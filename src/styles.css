@@ -1277,7 +1277,7 @@ html.dark .hello-name { background-image: linear-gradient(120deg, #9DB4FF, #C9A9
   border-radius: 24px 24px 24px 9px; padding: 15px 17px 11px;
   box-shadow: 0 14px 40px rgba(2,4,10,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
 }
-.bubble-row.me .bubble {
+.eva-console .bubble-row.me .bubble {
   background: linear-gradient(160deg, rgba(255,255,255,0.17), rgba(255,255,255,0.08));
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
@@ -1286,7 +1286,6 @@ html.dark .hello-name { background-image: linear-gradient(120deg, #9DB4FF, #C9A9
   box-shadow: 0 14px 40px rgba(2,4,10,0.45), inset 0 1px 0 rgba(255,255,255,0.20);
   color: #F2F1EC;
 }
-.eva-console .bubble-row.me .bubble { background: linear-gradient(160deg, rgba(255,255,255,0.17), rgba(255,255,255,0.08)); }
 .eva-console .bubble p { color: rgba(242,241,236,0.94); }
 .eva-console .chat-note {
   background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.10);

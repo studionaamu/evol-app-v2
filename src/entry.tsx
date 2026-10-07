@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
-import { Avatar, Logo } from './bits'
+import { Avatar } from './bits'
 import { COACHES, QUIZ, IMAGES, recommendedCoachIds, type Coach, type Domain } from './data'
 
 /* =====================================================
@@ -22,7 +22,6 @@ export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
       <div className="auth-body">
         <div className="auth-head">
           <div className="auth-brand" aria-label="Evol">
-            <Logo size={30} />
             <span>EVOL</span>
           </div>
           <h1>Votre évolution,<br />votre succès.</h1>

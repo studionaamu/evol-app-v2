@@ -486,12 +486,7 @@ export function EvaPanel({ role, prefill, onClose }: {
   prefill?: string
   onClose: () => void
 }) {
-  const { name } = useStore()
-  const [msgs, setMsgs] = useState<EvaMessage[]>([
-    role === 'coach'
-      ? { from: 'eva', text: 'Bonjour Marcus. J’ai agrégé les signaux de vos clients : 2 alertes méritent votre attention, dont une critique (Sofia M. — récupération insuffisante). Je vous fais la synthèse quand vous voulez.', actions: [{ label: 'Synthèse des alertes', kind: 'info' }] }
-      : { from: 'eva', text: `Bonjour ${name || 'vous'}. Posez-moi vos questions : stress, sommeil, énergie, douleur, nutrition — ou dites « choisir un coach ».` , actions: undefined }
-  ])
+  const [msgs, setMsgs] = useState<EvaMessage[]>([])
   const [draft, setDraft] = useState(prefill ?? '')
   const [typing, setTyping] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
@@ -539,17 +534,7 @@ export function EvaPanel({ role, prefill, onClose }: {
       </header>
 
       <div className="body eva-console">
-        <div className="eva-stage">
-          <span className="eva-halo" aria-hidden />
-          <span className="eva-orb-lum" data-phase={typing ? 'alive' : 'idle'} aria-hidden />
-          <div className="eva-hello">
-            <div className="eva-hello-kicker">{role === 'coach' ? 'VOS SIGNAUX SONT À JOUR' : 'VOTRE ESPACE EST CALME'}</div>
-            <h2>Hello {name || 'vous'}</h2>
-            <p>Comment puis-je vous aider aujourd’hui ?</p>
-          </div>
-        </div>
         <div className="eva-feed">
-          <div className="chat-note"><Icon name="shield" size={12} /> EVA vous oriente vers l’humain. En cas d’urgence, appelez le 15 ou le 112.</div>
           {msgs.map((m, k) => (
             m.from === 'me'
               ? <div key={k} className="bubble-row me">
