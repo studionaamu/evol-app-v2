@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
@@ -22,11 +22,11 @@ function greeting() {
    ===================================================== */
 
 const MOODS = [
-  { emoji: '☀️', label: 'Lumineux' },
-  { emoji: '🌤️', label: 'Correct' },
-  { emoji: '🌫️', label: 'Brouillard' },
-  { emoji: '🌧️', label: 'Lourd' },
-  { emoji: '⛈️', label: 'Orage' },
+  { label: 'Lumineux', color: '#E9A13B' },
+  { label: 'Correct', color: '#2E6BFF' },
+  { label: 'Brouillard', color: '#8E9BB5' },
+  { label: 'Lourd', color: '#6D3EAD' },
+  { label: 'Orage', color: '#101013' },
 ]
 
 const TOUR_STEPS = [
@@ -57,6 +57,46 @@ export function Tour({ step, onNext, onEnd }: { step: number; onNext: () => void
   )
 }
 
+const RADAR = [
+  { axis: 'Corps', v: 72 },
+  { axis: 'Mind', v: 55 },
+  { axis: 'Social', v: 80 },
+  { axis: 'Énergie', v: 38 },
+  { axis: 'Pro', v: 60 },
+  { axis: 'Sommeil', v: 34 },
+]
+
+function RadarChart({ scores }: { scores: { axis: string; v: number }[] }) {
+  const cx = 150, cy = 128, R = 92
+  const n = scores.length
+  const pt = (i: number, r: number) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const
+  }
+  const ring = (r: number) => scores.map((_, i) => pt(i, r).join(',')).join(' ')
+  const shape = scores.map((s, i) => pt(i, (s.v / 100) * R).join(',')).join(' ')
+  return (
+    <div className="radar-wrap">
+      <svg viewBox="0 0 300 300" className="radar-svg" aria-hidden>
+        {[0.33, 0.66, 1].map(f => <polygon key={f} points={ring(R * f)} className="radar-ring" />)}
+        {scores.map((_, i) => {
+          const [x, y] = pt(i, R)
+          return <line key={i} x1={cx} y1={cy} x2={x} y2={y} className="radar-spoke" />
+        })}
+        <polygon points={shape} className="radar-area" />
+        {scores.map((s, i) => {
+          const [x, y] = pt(i, (s.v / 100) * R)
+          return <circle key={i} cx={x} cy={y} r={4} className="radar-dot" />
+        })}
+        {scores.map((s, i) => {
+          const [x, y] = pt(i, R + 26)
+          return <text key={i} x={x} y={y} className="radar-label" textAnchor="middle" dominantBaseline="middle">{s.axis}</text>
+        })}
+      </svg>
+    </div>
+  )
+}
+
 export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replayTourSignal }: {
   onOpenExercise: (id: string) => void
   onOpenCoach: (c: Coach) => void
@@ -73,6 +113,7 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
   const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length))
   const [intention] = useState(() => INTENTIONS[Math.floor(Math.random() * INTENTIONS.length)])
   const bars = [42, 55, 38, 62, 48, 70, 58]
+  void bars
 
   /* dictée vocale simulée avec transcription IA */
   const [recording, setRecording] = useState(false)
@@ -112,10 +153,13 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
       <header className="page-head">
         <div>
           <div className="date-line">{todayLabel()}</div>
-          <h1>{greeting()}, {name} <span className="spark"><Icon name="sparkle" size={15} /></span></h1>
+          <h1>{greeting()}, <em className="hello-name">{name}</em></h1>
           <p>Votre espace pour avancer, un jour à la fois.</p>
         </div>
-        <button className="icon-btn" aria-label="Notifications"><Icon name="bell" size={19} /></button>
+        <div className="head-user">
+          <span className="user-presence" aria-hidden />
+          <Avatar hue="152" initials={name.slice(0, 1).toUpperCase()} photo={IMAGES.userPhoto} size={44} ring />
+        </div>
       </header>
 
       <section className="card card-quote">
@@ -142,30 +186,26 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
         </div>
       </section>
 
-      <section className="card" data-zone="balance">
+      <section className="card card-balance" data-zone="balance">
+        <span className="balance-wash" aria-hidden />
         <div className="card-kicker"><Icon name="activity" size={13} /> VOTRE ÉQUILIBRE</div>
-        <h2>Les petits signaux comptent.</h2>
-        <div className="metrics">
-          <div className="metric">
-            <div className="metric-top"><span>Énergie</span><span className="delta up">+8%</span></div>
-            <div className="metric-val">78<span className="of">/100</span></div>
-            <div className="meter"><span style={{ width: '78%' }} /></div>
-          </div>
-          <div className="metric">
-            <div className="metric-top"><span>Sommeil</span><span className="delta">stable</span></div>
-            <div className="metric-val sm">7h 42</div>
-            <div className="meter"><span style={{ width: '64%' }} /></div>
-          </div>
-          <div className="metric">
-            <div className="metric-top"><span>Mouvement</span><span className="delta up">+12%</span></div>
-            <div className="metric-val sm">4 280</div>
-            <div className="meter"><span style={{ width: '71%' }} /></div>
-          </div>
+        <div className="radar-head">
+          <h2>Radar de vie</h2>
+          <span className="radar-when"><Icon name="clock" size={12} /> Aujourd'hui <em className="radar-caret" /></span>
         </div>
-        <div className="sparkline" aria-hidden>
-          {bars.map((b, k) => <span key={k} style={{ height: `${b}%` }} />)}
+        <RadarChart scores={RADAR} />
+        <div className="radar-scores">
+          {RADAR.map(r => (
+            <div className="radar-score" key={r.axis}>
+              <span>{r.axis}</span>
+              <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
+            </div>
+          ))}
         </div>
-        <div className="axis"><span>Lun</span><span>Dim</span></div>
+        <div className="client-flag watch" style={{ marginTop: 14 }}>
+          <Icon name="alert" size={14} />
+          <span>Fatigue détectée : vos nuits courtes pèsent sur l'énergie. Un rituel d'ancrage est recommandé ce soir.</span>
+        </div>
       </section>
 
       <section className="card">
@@ -194,8 +234,8 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
         <h2>Comment vous sentez-vous ?</h2>
         <div className="moods">
           {MOODS.map((m, k) => (
-            <button key={k} className={'mood' + (mood === k ? ' on' : '')} onClick={() => setMood(k)}>
-              <span className="mood-emoji">{m.emoji}</span><span>{m.label}</span>
+            <button key={k} className={'mood' + (mood === k ? ' on' : '')} onClick={() => setMood(k)} style={{ '--m': m.color } as React.CSSProperties}>
+              <span className="mood-orb" aria-hidden /><span>{m.label}</span>
             </button>
           ))}
         </div>
@@ -498,35 +538,47 @@ export function EvaPanel({ role, prefill, onClose }: {
         <button className="icon-btn" aria-label="Appel EVA"><Icon name="phone" size={17} /></button>
       </header>
 
-      <div className="chat-body">
-        <div className="chat-note"><Icon name="shield" size={12} /> EVA vous oriente vers l’humain. En cas d’urgence, appelez le 15 ou le 112.</div>
-        {msgs.map((m, k) => (
-          <div key={k} className={'bubble-row ' + (m.from === 'me' ? 'me' : 'coach')}>
-            <div className="bubble">
-              <p>{m.text}</p>
-              {m.actions && (
-                <div className="eva-actions">
-                  {m.actions.map((a, i) => (
-                    <button key={i} className={'eva-action' + (a.kind === 'emergency' ? ' urgent' : '')} onClick={() => act(a)}>
-                      {a.kind === 'coach' && <Icon name="user" size={13} />}
-                      {a.kind === 'emergency' && <Icon name="alert" size={13} />}
-                      <span>{a.label}</span>
-                    </button>
-                  ))
-                  }
-                </div>
-              )}
-              <span>{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
+      <div className="body eva-console">
+        <div className="eva-stage">
+          <span className="eva-halo" aria-hidden />
+          <span className="eva-orb-lum" data-phase={typing ? 'alive' : 'idle'} aria-hidden />
+          <div className="eva-hello">
+            <div className="eva-hello-kicker">{role === 'coach' ? 'VOS SIGNAUX SONT À JOUR' : 'VOTRE ESPACE EST CALME'}</div>
+            <h2>Hello {name || 'vous'}</h2>
+            <p>Comment puis-je vous aider aujourd’hui ?</p>
           </div>
-        ))}
-        {typing && <div className="bubble-row coach"><div className="bubble eva-typing"><i /><i /><i /></div></div>}
-        <div ref={endRef} />
+        </div>
+        <div className="eva-feed">
+          <div className="chat-note"><Icon name="shield" size={12} /> EVA vous oriente vers l’humain. En cas d’urgence, appelez le 15 ou le 112.</div>
+          {msgs.map((m, k) => (
+            m.from === 'me'
+              ? <div key={k} className="bubble-row me">
+                  <div className="bubble"><p>{m.text}</p><span>{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                </div>
+              : <div key={k} className="eva-cardmsg">
+                  <div className="eva-cardmsg-head"><span className="eva-orb-mini" aria-hidden /><strong>EVA</strong></div>
+                  <p>{m.text}</p>
+                  {m.actions && (
+                    <div className="eva-actions">
+                      {m.actions.map((a, i) => (
+                        <button key={i} className={'eva-action' + (a.kind === 'emergency' ? ' urgent' : '')} onClick={() => act(a)}>
+                          {a.kind === 'coach' && <Icon name="user" size={13} />}
+                          {a.kind === 'emergency' && <Icon name="alert" size={13} />}
+                          <span>{a.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+          ))}
+          {typing && <div className="eva-cardmsg eva-typing"><span className="eva-orb-mini" /><i /><i /><i /></div>}
+          <div ref={endRef} />
+        </div>
       </div>
 
-      <div className="chat-input">
+      <div className="eva-composer glass">
         <input
-          placeholder={role === 'coach' ? 'Demander à EVA (clients, signaux, planning)…' : 'Écrire à EVA…'}
+          placeholder={role === 'coach' ? 'Demander à EVA…' : 'Demandez moi tout…'}
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}

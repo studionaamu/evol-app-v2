@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
 import { StoreProvider, useStore } from './store'
-import { Splash, Welcome, Quiz, QuizResults, ConsentScreen, Onboarding } from './entry'
+import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding } from './entry'
 import { Hub, Explorer, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
-import { Profile, CoachSpace } from './screens3'
+import { Profile, CoachSpace, type CoachTab } from './screens3'
 import { EXERCISES, type Coach, type Domain } from './data'
 
-type Phase = 'splash' | 'welcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
+type Phase = 'welcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
 
 function Shell() {
   const {
     role, setRole, setName, setGuest, tab, setTab,
     setThreads, setQuizDomains, setTourDone, reset,
   } = useStore()
-  const [phase, setPhase] = useState<Phase>('splash')
+  const [phase, setPhase] = useState<Phase>('welcome')
+  const [coachTab, setCoachTab] = useState<CoachTab>('bord')
   const [coachView, setCoachView] = useState<Coach | null>(null)
   const [chatId, setChatId] = useState<string | null>(null)
   const [exerciseId, setExerciseId] = useState<string | null>(null)
@@ -24,10 +25,8 @@ function Shell() {
   const openEva = (prefill?: string) => setEva({ open: true, prefill })
 
   useEffect(() => {
-    /* thème persistant, appliqué dès le démarrage */
+    /* thème persistant, appliqué dès le démarrage — pas de splash, on entre direct */
     document.documentElement.classList.toggle('dark', localStorage.getItem('evol-theme') === 'dark')
-    const t = setTimeout(() => setPhase('welcome'), 1400)
-    return () => clearTimeout(t)
   }, [])
 
   const openChat = (coachId: string) => {
@@ -56,8 +55,6 @@ function Shell() {
     setRole('coache')
     setPhase('onboarding')
   }
-
-  if (phase === 'splash') return <Splash />
 
   if (phase === 'welcome') return (
     <Welcome
@@ -96,7 +93,24 @@ function Shell() {
   /* ---- APP ---- */
   if (role === 'coach') return (
     <div className="phone">
-      <main className="tab-content" key="coach"><CoachSpace onExit={() => { setRole('coache'); reset() }} onOpenEva={openEva} /></main>
+      <main className="tab-content" key={coachTab}>
+        <CoachSpace coachTab={coachTab} onExit={() => { setRole('coache'); reset() }} onOpenEva={openEva} />
+      </main>
+      <nav className="tabbar" aria-label="Navigation coach">
+        {([
+          { id: 'bord', icon: 'home', label: 'Bord' },
+          { id: 'clients', icon: 'users', label: 'Clients' },
+          { id: 'messagerie', icon: 'chat', label: 'Messagerie' },
+          { id: 'reglages', icon: 'gear', label: 'Réglages' },
+        ] as const).map(t => (
+          <button key={t.id} className={'tab' + (coachTab === t.id ? ' on' : '')} onClick={() => setCoachTab(t.id)} aria-label={t.label}>
+            <span className="tab-icon">
+              <Icon name={t.icon} size={22} filled={coachTab === t.id} />
+            </span>
+            <span className="tab-label">{t.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   )
 

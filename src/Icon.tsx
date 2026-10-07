@@ -254,6 +254,13 @@ export function Icon({ name, size = 22, strokeWidth = 1.6, filled = false }: {
           <circle cx="12" cy="16.8" r="0.4" fill="currentColor" />
         </svg>
       )
+    case 'gear':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="3.2" />
+          <path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5a7.6 7.6 0 0 0-2.6 1.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.6 7.6 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3.9 2-3.4-2-1.5Z" />
+        </svg>
+      )
     case 'lock':
       return (
         <svg {...common} width={size * 0.85} height={size * 0.85}>

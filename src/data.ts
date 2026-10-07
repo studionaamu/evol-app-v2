@@ -279,6 +279,118 @@ export const QUOTES = [
   { text: 'Une intention claire vaut dix résolutions bruyantes.', src: 'Votre espace Evol' },
 ]
 
+/* --- Espace coach : clients, groupes, agenda, appels --- */
+
+export type CoachClient = {
+  id: string
+  name: string
+  initials: string
+  hue: string
+  photo?: string
+  program: string
+  startedAgo: string
+  nextSession: string
+  metrics: { label: string; value: string; delta?: string; up?: boolean }[]
+  trend: number[]
+  energy: number
+  sleep: string
+  adherence: number
+  journal?: string
+  flags: { type: 'alert' | 'watch' | 'ok'; text: string }[]
+}
+
+export const COACH_CLIENTS: CoachClient[] = [
+  {
+    id: 'alex', name: 'Alex Martin', initials: 'AM', hue: '152', photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&q=80&auto=format&fit=crop',
+    program: 'Respiration & sommeil · 6 mois', startedAgo: 'mois 3', nextSession: 'Demain 09:30',
+    metrics: [
+      { label: 'Énergie', value: '78', delta: '+8%', up: true },
+      { label: 'Sommeil', value: '7h42', delta: 'stable' },
+      { label: 'Séances tenues', value: '86%', delta: '+4%', up: true },
+    ],
+    trend: [42, 48, 45, 56, 58, 66, 78], energy: 78, sleep: '7h42 · stable', adherence: 86,
+    journal: '« Aujourd’hui je me sens plus calme. La respiration du matin m’a aidé à poser les choses. »',
+    flags: [{ type: 'ok', text: 'Aucun signal d’alerte ce mois-ci' }],
+  },
+  {
+    id: 'sofia', name: 'Sofia M.', initials: 'SM', hue: '8', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80&auto=format&fit=crop',
+    program: 'Force & mobilité · 6 mois', startedAgo: 'mois 2', nextSession: 'Jeu 26 · 14:00',
+    metrics: [
+      { label: 'Énergie', value: '41', delta: '-12%', up: false },
+      { label: 'Récupération', value: 'faible', delta: 'alerte' },
+      { label: 'Séances tenues', value: '64%', delta: '-9%', up: false },
+    ],
+    trend: [68, 66, 60, 55, 48, 44, 41], energy: 41, sleep: '5h10 · fragmenté', adherence: 64,
+    journal: '« J’enchaîne les grosses journées, je n’arrive pas à décrocher le soir. »',
+    flags: [{ type: 'alert', text: 'Effort soutenu 3 jours, récupération insuffisante — EVA recommande de décharger.' }],
+  },
+  {
+    id: 'david', name: 'David K.', initials: 'DK', hue: '208',
+    program: 'Ancrage anti-stress · 3 mois', startedAgo: 'mois 1', nextSession: 'Ven 27 · 08:15',
+    metrics: [
+      { label: 'Énergie', value: '62', delta: '+3%', up: true },
+      { label: 'Sommeil', value: '6h50', delta: '+20min', up: true },
+      { label: 'Séances tenues', value: '71%', delta: 'stable' },
+    ],
+    trend: [50, 52, 55, 53, 58, 60, 62], energy: 62, sleep: '6h50 · en progrès', adherence: 71,
+    flags: [{ type: 'watch', text: 'Check-in hebdo en retard de 24 h — relance douce conseillée.' }],
+  },
+  {
+    id: 'leila', name: 'Leïla B.', initials: 'LB', hue: '268',
+    program: 'Cohérence cardiaque · 6 mois', startedAgo: 'mois 4', nextSession: 'Lun 30 · 12:00',
+    metrics: [
+      { label: 'Énergie', value: '84', delta: '+6%', up: true },
+      { label: 'Sommeil', value: '8h05', delta: '+15min', up: true },
+      { label: 'Séances tenues', value: '93%', delta: '+2%', up: true },
+    ],
+    trend: [60, 64, 70, 72, 76, 80, 84], energy: 84, sleep: '8h05 · profond', adherence: 93,
+    flags: [{ type: 'ok', text: 'Meilleur mois depuis le début du programme' }],
+  },
+]
+
+export type CoachGroup = {
+  id: string
+  name: string
+  memberIds: string[]
+  objective: string
+  mode: 'Distanciel' | 'Présentiel'
+  schedule: string
+  progress: number
+}
+
+export const COACH_GROUPS: CoachGroup[] = [
+  {
+    id: 'g1', name: 'Groupe Matin · Respiration', memberIds: ['alex', 'leila'],
+    objective: '10 min de cohérence cardiaque, 5 jours/semaine',
+    mode: 'Distanciel', schedule: 'Lun–Ven · 07:30', progress: 78,
+  },
+  {
+    id: 'g2', name: 'Groupe Dos & Mobilité', memberIds: ['david', 'sofia'],
+    objective: 'Protocole 12 min · 3×/semaine',
+    mode: 'Présentiel', schedule: 'Mar & Jeu · 18:00', progress: 46,
+  },
+]
+
+export type CoachCall = {
+  id: string
+  withId: string
+  kind: 'audio' | 'video'
+  scope: 'individuel' | 'groupe'
+  title: string
+  when: string
+  duration?: string
+  missed?: boolean
+}
+
+export const COACH_CALLS: CoachCall[] = [
+  { id: 'c1', withId: 'alex', kind: 'video', scope: 'individuel', title: 'Séance respiration', when: 'Hier · 09:30', duration: '45 min' },
+  { id: 'c2', withId: 'g1', kind: 'video', scope: 'groupe', title: 'Groupe Matin · Respiration', when: 'Lun · 07:30', duration: '20 min' },
+  { id: 'c3', withId: 'david', kind: 'audio', scope: 'individuel', title: 'Point hebdo', when: 'Sam · 11:00', duration: '12 min', missed: true },
+  { id: 'c4', withId: 'leila', kind: 'audio', scope: 'individuel', title: 'Suivi énergie', when: 'Ven · 18:40', duration: '8 min' },
+]
+
+export type CoachAgendaDay = { day: number; items: { time: string; label: string; who: string; kind: 'video' | 'group' | 'inperson' }[] | null }
+
 /* --- Assessment quiz (friction zéro : pas de compte requis) --- */
 
 export type QuizOption = { label: string; domains: Domain[] }
@@ -329,6 +441,7 @@ export const IMAGES = {
     unsplash('photo-1518495973542-4542c06a5843', 900),         // lumière à travers les feuilles
     unsplash('photo-1521737604893-d14cc237f11d', 900),         // mains réunies
   ],
+  userPhoto: unsplash('photo-1535713875002-d1d0cf377fde', 400, 400), // portrait clair, fond doux
 }
 
 export function recommendedCoachIds(domains: Domain[]): string[] {

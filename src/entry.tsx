@@ -1,33 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
-import { Avatar } from './bits'
+import { Avatar, Logo } from './bits'
 import { COACHES, QUIZ, IMAGES, recommendedCoachIds, type Coach, type Domain } from './data'
 
 /* =====================================================
-   ENTRY FLOW: splash → welcome → quiz → signup → tour → app
+   ENTRY FLOW: welcome → quiz → signup → tour → app
    ===================================================== */
-
-export function Splash() {
-  return (
-    <div className="screen splash">
-      <div className="splash-inner">
-        <div className="splash-logo"><LogoMark size={64} /></div>
-        <div className="splash-word">evol</div>
-        <div className="splash-tag">Votre évolution, votre succès</div>
-      </div>
-    </div>
-  )
-}
-
-export function LogoMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
-      <circle cx="20" cy="20" r="18.5" stroke="currentColor" strokeWidth="1.4" opacity="0.5" />
-      <path d="M20 7c3.4 4.7 7.2 6.8 12.7 7.5C27.2 15.2 23.4 17.3 20 22c-3.4-4.7-7.2-6.8-12.7-7.5C12.8 13.8 16.6 11.7 20 7Z" fill="currentColor" />
-      <circle cx="20" cy="29.5" r="2.1" fill="currentColor" />
-    </svg>
-  )
-}
 
 /* ---------- welcome ---------- */
 
@@ -43,6 +21,10 @@ export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
       </div>
       <div className="auth-body">
         <div className="auth-head">
+          <div className="auth-brand" aria-label="Evol">
+            <Logo size={30} />
+            <span>EVOL</span>
+          </div>
           <h1>Votre évolution,<br />votre succès.</h1>
         </div>
         <div className="auth-actions">
