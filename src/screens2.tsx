@@ -21,7 +21,6 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
   const [slot, setSlot] = useState<string | null>(null)
   const [paying, setPaying] = useState(false)
   const [paid, setPaid] = useState(false)
-  const [tab, setTab] = useState<'about' | 'reviews' | 'free'>('about')
   const [days, setDays] = useState<number | null>(null)
 
   const dayList = useMemo(() => {
@@ -54,73 +53,87 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
 
   return (
     <div className="coach-screen">
-      <div className="coach-hero" style={{ background: `linear-gradient(150deg, hsl(${coach.hue} 30% 92%), hsl(${coach.hue} 18% 84%))` }}>
+      <div className="coach-hero" >
+        <img className="hero-photo" src={coach.photo} alt={coach.name} />
+        <div className="hero-shade" />
         <button className="icon-btn on-art" onClick={onBack} aria-label="Retour"><Icon name="chevron-left" size={19} /></button>
-        <Avatar hue={coach.hue} initials={coach.initials} size={86} />
-        <h1>{coach.name}</h1>
-        <p>{coach.role}</p>
-        <div className="hero-meta">
-          <span className="rating"><Icon name="star" size={12} /> {coach.rating} ({coach.reviews})</span>
-          <span><Icon name="location" size={12} /> {coach.city}</span>
-          <span><Icon name="check" size={12} /> Vérifié</span>
+        <div className="hero-foot">
+          <h1>{coach.name}</h1>
+          <p>{coach.role}</p>
+          <div className="hero-meta">
+            <span className="rating"><Icon name="star" size={12} /> {coach.rating} ({coach.reviews})</span>
+            <span><Icon name="location" size={12} /> {coach.city}</span>
+            <span><Icon name="check" size={12} /> Vérifié</span>
+          </div>
         </div>
-        {coach.video && (
-          <button className="video-pill">
-            <Icon name="video" size={15} /> Vidéo de présentation · {coach.video.duration}
-          </button>
-        )}
       </div>
 
       <div className="coach-body">
-        <div className="subtabs">
-          {(['about', 'reviews', 'free'] as const).map(t => (
-            <button key={t} className={'subtab' + (tab === t ? ' on' : '')} onClick={() => setTab(t)}>
-              {t === 'about' ? 'À propos' : t === 'reviews' ? `Avis (${coach.reviews})` : 'Gratuit'}
+        <div className="coach-intro">
+          <Avatar hue={coach.hue} initials={coach.initials} photo={coach.photo} size={64} ring />
+          <strong>{coach.name}</strong>
+          <span className="intro-role"><Icon name="sparkle" size={12} /> {coach.role}</span>
+        </div>
+
+        {/* vignette vidéo éditoriale */}
+        {coach.video && (
+          <button className="video-feature" aria-label={`Lire la vidéo de présentation de ${coach.name}`}>
+            <img src={coach.video.thumb} alt="" />
+            <span className="vf-shade" />
+            <span className="vf-play"><Icon name="play" size={22} /></span>
+            <span className="vf-label">Présentation · {coach.video.duration}</span>
+          </button>
+        )}
+
+        <div className="stat-duo">
+          <div className="stat-cell glass-lite">
+            <Icon name="users" size={19} />
+            <strong>{coach.students}+</strong>
+            <span>élèves accompagnés</span>
+          </div>
+          <div className="stat-cell glass-lite">
+            <Icon name="activity" size={19} />
+            <strong>{coach.successRate}%</strong>
+            <span>objectifs atteints</span>
+          </div>
+        </div>
+
+        <div className="block-title">À propos</div>
+        <p className="bio">{coach.bio}</p>
+        <div className="exp-list">
+          {coach.experience.map((e, k) => (
+            <div key={k} className="exp"><Icon name="check" size={14} /> {e}</div>
+          ))}
+        </div>
+        <div className="tag-row">{coach.tags.map(t => <span className="tag" key={t}>{t}</span>)}</div>
+
+        <div className="block-title">Ce qu'ils en disent <em>{coach.reviews} avis</em></div>
+        <div className="reviews">
+          {coach.testimonial.map((t, k) => (
+            <div className="review" key={k}>
+              <div className="review-top">
+                <span className="stars">{'★'.repeat(5)}</span>
+                <strong>{t.author}</strong>
+              </div>
+              <p>{t.text}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="block-title">Offert par {coach.name.split(' ')[0]}</div>
+        <div className="freelist">
+          {coach.freeContent.map((f, k) => (
+            <button className="free-item" key={k}>
+              <span className="free-kind">{f.kind}</span>
+              <span className="free-title">{f.title}</span>
+              <span className="free-dur">{f.duration}</span>
+              <Icon name="play" size={14} />
             </button>
           ))}
         </div>
 
-        {tab === 'about' && (
-          <>
-            <p className="bio">{coach.bio}</p>
-            <div className="exp-list">
-              {coach.experience.map((e, k) => (
-                <div key={k} className="exp"><Icon name="check" size={14} /> {e}</div>
-              ))}
-            </div>
-            <div className="tag-row">{coach.tags.map(t => <span className="tag" key={t}>{t}</span>)}</div>
-          </>
-        )}
-
-        {tab === 'reviews' && (
-          <div className="reviews">
-            {coach.testimonial.map((t, k) => (
-              <div className="review" key={k}>
-                <div className="review-top">
-                  <span className="stars">{'★'.repeat(5)}</span>
-                  <strong>{t.author}</strong>
-                </div>
-                <p>{t.text}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab === 'free' && (
-          <div className="freelist">
-            {coach.freeContent.map((f, k) => (
-              <button className="free-item" key={k}>
-                <span className="free-kind">{f.kind}</span>
-                <span className="free-title">{f.title}</span>
-                <span className="free-dur">{f.duration}</span>
-                <Icon name="play" size={14} />
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* calendrier interactif */}
-        <div className="card" style={{ marginTop: 14 }}>
+        <div className="card booking-card">
           <div className="card-kicker"><Icon name="calendar" size={13} /> RÉSERVER</div>
           <div className="days-row">
             {dayList.map(d => (
@@ -139,16 +152,20 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
           </div>
         </div>
 
-        <div className="cta-col">
-          <button className="btn btn-primary big" disabled={!slot || paying} onClick={startPay}>
-            {paying
-              ? <><i className="dot pulsing" /><span>Paiement sécurisé…</span></>
-              : <><span>{slot ? `Réserver · ${slot}` : 'Choisissez un créneau'}</span><Icon name="lock" size={15} /></>}
-          </button>
-          <button className="btn btn-soft big" onClick={onChat}><Icon name="chat" size={16} /><span>Envoyer un message</span></button>
-        </div>
-        <div className="stripe-note"><Icon name="lock" size={12} /> Paiement via Stripe Checkout · 3D Secure</div>
       </div>
+
+      {/* barre d'action flottante en verre, au-dessus du défilement */}
+      <div className="coach-ctabar glass-lite">
+        <button className="btn btn-glass solid" disabled={!slot || paying} onClick={startPay}>
+          {paying
+            ? <><i className="dot pulsing" /><span>Paiement sécurisé…</span></>
+            : <><span>{slot ? `Réserver · ${slot}` : 'Choisissez un créneau'}</span><Icon name="lock" size={15} /></>}
+        </button>
+        <button className="btn btn-glass round-cta" onClick={onChat} aria-label="Envoyer un message">
+          <Icon name="chat" size={18} />
+        </button>
+      </div>
+      <div className="stripe-note"><Icon name="lock" size={12} /> Paiement via Stripe Checkout · 3D Secure</div>
 
       {paying && (
         <div className="pay-layer" onClick={() => {}}>
@@ -197,7 +214,30 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const { threads, setThreads } = useStore()
   const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
+  const [q, setQ] = useState('')
   const totalUnread = threads.reduce((n, t) => n + t.unread, 0)
+
+  const shown = useMemo(() => {
+    const ql = q.trim().toLowerCase()
+    if (!ql) return threads
+    return threads.filter(t => {
+      const c = COACHES.find(x => x.id === t.coachId)!
+      const title = (t.group?.name ?? c.name).toLowerCase()
+      const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
+      return title.includes(ql) || last.includes(ql)
+    })
+  }, [threads, q])
+
+  /* intervenants impliqués quelque part → rangée d'accès rapide */
+  const quickCoaches = useMemo(() => {
+    const seen: string[] = []
+    for (const t of threads) {
+      for (const id of t.group?.memberIds ?? [t.coachId]) {
+        if (!seen.includes(id)) seen.push(id)
+      }
+    }
+    return seen.map(id => COACHES.find(c => c.id === id)).filter((c): c is Coach => !!c)
+  }, [threads])
 
   const createGroup = () => {
     if (picked.length < 2) return
@@ -227,6 +267,20 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         <button className="round-btn" onClick={() => setCreating(true)} aria-label="Nouvelle Synergy"><Icon name="plus" size={20} /></button>
       </header>
 
+      <div className="search glass-lite">
+        <Icon name="search" size={17} />
+        <input placeholder="Rechercher une conversation…" value={q} onChange={e => setQ(e.target.value)} />
+      </div>
+
+      <div className="quick-row">
+        {quickCoaches.map(c => (
+          <button key={c.id} className="quick-av" onClick={() => onOpenChat(c.id)}>
+            <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={58} ring />
+            <span>{c.name.split(' ')[0]}</span>
+          </button>
+        ))}
+      </div>
+
       {totalUnread > 0 && (
         <div className="count-line row between" style={{ marginBottom: 10 }}>
           <span>{totalUnread} non lu{totalUnread > 1 ? 's' : ''}</span>
@@ -235,7 +289,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
       )}
 
       <div className="thread-list">
-        {threads.map(t => {
+        {shown.map(t => {
           const c = COACHES.find(x => x.id === t.coachId)!
           const last = t.messages[t.messages.length - 1]
           const title = t.group?.name ?? c.name
@@ -245,9 +299,9 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
                 {t.group
                   ? <div className="group-av">{t.group.memberIds.slice(0, 2).map(id => {
                       const cc = COACHES.find(x => x.id === id)!
-                      return <Avatar key={id} hue={cc.hue} initials={cc.initials} size={30} />
+                      return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={30} />
                     })}</div>
-                  : <Avatar hue={c.hue} initials={c.initials} size={46} />}
+                  : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={46} />}
                 {t.unread > 0 && <span className="badge">{t.unread}</span>}
               </div>
               <div className="thread-info">
@@ -276,7 +330,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
                 <button key={c.id} className={'pick' + (picked.includes(c.id) ? ' on' : '')} onClick={() =>
                   setPicked(p => p.includes(c.id) ? p.filter(x => x !== c.id) : [...p, c.id])
                 }>
-                  <Avatar hue={c.hue} initials={c.initials} size={38} />
+                  <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={40} />
                   <span className="pick-name"><strong>{c.name}</strong><span>{c.role}</span></span>
                   <span className={'cbox' + (picked.includes(c.id) ? ' on' : '')}>
                     {picked.includes(c.id) && <Icon name="check" size={13} strokeWidth={2.4} />}
@@ -318,17 +372,26 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
     setDraft('')
     /* réponse simulée */
     setTimeout(() => {
-      const reply: Message = { from: 'coach', text: 'Bien noté, merci pour ce partage. On en reparle à la prochaine séance.', time: now }
+      const reply: Message = { from: 'coach', text: 'Bien noté, merci pour ce partage. On en reparle à la prochaine séance.', time: now, author: group ? c.name.split(' ')[0] : undefined }
       setThreads(ts => ts.map(t => t.id === thread.id ? { ...t, messages: [...t.messages, reply] } : t))
     }, 1200)
   }
 
   const addMember = (id: string) => {
-    if (!thread || !group) return
+    if (!thread) return
     const nc = COACHES.find(x => x.id === id)!
-    setThreads(ts => ts.map(t => t.id === thread.id
-      ? { ...t, group: { ...group, memberIds: [...group.memberIds, id] }, messages: [...t.messages, { from: 'me', text: `J'invite ${nc.name} dans cette Synergy pour synchroniser notre suivi.`, time: 'maintenant' }] }
-      : t))
+    if (group) {
+      setThreads(ts => ts.map(t => t.id === thread.id
+        ? { ...t, group: { ...group, memberIds: [...group.memberIds, id] }, messages: [...t.messages, { from: 'me', text: `J'invite ${nc.name} dans cette Synergy pour synchroniser notre suivi.`, time: 'maintenant' }] }
+        : t))
+    } else {
+      /* Conversation 1:1 → Synergy : le coaché crée le pont entre ses intervenants. */
+      const first = c.name.split(' ')[0]
+      const second = nc.name.split(' ')[0]
+      setThreads(ts => ts.map(t => t.id === thread.id
+        ? { ...t, group: { name: `Synergy · ${first} × ${second}`, memberIds: [coachId, id] }, messages: [...t.messages, { from: 'me', text: `J'invite ${second} dans cette conversation pour synchroniser notre suivi.`, time: 'maintenant' }] }
+        : t))
+    }
   }
   const removeMember = (id: string) => {
     if (!thread || !group) return
@@ -350,13 +413,15 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
         {group
           ? <div className="group-av head">{group.memberIds.slice(0, 2).map(id => {
               const cc = COACHES.find(x => x.id === id)!
-              return <Avatar key={id} hue={cc.hue} initials={cc.initials} size={26} />
+              return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={26} />
             })}</div>
-          : <Avatar hue={c.hue} initials={c.initials} size={38} />}
+          : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={38} />}
         <div className="chat-who">
           <strong>{group?.name ?? c.name}</strong>
           <span><i className="dot" /> {group ? `${group.memberIds.length} intervenants` : 'En ligne'}</span>
         </div>
+        <button className="icon-btn" onClick={onBack} aria-label="Appel audio"><Icon name="phone" size={17} /></button>
+        <button className="icon-btn" onClick={onBack} aria-label="Appel visio"><Icon name="video" size={17} /></button>
         <button className="icon-btn" onClick={() => setManaging(true)} aria-label="Participants">
           <Icon name={group ? 'users' : 'plus'} size={18} />
         </button>
@@ -367,7 +432,7 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
         {thread?.messages.map((m, k) => (
           <div key={k} className={'bubble-row ' + m.from}>
             <div className="bubble">
-              {group && m.from === 'coach' && <em className="bubble-author">{COACHES.find(x => x.id === coachId)?.name.split(' ')[0]}</em>}
+              {group && m.from === 'coach' && <em className="bubble-author">{m.author ?? COACHES.find(x => x.id === coachId)?.name.split(' ')[0]}</em>}
               <p>{m.text}</p>
               <span>{m.time}</span>
             </div>
@@ -401,7 +466,7 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
                   const cc = COACHES.find(x => x.id === id)!
                   return (
                     <div className="pick static" key={id}>
-                      <Avatar hue={cc.hue} initials={cc.initials} size={38} />
+                      <Avatar hue={cc.hue} initials={cc.initials} photo={cc.photo} size={40} />
                       <span className="pick-name"><strong>{cc.name}</strong><span>{cc.role}</span></span>
                       <button className="remove-btn" onClick={() => removeMember(id)} aria-label={`Retirer ${cc.name}`}>
                         <Icon name="close" size={14} />
@@ -416,8 +481,8 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
                 <div className="card-kicker" style={{ marginTop: group ? 14 : 0 }}>DISPONIBLES</div>
                 <div className="pick-list">
                   {candidates.map(cc => (
-                    <button className="pick" key={cc.id} onClick={() => (group ? addMember(cc.id) : null)}>
-                      <Avatar hue={cc.hue} initials={cc.initials} size={38} />
+                    <button className="pick" key={cc.id} onClick={() => addMember(cc.id)}>
+                      <Avatar hue={cc.hue} initials={cc.initials} photo={cc.photo} size={40} />
                       <span className="pick-name"><strong>{cc.name}</strong><span>{cc.role}</span></span>
                       <Icon name="plus" size={16} />
                     </button>

@@ -14,9 +14,12 @@ export type Coach = {
   available: boolean
   initials: string
   hue: string
+  photo: string
   bio: string
   experience: string[]
-  video?: { duration: string; views: string }
+  students: number
+  successRate: number
+  video?: { duration: string; views: string; thumb: string }
   freeContent: { title: string; kind: string; duration: string }[]
   testimonial: { text: string; author: string }[]
   slots: string[]
@@ -37,9 +40,12 @@ export const COACHES: Coach[] = [
     available: true,
     initials: 'CD',
     hue: '152',
+    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&q=80&auto=format&fit=crop',
     bio: "10 ans d'accompagnement en gestion du stress et respiration consciente. Sessions douces, orientées vers le système nerveux.",
     experience: ['Certifiée Wim Hof Method', '8 ans en maison de santé', 'Formatrice en cohérence cardiaque'],
-    video: { duration: '1:42', views: '12,4k' },
+    students: 320,
+    successRate: 92,
+    video: { duration: '1:42', views: '12,4k', thumb: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=900&q=80&auto=format&fit=crop' },
     freeContent: [
       { title: 'Respiration du matin', kind: 'Audio', duration: '8 min' },
       { title: 'Pourquoi vous malvotre souffle', kind: 'Article', duration: '4 min' },
@@ -64,8 +70,12 @@ export const COACHES: Coach[] = [
     available: true,
     initials: 'NB',
     hue: '36',
+    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500&q=80&auto=format&fit=crop',
     bio: 'Nutritionniste comportementale. Pas de régimes : des habitudes tenables qui respectent votre rythme de vie.',
     experience: ['Diététicienne-nutritionniste DE', 'Spécialiste eating behavior', 'Intervenante podcast "Manger juste"'],
+    students: 210,
+    successRate: 88,
+    video: { duration: '1:28', views: '6,1k', thumb: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900&q=80&auto=format&fit=crop' },
     freeContent: [
       { title: 'Le petit-déjeuner idéal', kind: 'Guide', duration: '6 min' },
       { title: 'Sucres cachés : le quiz', kind: 'Quiz', duration: '3 min' },
@@ -89,9 +99,12 @@ export const COACHES: Coach[] = [
     available: true,
     initials: 'ML',
     hue: '208',
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80&auto=format&fit=crop',
     bio: 'Kinésiologue et préparateur physique. Retrouvez une mobilité sans douleur et une force fonctionnelle, à votre rythme.',
     experience: ['Kinésithérapeute DE', 'Réathlétisation sportive', '12 ans de cabinet'],
-    video: { duration: '2:10', views: '8,7k' },
+    students: 500,
+    successRate: 94,
+    video: { duration: '2:10', views: '8,7k', thumb: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop' },
     freeContent: [
       { title: 'Dos : les 3 étirements', kind: 'Vidéo', duration: '7 min' },
     ],
@@ -114,8 +127,12 @@ export const COACHES: Coach[] = [
     available: true,
     initials: 'EM',
     hue: '268',
+    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&q=80&auto=format&fit=crop',
     bio: "Psychologue TCC. Un espace d'écoute sans jugement pour apprivoiser l'anxiété et retrouver confiance.",
     experience: ['Psychologue clinicienne', 'TCC & ACT', 'Pratique en ligne depuis 2019'],
+    students: 410,
+    successRate: 91,
+    video: { duration: '1:56', views: '9,3k', thumb: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=900&q=80&auto=format&fit=crop' },
     freeContent: [
       { title: 'Ancrage en 5 minutes', kind: 'Audio', duration: '5 min' },
       { title: 'Comprendre ses pensées intrusives', kind: 'Article', duration: '5 min' },
@@ -143,7 +160,7 @@ export const SESSIONS: Session[] = [
   { id: 's2', day: 28, month: 'JUIN', time: '18:00', coachId: 'nora', title: 'Point nutrition', duration: 30, mode: 'Visio' },
 ]
 
-export type Message = { from: 'me' | 'coach'; text: string; time: string }
+export type Message = { from: 'me' | 'coach'; text: string; time: string; author?: string }
 
 export type Thread = {
   id: string
@@ -298,6 +315,21 @@ export const QUIZ: QuizStep[] = [
     ],
   },
 ]
+
+/* --- Illustrations (Unsplash haute qualité) --- */
+
+const unsplash = (id: string, w = 1000, h?: number) =>
+  `https://images.unsplash.com/${id}?w=${w}${h ? `&h=${h}&crop=entropy` : ''}&q=80&auto=format&fit=crop`
+
+export const IMAGES = {
+  welcome: unsplash('photo-1470071459604-3b5ec3a7fe05', 1100), // forêt brumeuse au réveil
+  intent: unsplash('photo-1470252649378-9c29740c9fa8', 900, 1200), // lever de soleil doré
+  ob: [
+    unsplash('photo-1506905925346-21bda4d32df4', 900),         // sommet au lever du jour
+    unsplash('photo-1518495973542-4542c06a5843', 900),         // lumière à travers les feuilles
+    unsplash('photo-1521737604893-d14cc237f11d', 900),         // mains réunies
+  ],
+}
 
 export function recommendedCoachIds(domains: Domain[]): string[] {
   const scores = new Map<string, number>()

@@ -1,14 +1,28 @@
-export function Avatar({ hue, initials, size = 44 }: { hue: string; initials: string; size?: number }) {
+import { useState } from 'react'
+
+export function Avatar({ hue, initials, photo, size = 44, ring = false }: {
+  hue: string
+  initials: string
+  photo?: string
+  size?: number
+  ring?: boolean
+}) {
+  const [failed, setFailed] = useState(false)
+  const showPhoto = photo && !failed
   return (
     <div
-      className="avatar"
+      className={'avatar' + (showPhoto ? ' has-photo' : '') + (ring ? ' ring' : '')}
       style={{
         width: size, height: size,
-        background: `linear-gradient(140deg, hsl(${hue} 34% 88%), hsl(${hue} 20% 78%))`,
-        fontSize: size * 0.34,
+        ...(showPhoto ? {} : {
+          background: `linear-gradient(140deg, hsl(${hue} 20% 90%), hsl(${hue} 12% 80%))`,
+          fontSize: size * 0.34,
+        }),
       }}
     >
-      {initials}
+      {showPhoto
+        ? <img src={photo} alt={initials} onError={() => setFailed(true)} />
+        : initials}
     </div>
   )
 }

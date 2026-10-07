@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
 import { StoreProvider, useStore } from './store'
 import { Splash, Welcome, Quiz, QuizResults, ConsentScreen, Onboarding } from './entry'
-import { Hub, Explorer } from './screens1'
+import { Hub, Explorer, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
 import { Profile, CoachSpace } from './screens3'
 import { EXERCISES, type Coach, type Domain } from './data'
@@ -20,8 +20,12 @@ function Shell() {
   const [exerciseId, setExerciseId] = useState<string | null>(null)
   const [replayTour, setReplayTour] = useState(false)
   const [savedResults, setSavedResults] = useState<Domain[]>([])
+  const [eva, setEva] = useState<{ open: boolean; prefill?: string }>({ open: false })
+  const openEva = (prefill?: string) => setEva({ open: true, prefill })
 
   useEffect(() => {
+    /* thème persistant, appliqué dès le démarrage */
+    document.documentElement.classList.toggle('dark', localStorage.getItem('evol-theme') === 'dark')
     const t = setTimeout(() => setPhase('welcome'), 1400)
     return () => clearTimeout(t)
   }, [])
@@ -33,6 +37,7 @@ function Shell() {
   }
 
   /* overlays */
+  if (eva.open) return <EvaPanel role={role} prefill={eva.prefill} onClose={() => setEva({ open: false })} />
   if (exerciseId) return <PlayerScreen id={exerciseId} onExit={() => setExerciseId(null)} />
   if (chatId) return <ChatScreen coachId={chatId} onBack={() => setChatId(null)} />
   if (coachView) return (
@@ -91,7 +96,7 @@ function Shell() {
   /* ---- APP ---- */
   if (role === 'coach') return (
     <div className="phone">
-      <main className="tab-content" key="coach"><CoachSpace onExit={() => { setRole('coache'); reset() }} /></main>
+      <main className="tab-content" key="coach"><CoachSpace onExit={() => { setRole('coache'); reset() }} onOpenEva={openEva} /></main>
     </div>
   )
 
@@ -104,6 +109,7 @@ function Shell() {
             onOpenExercise={setExerciseId}
             onOpenCoach={c => setCoachView(c)}
             onOpenChat={openChat}
+            onOpenEva={openEva}
             replayTourSignal={replayTour}
           />
         )}

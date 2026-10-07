@@ -240,6 +240,20 @@ export function Icon({ name, size = 22, strokeWidth = 1.6, filled = false }: {
           <path d="M17.5 14.9c1.7.6 2.7 1.9 3 4.1" />
         </svg>
       )
+    case 'phone':
+      return (
+        <svg {...common}>
+          <path d="M5.5 4h3l1.5 4-2 1.5a12 12 0 0 0 6.5 6.5l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.7 1.5C10.6 19 5 13.4 4 5.7A1.5 1.5 0 0 1 5.5 4Z" />
+        </svg>
+      )
+    case 'alert':
+      return (
+        <svg {...common}>
+          <path d="M12 4 21 19.5H3L12 4Z" />
+          <path d="M12 10v4" />
+          <circle cx="12" cy="16.8" r="0.4" fill="currentColor" />
+        </svg>
+      )
     case 'lock':
       return (
         <svg {...common} width={size * 0.85} height={size * 0.85}>

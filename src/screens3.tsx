@@ -10,9 +10,10 @@ import { type Consent } from './data'
 
 export function Profile({ onReplayTour, onGoCoach }: { onReplayTour: () => void; onGoCoach: () => void }) {
   const { name, guest, consent, setConsent, reset, role } = useStore()
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') === 'dark')
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem('evol-theme', dark ? 'dark' : 'light')
     const meta = document.querySelector('meta[name=theme-color]')
     if (meta) meta.setAttribute('content', dark ? '#101013' : '#FAFAF8')
   }, [dark])
@@ -45,7 +46,6 @@ export function Profile({ onReplayTour, onGoCoach }: { onReplayTour: () => void;
           <span className={'switch' + (dark ? ' on' : '')}><i /></span>
         </div>
         <button className="setting wide" onClick={onReplayTour}><Icon name="compass" size={17} />Revoir le tour du Hub<Icon name="chevron-right" size={14} /></button>
-        <button className="setting wide"><Icon name="bell" size={17} />Rappels doux<span className="switch on static"><i /></span></button>
       </section>
 
       {/* ---- RGPD : révocation ---- */}
@@ -63,9 +63,10 @@ export function Profile({ onReplayTour, onGoCoach }: { onReplayTour: () => void;
             <span className={'switch' + (consent[k] ? ' on' : '')}><i /></span>
           </div>
         ))}
-        <div className="export-row">
-          <button className="btn btn-soft sm"><Icon name="share" size={14} /><span>Exporter mes données</span></button>
-          <button className="btn btn-soft sm danger"><Icon name="close" size={14} /><span>Supprimer mon compte</span></button>
+        <div className="service-list">
+          <button className="service-btn"><Icon name="share" size={15} /><span>Exporter mes données</span><Icon name="chevron-right" size={13} /></button>
+          <button className="service-btn danger"><Icon name="close" size={15} /><span>Supprimer mon compte</span><Icon name="chevron-right" size={13} /></button>
+          <p className="service-note">Suppression définitive sous 30 jours, réversible par e-mail. Export en JSON + PDF.</p>
         </div>
       </section>
 
@@ -96,7 +97,7 @@ export function Profile({ onReplayTour, onGoCoach }: { onReplayTour: () => void;
    ESPACE COACH — dashboard minimaliste
    ===================================================== */
 
-export function CoachSpace({ onExit }: { onExit: () => void }) {
+export function CoachSpace({ onExit, onOpenEva }: { onExit: () => void; onOpenEva?: (prefill?: string) => void }) {
   const [tab, setTab] = useState<'agenda' | 'clients' | 'synergy'>('agenda')
 
   return (
@@ -109,6 +110,32 @@ export function CoachSpace({ onExit }: { onExit: () => void }) {
         </div>
         <Avatar hue="152" initials="CD" size={52} />
       </header>
+
+      <section className="card card-grad eva-card">
+        <span className="eva-orb" aria-hidden />
+        <div className="card-kicker light"><Icon name="sparkle" size={13} /> EVA · VOTRE COPILOTE</div>
+        <h2>2 alertes à traiter.</h2>
+        <p className="light-dim">EVA surveille les signaux de vos clients et prépare vos synthèses de séance.</p>
+        <div className="eva-quick">
+          <button className="eva-chip" onClick={() => onOpenEva?.('Synthèse des alertes clients')}>Alertes & signaux</button>
+          <button className="eva-chip" onClick={() => onOpenEva?.('Prépare le résumé de ma séance Marie L.')}>Résumé de séance</button>
+        </div>
+      </section>
+
+      <section className="card alert-crit">
+        <div className="alert-head">
+          <span className="alert-ico"><Icon name="alert" size={17} /></span>
+          <div>
+            <strong>Sofia M. — Épuisement physique</strong>
+            <p>Effort soutenu 3 jours d’affilée avec une récupération insuffisante.</p>
+          </div>
+        </div>
+        <div className="alert-actions">
+          <button className="btn sm btn-soft" onClick={() => onOpenEva?.('Ajuste le plan de Sofia M. (récupération)')}>
+            <span>Ajuster le plan · EVA</span>
+          </button>
+        </div>
+      </section>
 
       <div className="subtabs">
         {(['agenda', 'clients', 'synergy'] as const).map(t => (

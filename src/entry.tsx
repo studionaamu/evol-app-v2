@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
 import { Avatar } from './bits'
-import { COACHES, QUIZ, recommendedCoachIds, type Coach, type Domain } from './data'
+import { COACHES, QUIZ, IMAGES, recommendedCoachIds, type Coach, type Domain } from './data'
 
 /* =====================================================
    ENTRY FLOW: splash → welcome → quiz → signup → tour → app
@@ -36,37 +36,31 @@ export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
   onAccount: () => void
   onGuest: () => void
   onCoach: () => void
-}) {
-  return (
+}) {  return (
     <div className="screen auth">
       <div className="auth-art" aria-hidden>
-        <div className="orb orb-a" />
-        <div className="orb orb-b" />
-        <div className="ring" />
-        <div className="auth-float"><LogoMark size={46} /></div>
+        <div className="aurora" />
       </div>
       <div className="auth-body">
         <div className="auth-head">
-          <div className="kicker">EVOL · MARKETPLACE HOLISTIQUE</div>
           <h1>Votre évolution,<br />votre succès.</h1>
-          <p>Coachs, signaux et journal réunis dans un seul espace calme.</p>
         </div>
         <div className="auth-actions">
-          <button className="btn btn-primary" onClick={onAssessment}>
+          <button className="btn btn-glass solid" onClick={onAssessment}>
             <span>Trouver mes coachs · 2 min</span><Icon name="sparkle" size={17} />
           </button>
-          <div className="or-divider"><span>ou</span></div>
-          <button className="btn btn-dark" onClick={onAccount}>
+          <div className="or-divider glass-div"><span>ou</span></div>
+          <button className="btn btn-glass" onClick={onAccount}>
             <AppleIcon size={19} /><span>Continuer avec Apple</span>
           </button>
-          <button className="btn btn-light" onClick={onAccount}>
+          <button className="btn btn-glass" onClick={onAccount}>
             <GoogleIcon size={18} /><span>Continuer avec Google</span>
           </button>
-          <button className="btn btn-ghost" onClick={onGuest}>Explorer en mode invité</button>
-          <button className="coach-link" onClick={onCoach}>
+          <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
+          <button className="coach-link on-photo" onClick={onCoach}>
             <Icon name="user" size={15} /> Vous êtes coach ?
           </button>
-          <p className="auth-legal">
+          <p className="auth-legal glass-div">
             Aucun compte requis pour découvrir vos coachs recommandés.
           </p>
         </div>
@@ -154,7 +148,7 @@ export function QuizResults({ domains, onOpenCoach, onCreateAccount, onGuest }: 
           <article className="card coach-card" key={c.id} onClick={() => onOpenCoach(c)}>
             {idx < Math.min(2, recos.length) && <span className="match">Match</span>}
             <div className="coach-top">
-              <Avatar hue={c.hue} initials={c.initials} size={52} />
+              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={54} ring />
               <div className="coach-id">
                 <strong>{c.name}</strong>
                 <span>{c.role}</span>
@@ -225,9 +219,9 @@ export function ConsentScreen({ onAccept, onBack }: { onAccept: () => void; onBa
 /* ---------- onboarding (post-account) ---------- */
 
 const OB = [
-  { tag: 'Bienvenue', title: 'Votre évolution,\nvotre succès.', sub: 'Vos coachs, vos signaux et votre journal réunis dans un seul espace calme.', icon: 'logo' as const },
-  { tag: 'Vos signaux', title: 'Des petits signaux,\npas des tableaux de bord.', sub: 'Énergie, sommeil, mouvement : ce qui compte, sans surcharge.', icon: 'activity' as const },
-  { tag: 'Synergy', title: 'Votre équipe,\nune seule direction.', sub: 'Réunissez vos coachs dans un espace privé. Vous gardez le contrôle.', icon: 'shield' as const },
+  { tag: 'Bienvenue', title: 'Votre évolution,\nvotre succès.', sub: 'Vos coachs, vos signaux et votre journal réunis dans un seul espace calme.', img: IMAGES.ob[0] },
+  { tag: 'Vos signaux', title: 'Des petits signaux,\npas des tableaux de bord.', sub: 'Énergie, sommeil, mouvement : ce qui compte, sans surcharge.', img: IMAGES.ob[1] },
+  { tag: 'Synergy', title: 'Votre équipe,\nune seule direction.', sub: 'Réunissez vos coachs dans un espace privé. Vous gardez le contrôle.', img: IMAGES.ob[2] },
 ]
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
@@ -241,8 +235,9 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         <button className="link-btn" onClick={onDone}>Passer</button>
       </div>
       <div className="ob-art" key={i}>
-        <div className="ob-halo" />
-        <div className="ob-disc"><Icon name={s.icon} size={40} strokeWidth={1.2} /></div>
+        <div className="ob-photo">
+          <img src={s.img} alt="" />
+        </div>
       </div>
       <div className="ob-body" key={'b' + i}>
         <div className="kicker">{s.tag}</div>
