@@ -139,8 +139,67 @@ export const COACHES: Coach[] = [
     ],
     testimonial: [
       { text: 'Élodie m’a aidée à traverser une période très sombre, avec justesse.', author: 'Claire M.' },
+      { text: 'Des outils concrets qui apaisent dès la première semaine.', author: 'Hugo P.' },
     ],
     slots: ['Mer 25 · 12:00', 'Jeu 26 · 20:00', 'Ven 27 · 19:30'],
+  },
+  {
+    id: 'lucas',
+    name: 'Lucas Moreau',
+    role: 'Chronobiologie & récupération profonde',
+    rating: 4.9,
+    reviews: 112,
+    city: 'Nantes',
+    mode: 'À distance',
+    tags: ['Sommeil', 'Récupération', 'Circadien'],
+    domains: ['Sommeil', 'Stress'],
+    price: 75,
+    available: true,
+    initials: 'LM',
+    hue: '192',
+    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&q=80&auto=format&fit=crop',
+    bio: 'Spécialiste du rythme circadien et de la récupération nerveuse. Recalibrez vos nuits sans somnifères ni rigidité.',
+    experience: ['Master Neurosciences du sommeil', 'Consultant athlètes & dirigeants', '7 ans de suivi clinique'],
+    students: 290,
+    successRate: 93,
+    video: { duration: '1:35', views: '7,8k', thumb: 'https://images.unsplash.com/photo-1511295742362-92c96b1cf484?w=900&q=80&auto=format&fit=crop' },
+    freeContent: [
+      { title: 'Protocole lumière du matin', kind: 'Guide', duration: '5 min' },
+      { title: 'Décompression 21h30', kind: 'Audio', duration: '9 min' },
+    ],
+    testimonial: [
+      { text: 'Mes réveils nocturnes ont disparu en dix jours. Approche ultra-précise.', author: 'Julien V.' },
+      { text: 'Enfin un protocole adapté à mes horaires décalés.', author: 'Sarah K.' },
+    ],
+    slots: ['Jeu 26 · 08:30', 'Ven 27 · 17:00', 'Lun 30 · 18:30'],
+  },
+  {
+    id: 'ines',
+    name: 'Inès Khelifi',
+    role: 'Leadership calme & clarté mentale',
+    rating: 5.0,
+    reviews: 94,
+    city: 'Paris',
+    mode: 'Présentiel',
+    tags: ['Focus', 'Confiance', 'Posture', 'Charge mentale'],
+    domains: ['Confiance', 'Mental'],
+    price: 85,
+    available: true,
+    initials: 'IK',
+    hue: '310',
+    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80&auto=format&fit=crop',
+    bio: 'Accompagnement exécutif et régulation émotionnelle. Décidez avec clarté sans y laisser votre énergie vitale.',
+    experience: ['Ex-directrice produit', 'Certifiée ICF PCC', 'Spécialiste haute charge cognitive'],
+    students: 185,
+    successRate: 95,
+    video: { duration: '1:50', views: '5,4k', thumb: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=900&q=80&auto=format&fit=crop' },
+    freeContent: [
+      { title: 'Audit de charge mentale', kind: 'Outil', duration: '6 min' },
+    ],
+    testimonial: [
+      { text: 'Inès transforme la pression en clarté immédiate. Indispensable.', author: 'Antoine G.' },
+    ],
+    slots: ['Mer 25 · 14:00', 'Ven 27 · 11:00', 'Mar 01 · 09:00'],
   },
 ]
 
@@ -463,3 +522,174 @@ export type Consent = {
 }
 
 export const DEFAULT_CONSENT: Consent = { account: false, health: false, journal: false, shareCoach: false }
+
+/* --- Nouvelles données : Vitrine Coach, Rapports EVA, Écosystème Coaché, Statistiques Coach --- */
+
+export type CoachProgram = {
+  id: string
+  title: string
+  duration: string
+  sessionsCount: number
+  format: string
+  desc: string
+  price: number
+  active: boolean
+}
+
+export type CoachPricingTier = {
+  id: string
+  name: string
+  price: number
+  unit: string
+  features: string[]
+  popular?: boolean
+}
+
+export const INITIAL_VITRINE_PROGRAMS: CoachProgram[] = [
+  {
+    id: 'p1',
+    title: 'Reset Nerveux & Souffle',
+    duration: '6 semaines',
+    sessionsCount: 6,
+    format: 'Individuel · Visio + suivi EVA',
+    desc: 'Régulation vagale, cohérence cardiaque sur-mesure et restructuration du sommeil profond.',
+    price: 360,
+    active: true,
+  },
+  {
+    id: 'p2',
+    title: 'Ancrage & Clarté Mentale',
+    duration: '12 semaines',
+    sessionsCount: 10,
+    format: 'Hybride · 1:1 & Groupe Matin',
+    desc: 'Sortir de la surcharge cognitive durablement grâce aux rituels respiratoires et au biofeedback.',
+    price: 620,
+    active: true,
+  },
+]
+
+export const INITIAL_FREEBIES: { id: string; title: string; kind: string; duration: string; downloads: number }[] = [
+  { id: 'f1', title: 'Respiration du matin (4-7-8 guidé)', kind: 'Audio', duration: '8 min', downloads: 412 },
+  { id: 'f2', title: 'Pourquoi votre souffle bloque sous pression', kind: 'Article', duration: '4 min', downloads: 289 },
+  { id: 'f3', title: 'Protocole déconnexion 21h30', kind: 'Guide PDF', duration: '6 pages', downloads: 530 },
+]
+
+export const INITIAL_PRICING_TIERS: CoachPricingTier[] = [
+  {
+    id: 't1',
+    name: 'Séance Découverte',
+    price: 65,
+    unit: 'la séance (45 min)',
+    features: ['Bilan respiratoire & nerveux', 'Protocole personnalisé immédiat', 'Compte rendu IA EVA inclus'],
+  },
+  {
+    id: 't2',
+    name: 'Accompagnement Mensuel',
+    price: 220,
+    unit: '/ mois · sans engagement',
+    features: ['4 séances 1:1 (45 min + 15 min débrief)', 'Accès illimité Synergy & messagerie', 'Analyse continue des signaux par EVA'],
+    popular: true,
+  },
+  {
+    id: 't3',
+    name: 'Immersion Trimestrielle',
+    price: 590,
+    unit: '/ trimestre (12 séances)',
+    features: ['Suivi prioritaire 7j/7', 'Sessions de groupe matinales incluses', 'Bilan biométrique complet'],
+  },
+]
+
+export type EvaSessionReport = {
+  id: string
+  date: string
+  coachId: string
+  coachName: string
+  clientName: string
+  title: string
+  duration: string
+  summary: string
+  keyTakeaways: string[]
+  nextActions: string[]
+  sentiment: string
+  timeSaved: string
+}
+
+export const EVA_SESSION_REPORTS: EvaSessionReport[] = [
+  {
+    id: 'r1',
+    date: 'Hier · 09:30',
+    coachId: 'camille',
+    coachName: 'Camille Durand',
+    clientName: 'Alex Martin',
+    title: 'Séance Respiration & Sommeil #4',
+    duration: '45 min',
+    summary: 'Séance enregistrée, transcrite et structurée par EVA. Nette diminution de la tension thoracique après 12 minutes de cohérence guidée. Alex identifie les réunions tardives comme déclencheur principal du réveil à 3h.',
+    keyTakeaways: [
+      'Capacité d’apnée basse passée de 18 s à 29 s (+61%)',
+      'Endormissement réduit à 15 min sur les 4 derniers jours',
+      'Besoin d’un sas de décompression de 10 min à 19h00',
+    ],
+    nextActions: [
+      'Pratiquer le 4-7-8 au coucher 5 soirs/7',
+      'Couper les écrans lumineux dès 21h45',
+      'Partager le relevé de pouls au repos avec Nora',
+    ],
+    sentiment: 'Apaisé & engagé',
+    timeSaved: '22 min d’admin économisées (80%)',
+  },
+  {
+    id: 'r2',
+    date: '20 juin · 18:00',
+    coachId: 'nora',
+    coachName: 'Nora Benali',
+    clientName: 'Alex Martin',
+    title: 'Bilan Énergie & Glycémie matinale',
+    duration: '30 min',
+    summary: 'Stabilisation nette du pic de fatigue de 15h grâce au petit-déjeuner protéiné. Hydratation encore en dessous de la cible les jours de télétravail.',
+    keyTakeaways: [
+      'Zéro fringale sucrée signalée cette semaine',
+      'Énergie subjective remontée de 52 à 74/100',
+    ],
+    nextActions: [
+      'Préparer une carafe d’eau visible sur le bureau',
+      'Maintenir l’apport protéiné avant 9h30',
+    ],
+    sentiment: 'Confiant',
+    timeSaved: '18 min d’admin économisées (80%)',
+  },
+]
+
+export type SharedDocument = {
+  id: string
+  title: string
+  kind: 'PDF' | 'Audio' | 'Bilan' | 'Note'
+  size: string
+  coachId: string
+  date: string
+  byMe?: boolean
+}
+
+export const INITIAL_SHARED_DOCS: SharedDocument[] = [
+  { id: 'd1', title: 'Bilan_Sommeil_Juin_Alex.pdf', kind: 'PDF', size: '1.4 Mo', coachId: 'camille', date: 'Hier' },
+  { id: 'd2', title: 'Routine_Matinale_Proteinee.pdf', kind: 'PDF', size: '840 Ko', coachId: 'nora', date: '21 juin' },
+  { id: 'd3', title: 'Protocole_Epaules_12min.mp3', kind: 'Audio', size: '6.2 Mo', coachId: 'marc', date: '18 juin' },
+  { id: 'd4', title: 'Relevé_Cardio_Semaine25.pdf', kind: 'Bilan', size: '520 Ko', coachId: 'camille', date: 'Auj.', byMe: true },
+]
+
+export type GoalTracker = {
+  id: string
+  title: string
+  domain: Domain
+  coachId: string
+  progress: number
+  target: string
+  current: string
+  streak: string
+}
+
+export const ECOSYSTEM_GOALS: GoalTracker[] = [
+  { id: 'g-1', title: 'Sommeil réparateur ≥ 7h30', domain: 'Sommeil', coachId: 'camille', progress: 78, current: '7h25 / nuit', target: '7h30', streak: '5 j consécutifs' },
+  { id: 'g-2', title: 'Stabilité énergétique après-midi', domain: 'Nutrition', coachId: 'nora', progress: 85, current: '6 / 7 jours', target: '7 / 7 jours', streak: '12 j' },
+  { id: 'g-3', title: 'Mobilité scapulaire & dos sans douleur', domain: 'Mouvement', coachId: 'marc', progress: 64, current: '2 / 3 séances', target: '3 / sem', streak: '3 sem' },
+]
+

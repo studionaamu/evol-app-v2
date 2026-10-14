@@ -14,7 +14,9 @@ export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
   onAccount: () => void
   onGuest: () => void
   onCoach: () => void
-}) {  return (
+}) {
+  void onAssessment
+  return (
     <div className="screen auth">
       <div className="auth-art" aria-hidden>
         <div className="aurora" />
@@ -27,22 +29,19 @@ export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
           <h1>Votre évolution,<br />votre succès.</h1>
         </div>
         <div className="auth-actions">
-          <button className="btn btn-glass solid" onClick={onAssessment}>
-            <span>Trouver mes coachs · 2 min</span><Icon name="sparkle" size={17} />
-          </button>
-          <div className="or-divider glass-div"><span>ou</span></div>
-          <button className="btn btn-glass" onClick={onAccount}>
+          <button className="btn btn-glass solid" onClick={onAccount}>
             <AppleIcon size={19} /><span>Continuer avec Apple</span>
           </button>
           <button className="btn btn-glass" onClick={onAccount}>
             <GoogleIcon size={18} /><span>Continuer avec Google</span>
           </button>
+          <div className="or-divider glass-div"><span>ou</span></div>
           <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
           <button className="coach-link on-photo" onClick={onCoach}>
             <Icon name="user" size={15} /> Vous êtes coach ?
           </button>
           <p className="auth-legal glass-div">
-            Aucun compte requis pour découvrir vos coachs recommandés.
+            Espace confidentiel · chiffré et hébergé en UE.
           </p>
         </div>
       </div>

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
 import { StoreProvider, useStore } from './store'
 import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding } from './entry'
-import { Hub, Explorer, EvaPanel } from './screens1'
+import { Hub, Explorer, Ecosystem, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
-import { Profile, CoachSpace, type CoachTab } from './screens3'
+import { Profile, CoachSpace, type CoachTab, type VitrineSub } from './screens3'
 import { EXERCISES, type Coach, type Domain } from './data'
 
 type Phase = 'welcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
@@ -12,21 +12,34 @@ type Phase = 'welcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
 function Shell() {
   const {
     role, setRole, setName, setGuest, tab, setTab,
-    setThreads, setQuizDomains, setTourDone, reset,
+    setThreads, setQuizDomains, reset,
   } = useStore()
   const [phase, setPhase] = useState<Phase>('welcome')
   const [coachTab, setCoachTab] = useState<CoachTab>('bord')
+  const [coachThreadId, setCoachThreadId] = useState<string | null>(null)
+  const [coachVSub, setCoachVSub] = useState<VitrineSub>('programmes')
   const [coachView, setCoachView] = useState<Coach | null>(null)
   const [chatId, setChatId] = useState<string | null>(null)
   const [exerciseId, setExerciseId] = useState<string | null>(null)
-  const [replayTour, setReplayTour] = useState(false)
   const [savedResults, setSavedResults] = useState<Domain[]>([])
   const [eva, setEva] = useState<{ open: boolean; prefill?: string }>({ open: false })
   const openEva = (prefill?: string) => setEva({ open: true, prefill })
 
   useEffect(() => {
-    /* thème persistant, appliqué dès le démarrage — pas de splash, on entre direct */
-    document.documentElement.classList.toggle('dark', localStorage.getItem('evol-theme') === 'dark')
+    /* thème : préférence choisie > système ; appliqué dès le démarrage */
+    const stored = localStorage.getItem('evol-theme')
+    const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const apply = (dark: boolean) => {
+      document.documentElement.classList.toggle('dark', dark)
+      const meta = document.querySelector('meta[name=theme-color]')
+      if (meta) meta.setAttribute('content', dark ? '#101013' : '#FAFAF8')
+    }
+    apply(stored ? stored === 'dark' : sysDark)
+    /* suit les changements du système tant que l'utilisateur n'a pas choisi explicitement */
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = (e: MediaQueryListEvent) => { if (!localStorage.getItem('evol-theme')) apply(e.matches) }
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
   }, [])
 
   const openChat = (coachId: string) => {
@@ -37,15 +50,30 @@ function Shell() {
 
   /* overlays */
   if (eva.open) return <EvaPanel role={role} prefill={eva.prefill} onClose={() => setEva({ open: false })} />
-  if (exerciseId) return <PlayerScreen id={exerciseId} onExit={() => setExerciseId(null)} />
-  if (chatId) return <ChatScreen coachId={chatId} onBack={() => setChatId(null)} />
+
+  const floatingEva = phase === 'app' ? (
+    <button
+      className="eva-fab"
+      onClick={() => openEva()}
+      aria-label="EVA"
+      title="Interroger l'IA EVA"
+    >
+      <span className="eva-fab-orb" aria-hidden />
+    </button>
+  ) : null
+
+  if (exerciseId) return <><PlayerScreen id={exerciseId} onExit={() => setExerciseId(null)} />{floatingEva}</>
+  if (chatId) return <><ChatScreen coachId={chatId} onBack={() => setChatId(null)} />{floatingEva}</>
   if (coachView) return (
-    <CoachScreen
-      coach={coachView}
-      onBack={() => setCoachView(null)}
-      onBooked={() => { setCoachView(null); if (phase !== 'app') enterApp('Alex', false) }}
-      onChat={() => openChat(coachView.id)}
-    />
+    <>
+      <CoachScreen
+        coach={coachView}
+        onBack={() => setCoachView(null)}
+        onBooked={() => { setCoachView(null); if (phase !== 'app') enterApp('Alex', false) }}
+        onChat={() => openChat(coachView.id)}
+      />
+      {floatingEva}
+    </>
   )
 
   /* création de compte : quiz results → consent → onboarding */
@@ -88,24 +116,36 @@ function Shell() {
     />
   )
 
-  if (phase === 'onboarding') return <Onboarding onDone={() => { setPhase('app'); setTourDone(false) }} />
+  if (phase === 'onboarding') return <Onboarding onDone={() => setPhase('app')} />
 
   /* ---- APP ---- */
   if (role === 'coach') return (
     <div className="phone">
       <main className="tab-content" key={coachTab}>
-        <CoachSpace coachTab={coachTab} onExit={() => { setRole('coache'); reset() }} onOpenEva={openEva} />
+        <CoachSpace
+          coachTab={coachTab}
+          onChangeCoachTab={setCoachTab}
+          onExit={() => { setRole('coache'); reset() }}
+          onOpenEva={openEva}
+          activeThreadId={coachThreadId}
+          onChangeThread={setCoachThreadId}
+          vitrineSub={coachVSub}
+          onChangeVitrineSub={setCoachVSub}
+        />
       </main>
-      <nav className="tabbar" aria-label="Navigation coach">
+      {floatingEva}
+      <nav className="tabbar coach-tabbar" aria-label="Navigation coach">
         {([
           { id: 'bord', icon: 'home', label: 'Bord' },
+          { id: 'vitrine', icon: 'store', label: 'Offre' },
+          { id: 'statistiques', icon: 'chart', label: 'Stats' },
           { id: 'clients', icon: 'users', label: 'Clients' },
-          { id: 'messagerie', icon: 'chat', label: 'Messagerie' },
+          { id: 'messagerie', icon: 'chat', label: 'Messages' },
           { id: 'reglages', icon: 'gear', label: 'Réglages' },
         ] as const).map(t => (
           <button key={t.id} className={'tab' + (coachTab === t.id ? ' on' : '')} onClick={() => setCoachTab(t.id)} aria-label={t.label}>
             <span className="tab-icon">
-              <Icon name={t.icon} size={22} filled={coachTab === t.id} />
+              <Icon name={t.icon} size={20} filled={coachTab === t.id} />
             </span>
             <span className="tab-label">{t.label}</span>
           </button>
@@ -116,32 +156,41 @@ function Shell() {
 
   return (
     <div className="phone">
-      <main className="tab-content" key={tab + String(replayTour)}>
+      <main className="tab-content" key={tab}>
         {tab === 'hub' && (
           <Hub
-            key={'hub' + replayTour}
             onOpenExercise={setExerciseId}
             onOpenCoach={c => setCoachView(c)}
             onOpenChat={openChat}
             onOpenEva={openEva}
-            replayTourSignal={replayTour}
+          />
+        )}
+        {tab === 'ecosystem' && (
+          <Ecosystem
+            onOpenExercise={setExerciseId}
+            onOpenCoach={c => setCoachView(c)}
+            onOpenChat={openChat}
+            onOpenEva={openEva}
           />
         )}
         {tab === 'explorer' && <Explorer onOpenCoach={c => setCoachView(c)} />}
         {tab === 'synergy' && <Synergy onOpenChat={openChat} />}
-        {tab === 'profile' && <Profile onReplayTour={() => { setTab('hub'); setTourDone(false); setReplayTour(r => !r) }} onGoCoach={() => setRole('coach')} />}
+        {tab === 'profile' && <Profile onGoCoach={() => setRole('coach')} />}
       </main>
+
+      {floatingEva}
 
       <nav className="tabbar" aria-label="Navigation principale">
         {([
           { id: 'hub', icon: 'home', label: 'Hub' },
+          { id: 'ecosystem', icon: 'grid', label: 'Écosystème' },
           { id: 'explorer', icon: 'compass', label: 'Explorer' },
           { id: 'synergy', icon: 'chat', label: 'Synergy' },
           { id: 'profile', icon: 'user', label: 'Profil' },
         ] as const).map(t => (
           <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} onClick={() => setTab(t.id)} aria-label={t.label}>
             <span className="tab-icon">
-              <Icon name={t.icon} size={22} filled={tab === t.id} />
+              <Icon name={t.icon} size={21} filled={tab === t.id} />
             </span>
             <span className="tab-label">{t.label}</span>
           </button>

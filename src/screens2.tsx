@@ -3,8 +3,81 @@ import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, type Coach, type Message,
+  COACHES, type Coach, type Message, type Thread,
 } from './data'
+
+/* =====================================================
+   APPELS — audio & visio (spotlight) — partagé coaché / coach
+   ===================================================== */
+
+export type CallKind = 'audio' | 'video'
+
+export function CallScreen({ kind, name, photo, hue, initials, group, onEnd }: {
+  kind: CallKind
+  name: string
+  photo?: string
+  hue: string
+  initials: string
+  group?: NonNullable<Thread['group']>
+  onEnd: () => void
+}) {
+  const [secs, setSecs] = useState(2)
+  const [camOff, setCamOff] = useState(false)
+  const [micOff, setMicOff] = useState(false)
+  useEffect(() => {
+    const t = setInterval(() => setSecs(s => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const mm = String(Math.floor(secs / 60)).padStart(2, '0')
+  const ss = String(secs % 60).padStart(2, '0')
+  const isVideo = kind === 'video'
+  const members = group?.memberIds.map(id => COACHES.find(c => c.id === id)!).filter(Boolean) ?? []
+
+  return (
+    <div className="call-screen">
+      <div className="call-bg" aria-hidden />
+
+      <button className="call-back" onClick={onEnd} aria-label="Quitter l'appel">
+        <Icon name="chevron-left" size={18} /><span>Quitter</span>
+      </button>
+
+      {isVideo && (
+        <div className={'video-stage' + (camOff ? ' dimmed' : '')}>
+          <span className="vf-live"><i /> EN DIRECT · {mm}:{ss}</span>
+          <div className="call-avs">
+            {members.length > 0
+              ? <div className="group-av head">{members.slice(0, 2).map(c => <Avatar key={c.id} hue={c.hue} initials={c.initials} photo={c.photo} size={44} />)}</div>
+              : <Avatar hue={hue} initials={initials} photo={photo} size={104} ring />}
+          </div>
+          <strong style={{ fontFamily: 'var(--disp)', fontSize: 17 }}>{name}</strong>
+          <span style={{ fontSize: 11.5, color: 'rgba(242,241,236,0.6)' }}>{camOff ? 'Camera du coach coupée' : 'Spotlight · caméra du coach'}</span>
+          <span className="pip">Vous</span>
+        </div>
+      )}
+
+      <div className={'call-id ' + (isVideo ? 'low' : 'mid')} style={isVideo ? undefined : { flex: 1, justifyContent: 'center' }}>
+        {!isVideo && (
+          <div className="call-avs">
+            {members.length > 0
+              ? <div className="group-av head">{members.slice(0, 2).map(c => <Avatar key={c.id} hue={c.hue} initials={c.initials} photo={c.photo} size={44} />)}</div>
+              : <Avatar hue={hue} initials={initials} photo={photo} size={104} ring />}
+          </div>
+        )}
+        <strong>{name}</strong>
+        <span>{isVideo ? 'Séance · visio spotlight · ' : 'Appel audio · '}{mm}:{ss}</span>
+      </div>
+      <div className="wave-bars live" aria-hidden><i /><i /><i /><i /><i /><i /></div>
+
+      <div className="call-controls">
+        <button className={'ctl-btn' + (micOff ? ' off' : '')} onClick={() => setMicOff(v => !v)} aria-label="Micro"><Icon name="mic" size={21} /></button>
+        {isVideo
+          ? <button className={'ctl-btn' + (camOff ? ' off' : '')} onClick={() => setCamOff(v => !v)} aria-label="Caméra"><Icon name="video" size={21} /></button>
+          : <button className="ctl-btn" aria-label="Haut-parleur"><Icon name="phone" size={21} /></button>}
+        <button className="ctl-btn end" onClick={onEnd} aria-label="Terminer l'appel"><Icon name="phone" size={21} /></button>
+      </div>
+    </div>
+  )
+}
 
 /* =====================================================
    COACH PROFILE — vidéo, contenu gratuit, reviews, booking + Stripe
@@ -16,7 +89,8 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
   onBooked: () => void
   onChat: () => void
 }) {
-  const { guest } = useStore()
+  const { guest, followedCoachIds, toggleFollowCoach } = useStore()
+  const isFollowed = followedCoachIds.includes(coach.id)
   const [needAccount, setNeedAccount] = useState(false)
   const [slot, setSlot] = useState<string | null>(null)
   const [paying, setPaying] = useState(false)
@@ -73,6 +147,14 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
           <Avatar hue={coach.hue} initials={coach.initials} photo={coach.photo} size={64} ring />
           <strong>{coach.name}</strong>
           <span className="intro-role"><Icon name="sparkle" size={12} /> {coach.role}</span>
+          <button
+            className={'btn sm ' + (isFollowed ? 'btn-soft' : 'btn-primary')}
+            style={{ marginTop: 10 }}
+            onClick={() => toggleFollowCoach(coach.id)}
+          >
+            <Icon name={isFollowed ? 'check' : 'plus'} size={14} />
+            <span>{isFollowed ? 'Dans votre équipe (suivi)' : 'Choisir ce coach dans mon équipe'}</span>
+          </button>
         </div>
 
         {/* vignette vidéo éditoriale */}
@@ -92,10 +174,18 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
             <span>élèves accompagnés</span>
           </div>
           <div className="stat-cell glass-lite">
-            <Icon name="activity" size={19} />
-            <strong>{coach.successRate}%</strong>
-            <span>objectifs atteints</span>
+            <Icon name="star" size={19} />
+            <strong>{coach.rating} / 5</strong>
+            <span>{coach.reviews} avis vérifiés</span>
           </div>
+        </div>
+
+        <div className="block-title">Expertises</div>
+        <div className="tag-row expertise-tags">
+          {coach.tags.map(t => <span className="tag glass-lite expertise-tag" key={t}>{t}</span>)}
+          {coach.domains.filter(d => !coach.tags.includes(d)).map(d => (
+            <span className="tag glass-lite expertise-tag" key={d}>{d}</span>
+          ))}
         </div>
 
         <div className="block-title">À propos</div>
@@ -105,17 +195,16 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
             <div key={k} className="exp"><Icon name="check" size={14} /> {e}</div>
           ))}
         </div>
-        <div className="tag-row">{coach.tags.map(t => <span className="tag" key={t}>{t}</span>)}</div>
 
-        <div className="block-title">Ce qu'ils en disent <em>{coach.reviews} avis</em></div>
+        <div className="block-title">Témoignages <em>{coach.reviews} avis</em></div>
         <div className="reviews">
           {coach.testimonial.map((t, k) => (
-            <div className="review" key={k}>
+            <div className="review glass-lite testimonial-card" key={k}>
               <div className="review-top">
                 <span className="stars">{'★'.repeat(5)}</span>
                 <strong>{t.author}</strong>
               </div>
-              <p>{t.text}</p>
+              <p>« {t.text} »</p>
             </div>
           ))}
         </div>
@@ -211,33 +300,36 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
    ===================================================== */
 
 export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void }) {
-  const { threads, setThreads } = useStore()
+  const { threads, setThreads, followedCoachIds, toggleFollowCoach } = useStore()
   const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [q, setQ] = useState('')
-  const totalUnread = threads.reduce((n, t) => n + t.unread, 0)
+  const [filterKind, setFilterKind] = useState<'all' | 'direct' | 'group'>('all')
+
+  /* Filtre les fils selon les coachs suivis par l'utilisateur */
+  const activeThreads = useMemo(() => {
+    return threads.filter(t => t.group || followedCoachIds.includes(t.coachId))
+  }, [threads, followedCoachIds])
+
+  const totalUnread = activeThreads.reduce((n, t) => n + t.unread, 0)
 
   const shown = useMemo(() => {
     const ql = q.trim().toLowerCase()
-    if (!ql) return threads
-    return threads.filter(t => {
+    return activeThreads.filter(t => {
+      if (filterKind === 'direct' && t.group) return false
+      if (filterKind === 'group' && !t.group) return false
+      if (!ql) return true
       const c = COACHES.find(x => x.id === t.coachId)!
       const title = (t.group?.name ?? c.name).toLowerCase()
       const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
       return title.includes(ql) || last.includes(ql)
     })
-  }, [threads, q])
+  }, [activeThreads, q, filterKind])
 
-  /* intervenants impliqués quelque part → rangée d'accès rapide */
+  /* intervenants suivis → rangée d'accès rapide */
   const quickCoaches = useMemo(() => {
-    const seen: string[] = []
-    for (const t of threads) {
-      for (const id of t.group?.memberIds ?? [t.coachId]) {
-        if (!seen.includes(id)) seen.push(id)
-      }
-    }
-    return seen.map(id => COACHES.find(c => c.id === id)).filter((c): c is Coach => !!c)
-  }, [threads])
+    return followedCoachIds.map(id => COACHES.find(c => c.id === id)).filter((c): c is Coach => !!c)
+  }, [followedCoachIds])
 
   const createGroup = () => {
     if (picked.length < 2) return
@@ -248,38 +340,85 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
     }
     setThreads(ts => [{
       id: 'g' + Date.now(), coachId: picked[0], unread: 0,
-      messages: [{ from: 'coach', text: `Bonjour ! ${names[0]} et ${names[1]} sont réunis ici pour synchroniser votre suivi.`, time: 'maintenant' }],
+      messages: [{ from: 'coach', text: `Bonjour ! ${names.join(' et ')} sont réunis ici pour synchroniser votre suivi.`, time: 'maintenant' }],
       group: g,
     }, ...ts])
     setPicked([]); setCreating(false)
   }
 
   const markAll = () => setThreads(ts => ts.map(t => ({ ...t, unread: 0 })))
+  const count = followedCoachIds.length
 
   return (
     <div className="tab-page">
       <header className="page-head">
         <div>
-          <div className="date-line">SYNERGY ROOM</div>
+          <div className="date-line">SYNERGY ROOM · {count} COACH{count > 1 ? 'S' : ''} EN CONTACT</div>
           <h1>Votre réseau de soin.</h1>
-          <p>Vous êtes le chef d'orchestre de votre équipe.</p>
+          <p>
+            {count === 1
+              ? 'Canal privilégié 1:1 avec votre expert référent.'
+              : count === 2
+                ? 'Duo synchronisé : échangez en direct ou réunissez vos 2 experts.'
+                : `${count} experts actifs : affichage condensé et canaux groupés sans surcharge.`}
+          </p>
         </div>
         <button className="round-btn" onClick={() => setCreating(true)} aria-label="Nouvelle Synergy"><Icon name="plus" size={20} /></button>
       </header>
+
+      {/* Sélecteur rapide de coachs suivis pour voir l'adaptation en temps réel */}
+      <div className="coach-selector-drawer glass-lite" style={{ marginBottom: 12 }}>
+        <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+          <span className="dim" style={{ fontSize: 11 }}>Coachs en contact ({count})</span>
+          <span className="tag mini">{count === 1 ? 'Focus 1:1' : count === 2 ? 'Duo' : 'Multi-coachs condensé'}</span>
+        </div>
+        <div className="coach-selector-pills">
+          {COACHES.map(c => {
+            const on = followedCoachIds.includes(c.id)
+            return (
+              <button
+                key={c.id}
+                className={'coach-pick-chip' + (on ? ' on' : '')}
+                onClick={() => toggleFollowCoach(c.id)}
+              >
+                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={20} />
+                <span>{c.name.split(' ')[0]}</span>
+                <Icon name={on ? 'check' : 'plus'} size={11} />
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {count >= 3 && (
+        <div className="chip-row" style={{ marginBottom: 10 }}>
+          {([
+            ['all', `Tous (${activeThreads.length})`],
+            ['direct', 'Direct 1:1'],
+            ['group', 'Groupes Synergy'],
+          ] as const).map(([k, label]) => (
+            <button key={k} className={'chip glass-lite' + (filterKind === k ? ' on' : '')} onClick={() => setFilterKind(k)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="search glass-lite">
         <Icon name="search" size={17} />
         <input placeholder="Rechercher une conversation…" value={q} onChange={e => setQ(e.target.value)} />
       </div>
 
-      <div className="quick-row">
-        {quickCoaches.map(c => (
-          <button key={c.id} className="quick-av" onClick={() => onOpenChat(c.id)}>
-            <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={58} ring />
-            <span>{c.name.split(' ')[0]}</span>
-          </button>
-        ))}
-      </div>
+      {count > 1 && (
+        <div className="quick-row">
+          {quickCoaches.map(c => (
+            <button key={c.id} className="quick-av" onClick={() => onOpenChat(c.id)}>
+              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={count >= 4 ? 46 : 56} ring />
+              <span>{c.name.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {totalUnread > 0 && (
         <div className="count-line row between" style={{ marginBottom: 10 }}>
@@ -288,7 +427,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         </div>
       )}
 
-      <div className="thread-list">
+      <div className={'thread-list' + (count >= 4 ? ' compact' : count === 1 ? ' spacious' : '')}>
         {shown.map(t => {
           const c = COACHES.find(x => x.id === t.coachId)!
           const last = t.messages[t.messages.length - 1]
@@ -301,13 +440,13 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
                       const cc = COACHES.find(x => x.id === id)!
                       return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={30} />
                     })}</div>
-                  : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={46} />}
+                  : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={count >= 4 ? 40 : 48} />}
                 {t.unread > 0 && <span className="badge">{t.unread}</span>}
               </div>
               <div className="thread-info">
                 <div className="thread-top">
                   <strong>{title}</strong>
-                  {t.group && <span className="tag mini"><Icon name="users" size={10} /> {t.group.memberIds.length}</span>}
+                  <span className="tag mini">{t.group ? `${t.group.memberIds.length} experts` : c.domains[0]}</span>
                   <span>{last?.time}</span>
                 </div>
                 <p>{last?.from === 'me' ? 'Vous : ' : ''}{last?.text}</p>
@@ -358,6 +497,7 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
   const thread = threads.find(t => t.coachId === coachId)
   const [draft, setDraft] = useState('')
   const [managing, setManaging] = useState(false)
+  const [call, setCall] = useState<CallKind | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const c = COACHES.find(x => x.id === coachId)!
   const group = thread?.group
@@ -406,6 +546,20 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
     ? COACHES.filter(x => !group.memberIds.includes(x.id))
     : COACHES.filter(x => x.id !== coachId)
 
+  if (call) {
+    return (
+      <CallScreen
+        kind={call}
+        name={group?.name ?? c.name}
+        photo={c.photo}
+        hue={c.hue}
+        initials={c.initials}
+        group={group}
+        onEnd={() => setCall(null)}
+      />
+    )
+  }
+
   return (
     <div className="chat-screen">
       <header className="chat-head">
@@ -420,8 +574,8 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
           <strong>{group?.name ?? c.name}</strong>
           <span><i className="dot" /> {group ? `${group.memberIds.length} intervenants` : 'En ligne'}</span>
         </div>
-        <button className="icon-btn" onClick={onBack} aria-label="Appel audio"><Icon name="phone" size={17} /></button>
-        <button className="icon-btn" onClick={onBack} aria-label="Appel visio"><Icon name="video" size={17} /></button>
+        <button className="icon-btn" onClick={() => setCall('audio')} aria-label="Appel audio"><Icon name="phone" size={17} /></button>
+        <button className="icon-btn" onClick={() => setCall('video')} aria-label="Appel visio"><Icon name="video" size={17} /></button>
         <button className="icon-btn" onClick={() => setManaging(true)} aria-label="Participants">
           <Icon name={group ? 'users' : 'plus'} size={18} />
         </button>

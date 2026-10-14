@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, SESSIONS, EXERCISES, INTENTIONS, QUOTES, IMAGES,
-  type Coach,
+  COACHES, SESSIONS, EXERCISES, QUOTES, IMAGES,
+  EVA_SESSION_REPORTS, INITIAL_SHARED_DOCS, ECOSYSTEM_GOALS,
+  type Coach, type SharedDocument,
 } from './data'
 
 function todayLabel() {
@@ -18,135 +19,100 @@ function greeting() {
 }
 
 /* =====================================================
-   HUB — dashboard holistique + tour + journaling vocal
+   HUB — dashboard holistique + radar cliquable + coachs adaptatifs
    ===================================================== */
 
-const MOODS = [
-  { label: 'Lumineux', color: '#E9A13B' },
-  { label: 'Correct', color: '#2E6BFF' },
-  { label: 'Brouillard', color: '#8E9BB5' },
-  { label: 'Lourd', color: '#6D3EAD' },
-  { label: 'Orage', color: '#101013' },
+export const RADAR = [
+  { axis: 'Corps', v: 72, delta: '+6%', coachId: 'marc', insight: 'Mobilité scapulaire en progrès. 8 420 pas quotidiens maintenus.', rec: 'Séance mobilité 12 min avec Marc' },
+  { axis: 'Mind', v: 55, delta: '+4%', coachId: 'elodie', insight: 'Charge cognitive modérée en fin de journée. Clarté matinale stable.', rec: 'Cohérence cardiaque 5 min à 18h30' },
+  { axis: 'Social', v: 80, delta: '+9%', coachId: 'ines', insight: 'Interactions professionnelles fluides et limites mieux posées.', rec: 'Maintenir le créneau sans réunion du jeudi' },
+  { axis: 'Énergie', v: 38, delta: '-8%', coachId: 'nora', insight: 'Creux énergétique vers 15h lié aux nuits écourtées cette semaine.', rec: 'Protocole hydratation & petit-déjeuner protéiné' },
+  { axis: 'Pro', v: 60, delta: '+3%', coachId: 'ines', insight: 'Focus profond tenu sur 3 matinées, dispersion en fin d’après-midi.', rec: 'Bloc deep work 90 min avant 11h' },
+  { axis: 'Sommeil', v: 34, delta: '-11%', coachId: 'camille', insight: 'Endormissement retardé et réveil léger vers 3h. Priorité n°1.', rec: 'Respiration 4-7-8 au coucher avec Camille' },
 ]
 
-const TOUR_STEPS = [
-  { target: 'intent', title: 'Votre intention du jour', body: 'Une micro-pratique choisie pour vous, chaque matin.', before: { top: '25%', left: '18%', width: '64%' } },
-  { target: 'balance', title: 'Votre équilibre', body: 'Énergie, sommeil, mouvement — sans surcharge.', before: { top: '42%', left: '12%', width: '76%' } },
-  { target: 'journal', title: 'Journal privé', body: 'Écrivez ou dictez. L’IA transcrit, vous décidez qui voit quoi.', before: { top: '52%', left: '10%', width: '80%' } },
-  { target: 'tabbar', title: 'Quatre espaces', body: 'Hub, Explorer, Synergy et Profil. C’est tout.', before: undefined },
-]
-
-export function Tour({ step, onNext, onEnd }: { step: number; onNext: () => void; onEnd: () => void }) {
-  const s = TOUR_STEPS[step]
-  const last = step === TOUR_STEPS.length - 1
-  return (
-    <div className="tour-layer" onClick={onEnd}>
-      {s.before && <div className="tour-spot" style={s.before} />}
-      <div className={'tour-tip ' + (s.target === 'tabbar' ? 'bottom' : '')} onClick={e => e.stopPropagation()}>
-        <div className="tour-kicker">ÉTAPE {step + 1} / {TOUR_STEPS.length}</div>
-        <strong>{s.title}</strong>
-        <p>{s.body}</p>
-        <div className="row between" style={{ marginTop: 10 }}>
-          <button className="link-btn" onClick={onEnd}>Passer</button>
-          <button className="btn btn-primary sm" onClick={onNext}>
-            <span>{last ? 'Terminé' : 'Suivant'}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const RADAR = [
-  { axis: 'Corps', v: 72 },
-  { axis: 'Mind', v: 55 },
-  { axis: 'Social', v: 80 },
-  { axis: 'Énergie', v: 38 },
-  { axis: 'Pro', v: 60 },
-  { axis: 'Sommeil', v: 34 },
-]
-
-function RadarChart({ scores }: { scores: { axis: string; v: number }[] }) {
-  const cx = 150, cy = 128, R = 92
+export function RadarChart({
+  scores,
+  selectedAxis,
+  onSelectAxis,
+  expanded = false,
+}: {
+  scores: typeof RADAR
+  selectedAxis: string | null
+  onSelectAxis: (axis: string) => void
+  expanded?: boolean
+}) {
+  const cx = 150, cy = 136, R = expanded ? 96 : 88
   const n = scores.length
   const pt = (i: number, r: number) => {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / n
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const
   }
   const ring = (r: number) => scores.map((_, i) => pt(i, r).join(',')).join(' ')
-  const shape = scores.map((s, i) => pt(i, (s.v / 100) * R).join(',')).join(' ')
+  const shape = scores.map((s, i) => {
+    const boost = selectedAxis === s.axis ? Math.min(100, s.v + 5) : s.v
+    return pt(i, (boost / 100) * R).join(',')
+  }).join(' ')
+
   return (
-    <div className="radar-wrap">
-      <svg viewBox="0 0 300 300" className="radar-svg" aria-hidden>
+    <div className={'radar-wrap' + (expanded ? ' expanded' : '')}>
+      <svg viewBox="0 0 300 280" className="radar-svg" role="group" aria-label="Radar de vie interactif">
         {[0.33, 0.66, 1].map(f => <polygon key={f} points={ring(R * f)} className="radar-ring" />)}
-        {scores.map((_, i) => {
+        {scores.map((s, i) => {
           const [x, y] = pt(i, R)
-          return <line key={i} x1={cx} y1={cy} x2={x} y2={y} className="radar-spoke" />
+          const isSel = selectedAxis === s.axis
+          return <line key={i} x1={cx} y1={cy} x2={x} y2={y} className={'radar-spoke' + (isSel ? ' active' : '')} />
         })}
         <polygon points={shape} className="radar-area" />
+        <polygon points={shape} className="radar-data" />
         {scores.map((s, i) => {
-          const [x, y] = pt(i, (s.v / 100) * R)
-          return <circle key={i} cx={x} cy={y} r={4} className="radar-dot" />
-        })}
-        {scores.map((s, i) => {
-          const [x, y] = pt(i, R + 26)
-          return <text key={i} x={x} y={y} className="radar-label" textAnchor="middle" dominantBaseline="middle">{s.axis}</text>
+          const boost = selectedAxis === s.axis ? Math.min(100, s.v + 5) : s.v
+          const [x, y] = pt(i, (boost / 100) * R)
+          const [lx, ly] = pt(i, R + 27)
+          const isSel = selectedAxis === s.axis
+          return (
+            <g
+              key={s.axis}
+              className={'radar-node' + (isSel ? ' active' : '')}
+              onClick={e => { e.stopPropagation(); onSelectAxis(s.axis) }}
+              style={{ cursor: 'pointer' }}
+            >
+              <circle cx={x} cy={y} r={isSel ? 13 : 9} className="radar-dot-halo" />
+              <circle cx={x} cy={y} r={isSel ? 5.5 : 4} className="radar-dot" />
+              <circle cx={lx} cy={ly} r={22} fill="transparent" />
+              <text x={lx} y={ly} className={'radar-label' + (isSel ? ' active' : '')} textAnchor="middle" dominantBaseline="middle">
+                {s.axis}
+              </text>
+            </g>
+          )
         })}
       </svg>
     </div>
   )
 }
 
-export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replayTourSignal }: {
+export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenExercise: (id: string) => void
   onOpenCoach: (c: Coach) => void
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
-  replayTourSignal?: boolean
 }) {
-  const { name, tourDone, setTourDone, consent } = useStore()
-  const [tourStep, setTourStep] = useState<number | null>(tourDone ? null : 0)
-  useEffect(() => { if (replayTourSignal !== undefined) setTourStep(tourDone ? null : 0) }, [replayTourSignal])
-  const [mood, setMood] = useState<number | null>(null)
-  const [note, setNote] = useState('')
-  const [saved, setSaved] = useState(false)
+  const {
+    name, setTab,
+    followedCoachIds, toggleFollowCoach,
+    selectedRadarAxis, setSelectedRadarAxis,
+  } = useStore()
+  void onOpenExercise; void onOpenEva
   const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length))
-  const [intention] = useState(() => INTENTIONS[Math.floor(Math.random() * INTENTIONS.length)])
-  const bars = [42, 55, 38, 62, 48, 70, 58]
-  void bars
-
-  /* dictée vocale simulée avec transcription IA */
-  const [recording, setRecording] = useState(false)
-  const [secs, setSecs] = useState(0)
-  const [transcribing, setTranscribing] = useState(false)
-  const [transcript, setTranscript] = useState('')
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const toggleRec = () => {
-    if (recording) {
-      setRecording(false)
-      if (timer.current) clearInterval(timer.current)
-      if (secs > 0) {
-        setTranscribing(true)
-        setTimeout(() => {
-          setTranscribing(false)
-          setTranscript(t =>
-            (t ? t + ' ' : '') +
-            (secs < 3
-              ? 'Aujourd’hui, je me sens plus calme qu’hier.'
-              : 'Aujourd’hui je me sens plus calme. La respiration de ce matin m’a aidé à poser les choses avant une journée chargée. J’aimerais garder ce rythme.')
-          )
-        }, 1400)
-      }
-      setSecs(0)
-    } else {
-      setRecording(true)
-      timer.current = setInterval(() => setSecs(s => s + 1), 1000)
-    }
-  }
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
+  const [pickingCoaches, setPickingCoaches] = useState(false)
 
   const quote = QUOTES[quoteIdx]
+  const activeAxis = RADAR.find(r => r.axis === selectedRadarAxis) ?? RADAR[5]
+  const followedCoaches = useMemo(
+    () => followedCoachIds.map(id => COACHES.find(c => c.id === id)!).filter(Boolean),
+    [followedCoachIds]
+  )
+  const layoutMode = followedCoaches.length === 1 ? 'mode-1' : followedCoaches.length === 2 ? 'mode-2' : followedCoaches.length === 3 ? 'mode-3' : 'mode-multi'
 
   return (
     <div className="tab-page" data-zone="hub">
@@ -171,40 +137,165 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
         </button>
       </section>
 
-      <section className="card card-intent on-photo" data-zone="intent">
-        <img className="intent-photo" src={IMAGES.intent} alt="" aria-hidden />
-        <div className="intent-content">
-          <div className="card-kicker on-photo"><Icon name="sparkle" size={13} /> VOTRE INTENTION DU JOUR</div>
-          <h2>{intention.title}</h2>
-          <p>{intention.sub}</p>
-          <div className="row">
-            <button className="btn btn-glass solid" onClick={() => onOpenExercise(intention.ex)}>
-              <span>Commencer</span><Icon name="arrow-right" size={16} />
+      <section className="card card-balance" data-zone="balance">
+        <span className="balance-wash" aria-hidden />
+        <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
+          <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> VOTRE ÉQUILIBRE</div>
+          <button
+            className="link-btn radar-expand-link"
+            onClick={() => setTab('ecosystem')}
+          >
+            <span>Développer dans l'Écosystème</span>
+            <Icon name="arrow-right" size={13} />
+          </button>
+        </div>
+        <div className="radar-head">
+          <h2>Radar de vie</h2>
+          <span className="radar-when"><Icon name="clock" size={12} /> Touchez un axe</span>
+        </div>
+
+        <RadarChart
+          scores={RADAR}
+          selectedAxis={selectedRadarAxis}
+          onSelectAxis={axis => setSelectedRadarAxis(axis)}
+        />
+
+        <div className="radar-scores">
+          {RADAR.map(r => {
+            const isSel = selectedRadarAxis === r.axis
+            return (
+              <button
+                type="button"
+                className={'radar-score' + (isSel ? ' active' : '')}
+                key={r.axis}
+                onClick={() => setSelectedRadarAxis(r.axis)}
+              >
+                <span>{r.axis}</span>
+                <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
+          <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
+            <div className="radar-axis-title">
+              <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
+              <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta}</span>
+            </div>
+            <button
+              className="btn btn-soft sm"
+              style={{ padding: '6px 11px', fontSize: 11.5 }}
+              onClick={() => { setSelectedRadarAxis(activeAxis.axis); setTab('ecosystem') }}
+            >
+              <span>Ouvrir dans Écosystème</span>
+              <Icon name="chevron-right" size={12} />
             </button>
-            <div className="meta-chip on-photo"><Icon name="clock" size={13} /> {EXERCISES.find(e => e.id === intention.ex)?.duration} min</div>
           </div>
+          <p className="radar-axis-txt">{activeAxis.insight}</p>
         </div>
       </section>
 
-      <section className="card card-balance" data-zone="balance">
-        <span className="balance-wash" aria-hidden />
-        <div className="card-kicker"><Icon name="activity" size={13} /> VOTRE ÉQUILIBRE</div>
-        <div className="radar-head">
-          <h2>Radar de vie</h2>
-          <span className="radar-when"><Icon name="clock" size={12} /> Aujourd'hui <em className="radar-caret" /></span>
+      <section className="card" data-zone="adaptive-coaches">
+        <div className="row between" style={{ marginTop: 0, marginBottom: 8 }}>
+          <div className="card-kicker" style={{ margin: 0 }}><Icon name="users" size={13} /> MON ÉQUIPE D'EXPERTS</div>
+          <button className="btn btn-soft sm" style={{ padding: '6px 12px', fontSize: 11.5 }} onClick={() => setPickingCoaches(v => !v)}>
+            <Icon name={pickingCoaches ? 'check' : 'plus'} size={13} />
+            <span>{pickingCoaches ? 'Terminé' : `Choisir mes coachs (${followedCoaches.length})`}</span>
+          </button>
         </div>
-        <RadarChart scores={RADAR} />
-        <div className="radar-scores">
-          {RADAR.map(r => (
-            <div className="radar-score" key={r.axis}>
-              <span>{r.axis}</span>
-              <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
+        <div className="radar-head" style={{ marginBottom: 12 }}>
+          <h2>Vos coachs suivis</h2>
+          <span className="dim" style={{ fontSize: 11.5 }}>
+            {followedCoaches.length === 1
+              ? '1 expert · suivi focus'
+              : followedCoaches.length === 2
+                ? '2 experts · duo coordonné'
+                : `${followedCoaches.length} experts · vue condensée`}
+          </span>
+        </div>
+
+        {pickingCoaches && (
+          <div className="coach-selector-drawer glass-lite">
+            <span className="dim" style={{ fontSize: 11.5, display: 'block', marginBottom: 8 }}>
+              Sélectionnez ou retirez des experts : le Hub et la messagerie s'adaptent instantanément.
+            </span>
+            <div className="coach-selector-pills">
+              {COACHES.map(c => {
+                const on = followedCoachIds.includes(c.id)
+                return (
+                  <button
+                    key={c.id}
+                    className={'coach-pick-chip' + (on ? ' on' : '')}
+                    onClick={() => toggleFollowCoach(c.id)}
+                  >
+                    <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={22} />
+                    <span>{c.name.split(' ')[0]}</span>
+                    <Icon name={on ? 'check' : 'plus'} size={12} />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className={`adaptive-coach-grid ${layoutMode}`} key={followedCoaches.length}>
+          {followedCoaches.map(c => (
+            <div key={c.id} className="adaptive-coach-tile glass-lite" onClick={() => onOpenCoach(c)}>
+              <div className="act-top">
+                <Avatar
+                  hue={c.hue}
+                  initials={c.initials}
+                  photo={c.photo}
+                  size={followedCoaches.length === 1 ? 56 : followedCoaches.length <= 3 ? 44 : 36}
+                  ring
+                />
+                <div className="act-info">
+                  <strong>{followedCoaches.length >= 4 ? c.name.split(' ')[0] : c.name}</strong>
+                  <span>{c.role}</span>
+                </div>
+                {followedCoaches.length <= 2 && (
+                  <button
+                    className="round-btn sm"
+                    onClick={e => { e.stopPropagation(); onOpenChat(c.id) }}
+                    aria-label={`Message à ${c.name}`}
+                  >
+                    <Icon name="chat" size={16} />
+                  </button>
+                )}
+              </div>
+              {followedCoaches.length === 1 && (
+                <div className="act-spotlight">
+                  <div className="act-tags">
+                    {c.tags.map(t => <span key={t} className="tag glass-lite">{t}</span>)}
+                  </div>
+                  <div className="act-next">
+                    <span><Icon name="calendar" size={12} /> Prochain créneau : {c.slots[0]}</span>
+                    <span className="act-cta">Voir le suivi <Icon name="chevron-right" size={13} /></span>
+                  </div>
+                </div>
+              )}
+              {(followedCoaches.length === 2 || followedCoaches.length === 3) && (
+                <div className="act-meta">
+                  <span className="tag mini">{c.domains[0]}</span>
+                  <span className="act-slot"><Icon name="clock" size={11} /> {c.slots[0]}</span>
+                </div>
+              )}
+              {followedCoaches.length >= 4 && (
+                <div className="act-compact-foot">
+                  <span className="tag mini">{c.tags[0]}</span>
+                  <button
+                    className="icon-btn"
+                    style={{ width: 26, height: 26 }}
+                    onClick={e => { e.stopPropagation(); onOpenChat(c.id) }}
+                    aria-label={`Message à ${c.name}`}
+                  >
+                    <Icon name="chat" size={12} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
-        </div>
-        <div className="client-flag watch" style={{ marginTop: 14 }}>
-          <Icon name="alert" size={14} />
-          <span>Fatigue détectée : vos nuits courtes pèsent sur l'énergie. Un rituel d'ancrage est recommandé ce soir.</span>
         </div>
       </section>
 
@@ -212,7 +303,7 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
         <div className="card-kicker"><Icon name="calendar" size={13} /> À VENIR</div>
         <h2>Vos prochains rendez-vous</h2>
         <div className="sessions">
-          {SESSIONS.map(s => {
+          {SESSIONS.filter(s => followedCoachIds.includes(s.coachId) || followedCoachIds.length > 0).map(s => {
             const c = COACHES.find(x => x.id === s.coachId)!
             return (
               <button className="session" key={s.id} onClick={() => onOpenCoach(c)}>
@@ -229,82 +320,7 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
         </div>
       </section>
 
-      <section className="card" data-zone="journal">
-        <div className="card-kicker"><Icon name="sparkle" size={13} /> JOURNAL</div>
-        <h2>Comment vous sentez-vous ?</h2>
-        <div className="moods">
-          {MOODS.map((m, k) => (
-            <button key={k} className={'mood' + (mood === k ? ' on' : '')} onClick={() => setMood(k)} style={{ '--m': m.color } as React.CSSProperties}>
-              <span className="mood-orb" aria-hidden /><span>{m.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {transcript && (
-          <div className="transcript">
-            <div className="transcript-head"><Icon name="sparkle" size={12} /> Transcription IA</div>
-            <p>{transcript}</p>
-            {consent.shareCoach ? (
-              <button className="btn btn-soft sm" onClick={() => onOpenChat('camille')}>
-                <Icon name="users" size={15} /><span>Partager avec Camille</span>
-              </button>
-            ) : (
-              <div className="transcript-lock"><Icon name="lock" size={13} /> Partage coach désactivé — réglable dans Confidentialité.</div>
-            )}
-          </div>
-        )}
-
-        <textarea
-          className="journal"
-          rows={3}
-          placeholder="Écrivez, ou dictez…"
-          value={note}
-          onChange={e => setNote(e.target.value)}
-        />
-        <div className="row">
-          <button className={'mic-btn' + (recording ? ' rec' : '')} onClick={toggleRec} aria-label="Dicter">
-            <Icon name={recording ? 'pause' : 'mic'} size={19} />
-            {recording && <span className="mic-wave"><i /><i /><i /></span>}
-            {recording && <em>{String(Math.floor(secs / 60)).padStart(2, '0')}:{String(secs % 60).padStart(2, '0')}</em>}
-          </button>
-          {transcribing
-            ? <span className="ai-status"><i className="dot pulsing" /> Transcription IA…</span>
-            : recording
-              ? <span className="ai-status">J’écoute…</span>
-              : null}
-          <div style={{ flex: 1 }} />
-          <button className="btn btn-primary" onClick={() => { setSaved(true); setNote(''); setTranscript(''); setTimeout(() => setSaved(false), 1600) }}>
-            <Icon name={saved ? 'check' : 'send'} size={15} />
-            <span>{saved ? 'Enregistré' : 'Enregistrer'}</span>
-          </button>
-        </div>
-        <div className="privacy"><Icon name="shield" size={13} /> {consent.shareCoach ? 'Partage sélectif activé avec vos coachs.' : 'Privé — vous seul décidez qui voit vos notes.'}</div>
-      </section>
-
-      <section className="card card-grad eva-card" data-zone="eva">
-        <span className="eva-orb" aria-hidden />
-        <div className="card-kicker light"><Icon name="sparkle" size={13} /> EVA · VOTRE ASSISTANTE</div>
-        <h2>Une question ? EVA est là.</h2>
-        <p className="light-dim">Elle répond, vous oriente vers le bon coach et veille sur vos signaux de santé.</p>
-        <div className="eva-quick">
-          {['Je me sens stressé·e', 'J’ai mal au dos', 'Je veux mieux manger', 'Choisir un coach'].map(s => (
-            <button key={s} className="eva-chip" onClick={() => onOpenEva(s)}>{s}</button>
-          ))}
-        </div>
-        <button className="btn btn-inverse" onClick={() => onOpenEva()}>
-          <span>Parler à EVA</span><Icon name="arrow-right" size={15} />
-        </button>
-      </section>
-
       <footer className="tab-footer">Evol · conçu pour respirer</footer>
-
-      {tourStep !== null && (
-        <Tour
-          step={tourStep}
-          onNext={() => (tourStep >= TOUR_STEPS.length - 1 ? (setTourDone(true), setTourStep(null)) : setTourStep(tourStep + 1))}
-          onEnd={() => { setTourDone(true); setTourStep(null) }}
-        />
-      )}
     </div>
   )
 }
@@ -314,12 +330,11 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva, replay
    ===================================================== */
 
 export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
-  const { quizDomains } = useStore()
+  const { quizDomains, followedCoachIds, toggleFollowCoach } = useStore()
   const [q, setQ] = useState('')
   const [specialty, setSpecialty] = useState<string | null>(null)
   const [maxPrice, setMaxPrice] = useState<number | null>(null)
   const [mode, setMode] = useState<string | null>(null)
-  const [fav, setFav] = useState<string[]>([])
   const specialties = ['Stress', 'Nutrition', 'Mobilité', 'Anxiété']
 
   const results = useMemo(() => COACHES.filter(c => {
@@ -337,7 +352,7 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         <div>
           <div className="date-line">EXPLORER</div>
           <h1>Les bonnes personnes<br />au bon moment.</h1>
-          <p>Des accompagnants vérifiés, dans toutes les dimensions de votre vie.</p>
+          <p>Choisissez vos coachs : votre Hub et votre messagerie s'adaptent automatiquement ({followedCoachIds.length} suivi{followedCoachIds.length > 1 ? 's' : ''}).</p>
         </div>
       </header>
 
@@ -359,32 +374,41 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
       <div className="quick-row">
         {COACHES.map(c => (
           <button key={c.id} className="quick-av" onClick={() => onOpenCoach(c)}>
-            <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={58} ring />
+            <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={58} ring={followedCoachIds.includes(c.id)} />
             <span>{c.name.split(' ')[0]}</span>
           </button>
         ))}
       </div>
 
-      <div className="count-line">{results.length} accompagnant{results.length > 1 ? 's' : ''}{specialty || maxPrice || mode ? ' · filtres actifs' : ''}</div>
+      <div className="count-line">{results.length} accompagnant{results.length > 1 ? 's' : ''} · {followedCoachIds.length} dans votre équipe</div>
 
       <div className="coach-list">
-        {results.map(c => (
-          <article className="coach-line" key={c.id} onClick={() => onOpenCoach(c)}>
-            <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={54} ring />
-            <div className="coach-id">
-              <strong>{c.name}{quizDomains.some(d => c.domains.includes(d as any)) && <em className="match-dot" />}</strong>
-              <span>{c.role}</span>
-              <div className="coach-meta">
-                <span className="rating"><Icon name="star" size={12} /> {c.rating}</span>
-                <span><Icon name="location" size={12} /> {c.city} · {c.mode}</span>
+        {results.map(c => {
+          const isFollowed = followedCoachIds.includes(c.id)
+          return (
+            <article className="coach-line" key={c.id} onClick={() => onOpenCoach(c)}>
+              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={54} ring={isFollowed} />
+              <div className="coach-id">
+                <strong>{c.name}{quizDomains.some(d => c.domains.includes(d as any)) && <em className="match-dot" />}</strong>
+                <span>{c.role}</span>
+                <div className="coach-meta">
+                  <span className="rating"><Icon name="star" size={12} /> {c.rating}</span>
+                  <span><Icon name="location" size={12} /> {c.city} · {c.mode}</span>
+                </div>
               </div>
-            </div>
-            <button className="fav" aria-label="Favori" onClick={e => { e.stopPropagation(); setFav(f => f.includes(c.id) ? f.filter(x => x !== c.id) : [...f, c.id]) }}>
-              <Icon name="heart" size={16} filled={fav.includes(c.id)} />
-            </button>
-            <strong className="price-line-s">{c.price} €</strong>
-          </article>
-        ))}
+              <button
+                className={'btn sm ' + (isFollowed ? 'btn-soft' : 'btn-primary')}
+                style={{ padding: '7px 12px', fontSize: 11.5 }}
+                aria-label={isFollowed ? `Retirer ${c.name}` : `Choisir ${c.name}`}
+                onClick={e => { e.stopPropagation(); toggleFollowCoach(c.id) }}
+              >
+                <Icon name={isFollowed ? 'check' : 'plus'} size={13} />
+                <span>{isFollowed ? 'Suivi' : 'Choisir'}</span>
+              </button>
+              <strong className="price-line-s">{c.price} €</strong>
+            </article>
+          )
+        })}
         {results.length === 0 && (
           <div className="empty">
             <Icon name="compass" size={30} />
@@ -394,6 +418,509 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
       </div>
 
       <footer className="tab-footer">Coachs vérifiés et certifiés · paiement sécurisé</footer>
+    </div>
+  )
+}
+
+/* =====================================================
+   MON ÉCOSYSTÈME — espace centralisé en widgets/grille
+   ===================================================== */
+
+export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
+  onOpenExercise: (id: string) => void
+  onOpenCoach: (c: Coach) => void
+  onOpenChat: (coachId: string) => void
+  onOpenEva: (prefill?: string) => void
+}) {
+  const { consent, selectedRadarAxis, setSelectedRadarAxis, followedCoachIds } = useStore()
+  const [section, setSection] = useState<'all' | 'radar' | 'sante' | 'objectifs' | 'seances' | 'partage' | 'outils'>('all')
+  const [steps, setSteps] = useState(8420)
+  const [bpm, setBpm] = useState(58)
+  const [measuring, setMeasuring] = useState(false)
+  const [evaHealthAnalysis, setEvaHealthAnalysis] = useState<string | null>(
+    'Votre pouls au repos (58 bpm) et vos 8 420 pas montrent une excellente récupération cardiovasculaire. EVA suggère de maintenir la séance de mobilité douce avec Marc et d’avancer le coucher de 20 min.'
+  )
+  const [analyzingHealth, setAnalyzingHealth] = useState(false)
+
+  /* Module de journaling complet (texte + dictée vocale IA, sans "Comment vous sentez-vous ?") */
+  const [journalEntries, setJournalEntries] = useState<{ id: string; date: string; text: string; tag: string }[]>([
+    { id: 'j1', date: 'Aujourd’hui · 08:15', text: 'Réveil plus clair après 4 cycles de 4-7-8 hier soir. Moins de raideur dans la nuque.', tag: 'Sommeil' },
+    { id: 'j2', date: 'Hier · 21:40', text: 'Journée dense mais pas d’épuisement en fin d’après-midi grâce au protocole de Nora.', tag: 'Énergie' },
+  ])
+  const [newJournal, setNewJournal] = useState('')
+  const [recording, setRecording] = useState(false)
+  const [secs, setSecs] = useState(0)
+  const [transcribing, setTranscribing] = useState(false)
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const toggleRec = () => {
+    if (recording) {
+      setRecording(false)
+      if (timer.current) clearInterval(timer.current)
+      if (secs > 0) {
+        setTranscribing(true)
+        setTimeout(() => {
+          setTranscribing(false)
+          setNewJournal(t =>
+            (t ? t + ' ' : '') +
+            (secs < 3
+              ? 'Note vocale : rythme plus posé ce matin.'
+              : 'Note vocale transcrite par EVA : la respiration m’a aidé à stabiliser mon attention avant les réunions.')
+          )
+        }, 1100)
+      }
+      setSecs(0)
+    } else {
+      setRecording(true)
+      timer.current = setInterval(() => setSecs(s => s + 1), 1000)
+    }
+  }
+  useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
+
+  const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
+  const [docTitle, setDocTitle] = useState('')
+  const [docCoach, setDocCoach] = useState('camille')
+  const [expandedReport, setExpandedReport] = useState<string | null>('r1')
+  const [toolTab, setToolTab] = useState<'exercices' | 'rdv' | 'favoris'>('exercices')
+
+  const triggerPulseMeasure = () => {
+    if (measuring) return
+    setMeasuring(true)
+    setTimeout(() => {
+      const nextBpm = 56 + Math.floor(Math.random() * 7)
+      setBpm(nextBpm)
+      setSteps(s => s + 180)
+      setMeasuring(false)
+    }, 1100)
+  }
+
+  const runEvaHealthAnalysis = () => {
+    setAnalyzingHealth(true)
+    setTimeout(() => {
+      setAnalyzingHealth(false)
+      setEvaHealthAnalysis(
+        `Analyse croisée (${steps.toLocaleString('fr-FR')} pas · ${bpm} bpm au repos · variabilité VFC 68 ms) : récupération parasympathique optimale (+11% vs S-1). Votre fenêtre idéale pour le travail profond est 09h30–12h00 ; privilégiez une décompression respiratoire à 19h00.`
+      )
+    }, 900)
+  }
+
+  const addJournalEntry = () => {
+    if (!newJournal.trim()) return
+    setJournalEntries(es => [
+      { id: 'j' + Date.now(), date: 'À l’instant', text: newJournal.trim(), tag: selectedRadarAxis ?? 'Réflexion' },
+      ...es,
+    ])
+    setNewJournal('')
+  }
+
+  const addSharedDoc = () => {
+    const title = docTitle.trim() || `Note_Suivi_${new Date().toLocaleDateString('fr-FR')}.pdf`
+    setDocs(ds => [
+      { id: 'd' + Date.now(), title, kind: 'Bilan', size: '640 Ko', coachId: docCoach, date: 'À l’instant', byMe: true },
+      ...ds,
+    ])
+    setDocTitle('')
+  }
+
+  const activeAxis = RADAR.find(r => r.axis === selectedRadarAxis) ?? RADAR[5]
+  const axisCoach = COACHES.find(c => c.id === activeAxis.coachId) ?? COACHES[0]
+
+  return (
+    <div className="tab-page" data-zone="ecosystem">
+      <header className="page-head">
+        <div>
+          <div className="date-line">MON ÉCOSYSTÈME</div>
+          <h1>Votre évolution<br />à 360°.</h1>
+          <p>Radar développé, santé, objectifs, outils, journaling et partages.</p>
+        </div>
+      </header>
+
+      <div className="chip-row">
+        {([
+          ['all', 'Vue globale'],
+          ['radar', 'Radar de vie'],
+          ['sante', 'Santé & IA'],
+          ['objectifs', 'Stats & Objectifs'],
+          ['outils', 'Outils'],
+          ['seances', 'Comptes rendus EVA'],
+          ['partage', 'Journal & Docs'],
+        ] as const).map(([id, label]) => (
+          <button
+            key={id}
+            className={'chip glass-lite' + (section === id ? ' on' : '')}
+            onClick={() => setSection(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* WIDGET 0 : RADAR DE VIE DÉVELOPPÉ & INTERACTIF */}
+      {(section === 'all' || section === 'radar') && (
+        <section className="card card-balance">
+          <span className="balance-wash" aria-hidden />
+          <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE DÉVELOPPÉ</div>
+          <div className="radar-head">
+            <h2>Analyse par domaine</h2>
+            <span className="tag mini glass-lite">{activeAxis.axis} sélectionné</span>
+          </div>
+
+          <RadarChart
+            scores={RADAR}
+            selectedAxis={selectedRadarAxis}
+            onSelectAxis={axis => setSelectedRadarAxis(axis)}
+            expanded
+          />
+
+          <div className="radar-scores">
+            {RADAR.map(r => {
+              const isSel = selectedRadarAxis === r.axis
+              return (
+                <button
+                  type="button"
+                  className={'radar-score' + (isSel ? ' active' : '')}
+                  key={r.axis}
+                  onClick={() => setSelectedRadarAxis(r.axis)}
+                >
+                  <span>{r.axis}</span>
+                  <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
+            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+              <div className="radar-axis-title">
+                <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
+                <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta} sur 30 j</span>
+              </div>
+              <button className="btn btn-soft sm" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => onOpenCoach(axisCoach)}>
+                <span>Expert : {axisCoach.name.split(' ')[0]}</span>
+              </button>
+            </div>
+            <p className="radar-axis-txt">{activeAxis.insight}</p>
+            <div className="radar-rec-line">
+              <Icon name="sparkle" size={12} />
+              <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* WIDGET 1 : MODULE SANTÉ (PAS, POULS & ANALYSE IA EVA) */}
+      {(section === 'all' || section === 'sante') && (
+        <section className="card eco-health-card">
+          <span className="balance-wash" aria-hidden />
+          <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> MODULE SANTÉ & BIOMÉTRIE</div>
+            <span className="tag mini glass-lite"><i className="dot" /> Capteurs synchronisés</span>
+          </div>
+          <h2>Pas, pouls & analyse EVA</h2>
+
+          <div className="health-bento">
+            <div className="health-tile glass-lite">
+              <div className="ht-head">
+                <span>PAS QUOTIDIENS</span>
+                <span className="delta up">+14%</span>
+              </div>
+              <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
+              <span className="ht-sub">Objectif 10 000 pas · {(Math.min(100, Math.round((steps / 10000) * 100)))}%</span>
+              <div className="group-meter" style={{ marginTop: 8 }}>
+                <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
+              </div>
+            </div>
+
+            <div className="health-tile glass-lite">
+              <div className="ht-head">
+                <span>PRISE DE POULS</span>
+                <span className="pulse-dot" />
+              </div>
+              <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
+              <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
+              <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
+                <Icon name="heart" size={13} filled />
+                <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="eva-health-box glass-lite">
+            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+              <div className="transcript-head" style={{ margin: 0 }}>
+                <span className="eva-orb-mini" style={{ width: 11, height: 11 }} /> ANALYSE IA EVA · TEMPS RÉEL
+              </div>
+              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
+                {analyzingHealth ? 'Calcul…' : 'Actualiser'}
+              </button>
+            </div>
+            <p className="eva-health-txt">{evaHealthAnalysis}</p>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
+                <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* WIDGET 2 : STATISTIQUES AVANCÉES & TABLEAUX DE SUIVI DES OBJECTIFS */}
+      {(section === 'all' || section === 'objectifs') && (
+        <section className="card">
+          <div className="card-kicker"><Icon name="chart" size={13} /> STATISTIQUES AVANCÉES & OBJECTIFS</div>
+          <h2>Tableaux de suivi ({followedCoachIds.length} coachs suivis)</h2>
+          <div className="metrics" style={{ marginTop: 10, marginBottom: 14 }}>
+            <div className="metric">
+              <div className="metric-top"><span>ASSIDUITÉ</span><span className="delta up">+9%</span></div>
+              <span className="metric-val">91%</span>
+            </div>
+            <div className="metric">
+              <div className="metric-top"><span>SCORE GLOBAL</span><span className="delta up">+12 pts</span></div>
+              <span className="metric-val">78<span className="of">/100</span></span>
+            </div>
+            <div className="metric">
+              <div className="metric-top"><span>SÉRIES ACTIVES</span></div>
+              <span className="metric-val">12 j</span>
+            </div>
+          </div>
+
+          <div className="eco-table">
+            <div className="eco-thead">
+              <span>Objectif & domaine</span>
+              <span>Cible</span>
+              <span>Progression</span>
+            </div>
+            {ECOSYSTEM_GOALS.map(g => {
+              const c = COACHES.find(x => x.id === g.coachId)!
+              return (
+                <div className="eco-trow" key={g.id} onClick={() => onOpenCoach(c)}>
+                  <div className="eco-tmain">
+                    <strong>{g.title}</strong>
+                    <span>{g.domain} · suivi par {c.name.split(' ')[0]} · {g.streak}</span>
+                  </div>
+                  <div className="eco-ttarget">
+                    <strong>{g.current}</strong>
+                    <span>cible {g.target}</span>
+                  </div>
+                  <div className="eco-tprog">
+                    <strong>{g.progress}%</strong>
+                    <div className="group-meter"><span style={{ width: `${g.progress}%` }} /></div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* WIDGET OUTILS (DÉPLACÉ DEPUIS PROFIL) : EXERCICES, RENDEZ-VOUS, CONTENUS FAVORIS */}
+      {(section === 'all' || section === 'outils') && (
+        <section className="card" data-zone="outils">
+          <div className="card-kicker"><Icon name="activity" size={13} /> OUTILS & PRATIQUES</div>
+          <h2>Exercices, rendez-vous & favoris</h2>
+          <div className="subtabs" style={{ marginTop: 10, marginBottom: 12 }}>
+            {([
+              ['exercices', 'Mes exercices'],
+              ['rdv', 'Mes rendez-vous'],
+              ['favoris', 'Contenus favoris'],
+            ] as const).map(([k, label]) => (
+              <button key={k} className={'subtab' + (toolTab === k ? ' on' : '')} onClick={() => setToolTab(k)}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {toolTab === 'exercices' && (
+            <div className="freelist">
+              {EXERCISES.map(ex => (
+                <button key={ex.id} className="free-item glass-lite" onClick={() => onOpenExercise(ex.id)}>
+                  <span className="free-kind">{ex.level}</span>
+                  <span className="free-title">{ex.title}</span>
+                  <span className="free-dur">{ex.duration} min</span>
+                  <Icon name="play" size={14} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {toolTab === 'rdv' && (
+            <div className="sessions" style={{ marginTop: 4 }}>
+              {SESSIONS.map(s => {
+                const c = COACHES.find(x => x.id === s.coachId)!
+                return (
+                  <button className="session" key={s.id} onClick={() => onOpenCoach(c)}>
+                    <div className="date-box"><strong>{s.day}</strong><span>{s.month}</span></div>
+                    <div className="session-info">
+                      <div className="session-time"><Icon name="clock" size={12} /> {s.time} · {s.mode}</div>
+                      <strong>{c.name}</strong>
+                      <span>{s.title} · {s.duration} min</span>
+                    </div>
+                    <span className="chev"><Icon name="chevron-right" size={15} /></span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {toolTab === 'favoris' && (
+            <div className="freelist">
+              {COACHES.slice(0, 3).flatMap(c => c.freeContent.slice(0, 1).map(f => ({ ...f, coachName: c.name.split(' ')[0], coach: c }))).map((item, i) => (
+                <button key={i} className="free-item glass-lite" onClick={() => onOpenCoach(item.coach)}>
+                  <span className="free-kind">{item.kind}</span>
+                  <span className="free-title">{item.title} · {item.coachName}</span>
+                  <span className="free-dur">{item.duration}</span>
+                  <Icon name="heart" size={14} filled />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* WIDGET 3 : COMPTES RENDUS DE SÉANCES GÉNÉRÉS PAR L'IA EVA */}
+      {(section === 'all' || section === 'seances') && (
+        <section className="card">
+          <div className="card-kicker"><Icon name="sparkle" size={13} /> COMPTES RENDUS IA EVA</div>
+          <h2>Synthèses de vos séances</h2>
+          <p>Enregistrées, transcrites et structurées automatiquement par EVA.</p>
+          <div className="eva-reports-list" style={{ marginTop: 12 }}>
+            {EVA_SESSION_REPORTS.map(r => {
+              const isOpen = expandedReport === r.id
+              const c = COACHES.find(x => x.id === r.coachId)!
+              return (
+                <div key={r.id} className={'eva-report-item glass-lite' + (isOpen ? ' open' : '')}>
+                  <button className="eva-report-head" onClick={() => setExpandedReport(isOpen ? null : r.id)}>
+                    <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={38} />
+                    <div className="session-info">
+                      <strong>{r.title}</strong>
+                      <span>{r.coachName} · {r.date} · {r.duration}</span>
+                    </div>
+                    <span className="tag mini">IA EVA</span>
+                  </button>
+                  {isOpen && (
+                    <div className="eva-report-body">
+                      <p className="eva-report-sum">{r.summary}</p>
+                      <div className="eva-report-sub">Points clés retenus</div>
+                      <ul className="eva-report-ul">
+                        {r.keyTakeaways.map((k, idx) => <li key={idx}><Icon name="check" size={13} /><span>{k}</span></li>)}
+                      </ul>
+                      <div className="eva-report-sub">Prochaines actions recommandées</div>
+                      <ul className="eva-report-ul">
+                        {r.nextActions.map((a, idx) => <li key={idx}><Icon name="arrow-right" size={13} /><span>{a}</span></li>)}
+                      </ul>
+                      <div className="row between" style={{ marginTop: 10 }}>
+                        <span className="dim" style={{ fontSize: 11 }}>État détecté : {r.sentiment}</span>
+                        <button className="btn btn-soft sm" onClick={() => onOpenChat(r.coachId)}>
+                          <Icon name="chat" size={13} /><span>Discuter avec {c.name.split(' ')[0]}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* WIDGET 4 : MODULE DE JOURNALING CENTRALISÉ (SANS "COMMENT VOUS SENTEZ-VOUS ?") */}
+      {(section === 'all' || section === 'partage') && (
+        <section className="card" data-zone="journal">
+          <div className="card-kicker"><Icon name="edit" size={13} /> JOURNALING & TRANSCRIPTION IA</div>
+          <h2>Carnet d'évolution</h2>
+          <p>Écrivez ou dictez vos notes. EVA les structure et vous choisissez ce que vous partagez.</p>
+
+          <textarea
+            className="journal"
+            rows={3}
+            style={{ marginTop: 10 }}
+            placeholder="Noter une prise de conscience, un ressenti ou dicter…"
+            value={newJournal}
+            onChange={e => setNewJournal(e.target.value)}
+          />
+          <div className="row" style={{ marginTop: 10, marginBottom: 14 }}>
+            <button className={'mic-btn' + (recording ? ' rec' : '')} onClick={toggleRec} aria-label="Dicter">
+              <Icon name={recording ? 'pause' : 'mic'} size={18} />
+              {recording && <span className="mic-wave"><i /><i /><i /></span>}
+              {recording && <em>{String(Math.floor(secs / 60)).padStart(2, '0')}:{String(secs % 60).padStart(2, '0')}</em>}
+            </button>
+            {transcribing
+              ? <span className="ai-status"><i className="dot pulsing" /> Transcription IA…</span>
+              : recording
+                ? <span className="ai-status">J’écoute…</span>
+                : null}
+            <div style={{ flex: 1 }} />
+            <button className="btn btn-primary sm" onClick={addJournalEntry}>
+              <Icon name="check" size={14} /><span>Enregistrer</span>
+            </button>
+          </div>
+
+          <div className="eco-journal-list">
+            {journalEntries.map(j => (
+              <div key={j.id} className="eco-journal-item glass-lite">
+                <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
+                  <span className="dim" style={{ fontSize: 11 }}>{j.date}</span>
+                  <span className="tag mini">{j.tag}</span>
+                </div>
+                <p style={{ fontSize: 13 }}>{j.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* WIDGET 5 : ESPACE DE PARTAGE D'ÉLÉMENTS ET DE DOCUMENTS AVEC LES COACHS */}
+      {(section === 'all' || section === 'partage') && (
+        <section className="card">
+          <div className="card-kicker"><Icon name="file" size={13} /> ESPACE DE PARTAGE MULTI-COACHS</div>
+          <h2>Documents & éléments partagés</h2>
+          <p>{consent.shareCoach ? 'Partage sélectif actif avec votre équipe.' : 'Coffre chiffré — partageable en un clic avec chaque expert.'}</p>
+
+          <div className="doc-share-bar" style={{ marginTop: 12, marginBottom: 12 }}>
+            <input
+              className="eco-input glass-lite"
+              placeholder="Nom du document ou bilan à partager…"
+              value={docTitle}
+              onChange={e => setDocTitle(e.target.value)}
+            />
+            <select
+              className="eco-select glass-lite"
+              value={docCoach}
+              onChange={e => setDocCoach(e.target.value)}
+              aria-label="Choisir le coach destinataire"
+            >
+              {COACHES.slice(0, 4).map(c => (
+                <option key={c.id} value={c.id}>{c.name.split(' ')[0]}</option>
+              ))}
+            </select>
+            <button className="btn btn-primary sm" onClick={addSharedDoc}>
+              <Icon name="share" size={14} /><span>Partager</span>
+            </button>
+          </div>
+
+          <div className="freelist">
+            {docs.map(d => {
+              const c = COACHES.find(x => x.id === d.coachId)!
+              return (
+                <div key={d.id} className="free-item glass-lite">
+                  <span className="free-kind">{d.kind}</span>
+                  <div className="session-info">
+                    <strong style={{ fontSize: 13 }}>{d.title}</strong>
+                    <span style={{ fontSize: 11 }}>
+                      {d.byMe ? `Partagé par vous avec ${c.name.split(' ')[0]}` : `Reçu de ${c.name.split(' ')[0]}`} · {d.date} · {d.size}
+                    </span>
+                  </div>
+                  <button className="icon-btn" style={{ width: 32, height: 32 }} onClick={() => onOpenChat(c.id)} aria-label="Ouvrir la discussion">
+                    <Icon name="chat" size={14} />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      <footer className="tab-footer">Mon Écosystème · synchronisé par EVA</footer>
     </div>
   )
 }
@@ -520,7 +1047,7 @@ export function EvaPanel({ role, prefill, onClose }: {
   }
 
   return (
-    <div className="screen chat-screen">
+    <div className="screen chat-screen eva-screen">
       <header className="chat-head">
         <button className="icon-btn" onClick={onClose} aria-label="Retour"><Icon name="chevron-left" size={19} /></button>
         <div className="eva-avatar-sm" aria-hidden>

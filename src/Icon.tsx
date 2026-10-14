@@ -268,6 +268,48 @@ export function Icon({ name, size = 22, strokeWidth = 1.6, filled = false }: {
           <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
         </svg>
       )
+    case 'grid':
+      return filled ? (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M12 2.5 19.5 6.8v8.4L12 19.5 4.5 15.2V6.8L12 2.5Zm0 5.3a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z" />
+        </svg>
+      ) : (
+        <svg {...common}>
+          <polygon points="12 2.8 19.8 7.3 19.8 16.7 12 21.2 4.2 16.7 4.2 7.3" />
+          <circle cx="12" cy="12" r="2.8" />
+          <path d="M12 2.8v6.4M19.8 7.3l-5.4 3.2M19.8 16.7l-5.4-3.2M12 21.2v-6.4M4.2 16.7l5.4-3.2M4.2 7.3l5.4 3.2" strokeOpacity="0.55" />
+        </svg>
+      )
+    case 'chart':
+      return (
+        <svg {...common}>
+          <path d="M4 19.5h16" />
+          <rect x="6" y="11" width="3" height="6.5" rx="1" fill={filled ? 'currentColor' : 'none'} />
+          <rect x="11" y="6.5" width="3" height="11" rx="1" fill={filled ? 'currentColor' : 'none'} />
+          <rect x="16" y="9" width="3" height="8.5" rx="1" fill={filled ? 'currentColor' : 'none'} />
+        </svg>
+      )
+    case 'file':
+      return (
+        <svg {...common} width={size * 0.88} height={size * 0.88}>
+          <path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5L14 3.5Z" />
+          <path d="M14 3.5v5h5M9 13h6M9 16.5h4" />
+        </svg>
+      )
+    case 'store':
+      return (
+        <svg {...common}>
+          <path d="M4 9.5 5.6 4.5h12.8L20 9.5" />
+          <path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0" />
+          <path d="M5.5 12v7.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V12" />
+        </svg>
+      )
+    case 'edit':
+      return (
+        <svg {...common} width={size * 0.85} height={size * 0.85}>
+          <path d="M15.5 4.5 19.5 8.5 8 20H4v-4L15.5 4.5Z" />
+        </svg>
+      )
     default:
       return null
   }
