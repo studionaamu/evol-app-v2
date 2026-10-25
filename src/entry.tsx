@@ -9,13 +9,19 @@ import { COACHES, QUIZ, IMAGES, recommendedCoachIds, type Coach, type Domain } f
 
 /* ---------- welcome ---------- */
 
-export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
-  onAssessment: () => void
-  onAccount: () => void
+export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
+  onAccount: (email?: string) => void
   onGuest: () => void
   onCoach: () => void
+  onProgramme: () => void
 }) {
-  void onAssessment
+  const [mailOpen, setMailOpen] = useState(false)
+  const [email, setEmail] = useState('')
+  const [programmeOpen, setProgrammeOpen] = useState(false)
+  const [accessEmail, setAccessEmail] = useState('')
+  const [accessCode, setAccessCode] = useState('')
+  const accessValid = accessEmail.trim().length > 3 && accessCode.trim().length > 3
+
   return (
     <div className="screen auth">
       <div className="auth-art" aria-hidden>
@@ -26,25 +32,78 @@ export function Welcome({ onAssessment, onAccount, onGuest, onCoach }: {
           <div className="auth-brand" aria-label="Evol">
             <span>EVOL</span>
           </div>
-          <h1>Votre évolution,<br />votre succès.</h1>
+          <h1 className="auth-slogan">votre évolution,<br />vos succès</h1>
         </div>
         <div className="auth-actions">
-          <button className="btn btn-glass solid" onClick={onAccount}>
+          <button className="btn btn-glass solid" onClick={() => onAccount()}>
             <AppleIcon size={19} /><span>Continuer avec Apple</span>
           </button>
-          <button className="btn btn-glass" onClick={onAccount}>
+          <button className="btn btn-glass" onClick={() => onAccount()}>
             <GoogleIcon size={18} /><span>Continuer avec Google</span>
           </button>
+          <button className="btn btn-glass" onClick={() => setMailOpen(v => !v)}>
+            <Icon name="send" size={17} /><span>Continuer avec l'adresse mail</span>
+          </button>
+          {mailOpen && (
+            <div className="auth-mail">
+              <input
+                className="email-input auth-mail-input"
+                type="email"
+                autoFocus
+                placeholder="prenom@exemple.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && email.includes('@')) onAccount(email.trim()) }}
+              />
+              <button className="btn btn-glass solid" disabled={!email.includes('@')} onClick={() => onAccount(email.trim())}>
+                <span>Continuer par e-mail</span><Icon name="arrow-right" size={16} />
+              </button>
+            </div>
+          )}
           <div className="or-divider glass-div"><span>ou</span></div>
+          <button className="btn btn-glass ghost" onClick={() => setProgrammeOpen(true)}>
+            <Icon name="lock" size={16} /><span>J'ai un programme · accès par identifiant</span>
+          </button>
           <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
           <button className="coach-link on-photo" onClick={onCoach}>
-            <Icon name="user" size={15} /> Vous êtes coach ?
+            <Icon name="user" size={15} /> Espace coach
           </button>
           <p className="auth-legal glass-div">
             Espace confidentiel · chiffré et hébergé en UE.
           </p>
         </div>
       </div>
+
+      {programmeOpen && (
+        <div className="pay-layer" onClick={() => setProgrammeOpen(false)}>
+          <div className="pay-sheet" onClick={e => e.stopPropagation()}>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="lock" size={12} /> ACCÈS PROGRAMME</div>
+            <h2 style={{ marginBottom: 6 }}>Vos accès, générés après paiement.</h2>
+            <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>
+              Utilisez l'e-mail de commande et l'identifiant reçu par e-mail pour ouvrir votre programme complet.
+            </p>
+            <div className="vitrine-form">
+              <input
+                className="eco-input glass-lite"
+                type="email"
+                placeholder="E-mail de commande"
+                value={accessEmail}
+                onChange={e => setAccessEmail(e.target.value)}
+              />
+              <input
+                className="eco-input glass-lite"
+                placeholder="Identifiant (ex. EVOL-4821-XR)"
+                value={accessCode}
+                onChange={e => setAccessCode(e.target.value)}
+              />
+            </div>
+            <button className="btn btn-primary" disabled={!accessValid} onClick={() => { setProgrammeOpen(false); onProgramme() }}>
+              <span>Ouvrir mon programme</span><Icon name="arrow-right" size={16} />
+            </button>
+            <button className="btn btn-ghost" onClick={() => setProgrammeOpen(false)}>Annuler</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

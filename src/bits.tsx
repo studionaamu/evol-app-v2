@@ -27,6 +27,33 @@ export function Avatar({ hue, initials, photo, size = 44, ring = false }: {
   )
 }
 
+/* Visage d'EVA — disque de marque (grenat → améthyste → saphir) + visière douce */
+export function EvaAvatar({ size = 46 }: { size?: number }) {
+  return (
+    <span className="eva-avatar" style={{ width: size, height: size }} aria-hidden>
+      <svg viewBox="0 0 48 48" width={size} height={size}>
+        <defs>
+          <linearGradient id="evaFaceGrad" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#FF5B4D" />
+            <stop offset="0.52" stopColor="#9A6BE0" />
+            <stop offset="1" stopColor="#4B5CFF" />
+          </linearGradient>
+          <radialGradient id="evaVisor" cx="50%" cy="38%" r="70%">
+            <stop offset="0" stopColor="rgba(12,10,24,0.62)" />
+            <stop offset="1" stopColor="rgba(12,10,24,0.86)" />
+          </radialGradient>
+        </defs>
+        <circle cx="24" cy="24" r="23" fill="url(#evaFaceGrad)" />
+        <circle cx="24" cy="24" r="22.4" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="1.2" />
+        <ellipse cx="24" cy="24.5" rx="15" ry="12.5" fill="url(#evaVisor)" />
+        <circle cx="18.6" cy="22.4" r="2.1" fill="#EAF0FF" />
+        <circle cx="29.4" cy="22.4" r="2.1" fill="#EAF0FF" />
+        <path d="M20 28.6c1.2 1.5 2.6 2.2 4 2.2s2.8-.7 4-2.2" fill="none" stroke="rgba(234,240,255,0.85)" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </span>
+  )
+}
+
 export function Logo({ size = 40 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>

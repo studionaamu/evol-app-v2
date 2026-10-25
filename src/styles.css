@@ -126,8 +126,8 @@ p { font-weight: 300; }
   margin-bottom: 18px; color: #fff;
 }
 .auth-brand span {
-  font-family: var(--disp); font-size: 15px; font-weight: 600;
-  letter-spacing: 0.34em; text-indent: 0.34em;
+  font-family: var(--disp); font-size: 17px; font-weight: 600;
+  letter-spacing: 0.38em; text-indent: 0.38em;
 }
 .auth-head h1 { font-size: 31px; margin-bottom: 10px; color: #fff; text-shadow: 0 2px 34px rgba(0,0,0,0.55); }
 .auth-head p { color: var(--ink-2); font-size: 14px; }
@@ -1584,38 +1584,31 @@ html.dark .quiz-opt { box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
 }
 .client-row { display: flex; align-items: center; gap: 13px; padding: 4px 0 13px; }
 
-/* ============ OMNIPRÉSENCE DE L'IA EVA (BOULE BLEUE DISCRÈTE) ============ */
+/* ============ EVA — avatar incarné, présent partout ============ */
+.eva-avatar {
+  display: block; border-radius: 50%; overflow: hidden; flex: none;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18), 0 8px 22px rgba(8,12,24,0.35);
+}
+.eva-avatar svg { display: block; }
 .eva-fab {
   position: fixed;
   right: max(16px, calc(50vw - 198px));
   bottom: calc(86px + env(safe-area-inset-bottom));
   z-index: 95;
-  width: 38px; height: 38px;
+  width: 46px; height: 46px;
   padding: 0;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(16, 20, 34, 0.55);
-  backdrop-filter: blur(16px) saturate(1.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  border: 1px solid rgba(130, 175, 255, 0.32);
-  box-shadow: 0 8px 22px rgba(8, 12, 24, 0.36), 0 0 18px rgba(46, 107, 255, 0.35);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 10px 24px rgba(8,12,24,0.34), 0 0 20px rgba(109,62,173,0.32);
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
 }
 .eva-fab:hover {
-  transform: scale(1.08);
-  box-shadow: 0 10px 26px rgba(8, 12, 24, 0.45), 0 0 24px rgba(46, 107, 255, 0.55);
+  transform: scale(1.06);
+  box-shadow: 0 12px 28px rgba(8,12,24,0.42), 0 0 26px rgba(109,62,173,0.48);
 }
-.eva-fab:active { transform: scale(0.93); }
-.eva-fab-orb {
-  width: 24px; height: 24px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #9CC2FF 0%, #2E6BFF 58%, #1525FF 100%);
-  box-shadow: 0 0 12px rgba(46, 107, 255, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.55);
-  animation: evaOrbPulse 4s ease-in-out infinite;
-}
-@keyframes evaOrbPulse {
-  0%, 100% { transform: scale(1); opacity: 0.94; }
-  50% { transform: scale(1.06); opacity: 1; }
-}
+.eva-fab:active { transform: scale(0.94); }
 
 /* ============ RADAR INTERACTIF FLUIDE & DÉVELOPPABLE ============ */
 .radar-expand-link {
@@ -1919,3 +1912,56 @@ html.dark .eva-gain-badge { color: #4CC38A; background: rgba(76,195,138,0.16); }
 .star-btn.on { color: #E9A13B; }
 .star-btn:active { transform: scale(1.2); }
 
+
+/* ============ ACCUEIL — slogan de marque (grenat · améthyste · saphir) ============ */
+.auth-head h1.auth-slogan {
+  background: linear-gradient(100deg, #FF5B4D 0%, #C98AF2 46%, #5B6BFF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 8px 30px rgba(109, 62, 173, 0.42));
+}
+.auth-mail { display: flex; flex-direction: column; gap: 8px; animation: fadeUp 0.3s ease both; }
+.auth-mail-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  color: #fff;
+  text-align: left;
+  padding-left: 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.auth-mail-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.auth-mail-input:focus { border-color: rgba(255, 255, 255, 0.6); }
+.auth-mail .btn:disabled { opacity: 0.42; }
+
+/* ============ EXPLORER — évènements communauté ============ */
+.event-row { cursor: default; }
+.event-join { flex: none; }
+
+/* ============ ESPACE COACH — galerie vitrine ============ */
+.gallery-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px;
+}
+.gallery-item {
+  position: relative; margin: 0; border-radius: 18px; overflow: hidden;
+}
+.gallery-item img, .gallery-item video {
+  width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--bg-soft);
+}
+.gallery-ph {
+  aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(140deg, rgba(233,43,31,0.14), rgba(109,62,173,0.18), rgba(21,37,255,0.14));
+  color: var(--ink-2);
+}
+.gallery-item figcaption { display: flex; flex-direction: column; gap: 2px; padding: 9px 10px 11px; }
+.gallery-item figcaption strong { font-size: 12.5px; line-height: 1.3; }
+.gallery-item figcaption span { font-size: 10.5px; color: var(--ink-3); }
+.gallery-item .remove-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(8, 10, 18, 0.5); color: #fff; backdrop-filter: blur(8px);
+}
+.gallery-pick { position: relative; overflow: hidden; cursor: pointer; }
+.gallery-pick input[type='file'] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }

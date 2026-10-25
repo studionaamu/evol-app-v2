@@ -219,6 +219,27 @@ export const SESSIONS: Session[] = [
   { id: 's2', day: 28, month: 'JUIN', time: '18:00', coachId: 'nora', title: 'Point nutrition', duration: 30, mode: 'Visio' },
 ]
 
+export type CommunityEvent = {
+  id: string
+  title: string
+  day: number
+  month: string
+  time: string
+  mode: 'Visio' | 'Présentiel'
+  host: string
+  place: string
+  seats: number
+  tag: string
+}
+
+/* événements ouverts à la communauté (visio ou présentiel) */
+export const EVENTS: CommunityEvent[] = [
+  { id: 'e1', title: 'Cohérence cardiaque collective', day: 26, month: 'JUIN', time: '07:30', mode: 'Visio', host: 'Camille Durand', place: 'Salle Synergy', seats: 12, tag: 'Respiration' },
+  { id: 'e2', title: 'Marche consciente au parc Monceau', day: 28, month: 'JUIN', time: '10:00', mode: 'Présentiel', host: 'Marc Lefèvre', place: 'Paris 8e', seats: 8, tag: 'Mouvement' },
+  { id: 'e3', title: 'Atelier petit-déjeuner protéiné', day: 2, month: 'JUIL', time: '18:30', mode: 'Visio', host: 'Nora Benali', place: 'Cuisine partagée', seats: 20, tag: 'Nutrition' },
+  { id: 'e4', title: 'Cercle d’écoute entre élèves', day: 5, month: 'JUIL', time: '19:00', mode: 'Visio', host: 'Élodie Martin', place: 'Salle confidentielle', seats: 6, tag: 'Mental' },
+]
+
 export type Message = { from: 'me' | 'coach'; text: string; time: string; author?: string }
 
 export type Thread = {
@@ -566,6 +587,14 @@ export const INITIAL_VITRINE_PROGRAMS: CoachProgram[] = [
     price: 620,
     active: true,
   },
+]
+
+export type CoachMedia = { id: string; title: string; kind: 'Photo' | 'Vidéo'; meta: string; src?: string }
+
+export const INITIAL_GALLERY: CoachMedia[] = [
+  { id: 'm1', title: 'Salle de respiration · lumière du matin', kind: 'Photo', meta: 'Studio Paris 8e' },
+  { id: 'm2', title: 'Démonstration cohérence cardiaque', kind: 'Vidéo', meta: '1 min 12' },
+  { id: 'm3', title: 'Atelier groupe Dos & Mobilité', kind: 'Photo', meta: 'Groupe · 6 élèves' },
 ]
 
 export const INITIAL_FREEBIES: { id: string; title: string; kind: string; duration: string; downloads: number }[] = [

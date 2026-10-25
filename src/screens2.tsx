@@ -304,7 +304,50 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [q, setQ] = useState('')
-  const [filterKind, setFilterKind] = useState<'all' | 'direct' | 'group'>('all')
+
+  /* Journaling & transcription IA — déplacé ici pour alléger l'Écosystème */
+  const [journalEntries, setJournalEntries] = useState<{ id: string; date: string; text: string; tag: string }[]>([
+    { id: 'j1', date: 'Aujourd’hui · 08:15', text: 'Réveil plus clair après 4 cycles de 4-7-8 hier soir. Moins de raideur dans la nuque.', tag: 'Sommeil' },
+    { id: 'j2', date: 'Hier · 21:40', text: 'Journée dense mais pas d’épuisement en fin d’après-midi grâce au protocole de Nora.', tag: 'Énergie' },
+  ])
+  const [newJournal, setNewJournal] = useState('')
+  const [recording, setRecording] = useState(false)
+  const [secs, setSecs] = useState(0)
+  const [transcribing, setTranscribing] = useState(false)
+  const journalTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const toggleRec = () => {
+    if (recording) {
+      setRecording(false)
+      if (journalTimer.current) clearInterval(journalTimer.current)
+      if (secs > 0) {
+        setTranscribing(true)
+        setTimeout(() => {
+          setTranscribing(false)
+          setNewJournal(t =>
+            (t ? t + ' ' : '') +
+            (secs < 3
+              ? 'Note vocale : rythme plus posé ce matin.'
+              : 'Note vocale transcrite par EVA : la respiration m’a aidé à stabiliser mon attention avant les réunions.')
+          )
+        }, 1100)
+      }
+      setSecs(0)
+    } else {
+      setRecording(true)
+      journalTimer.current = setInterval(() => setSecs(s => s + 1), 1000)
+    }
+  }
+  useEffect(() => () => { if (journalTimer.current) clearInterval(journalTimer.current) }, [])
+
+  const addJournalEntry = () => {
+    if (!newJournal.trim()) return
+    setJournalEntries(es => [
+      { id: 'j' + Date.now(), date: 'À l’instant', text: newJournal.trim(), tag: 'Synergy' },
+      ...es,
+    ])
+    setNewJournal('')
+  }
 
   /* Filtre les fils selon les coachs suivis par l'utilisateur */
   const activeThreads = useMemo(() => {
@@ -316,15 +359,16 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const shown = useMemo(() => {
     const ql = q.trim().toLowerCase()
     return activeThreads.filter(t => {
-      if (filterKind === 'direct' && t.group) return false
-      if (filterKind === 'group' && !t.group) return false
       if (!ql) return true
       const c = COACHES.find(x => x.id === t.coachId)!
       const title = (t.group?.name ?? c.name).toLowerCase()
       const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
       return title.includes(ql) || last.includes(ql)
     })
-  }, [activeThreads, q, filterKind])
+  }, [activeThreads, q])
+
+  const directThreads = shown.filter(t => !t.group)
+  const groupThreads = shown.filter(t => !!t.group)
 
   /* intervenants suivis → rangée d'accès rapide */
   const quickCoaches = useMemo(() => {
@@ -348,6 +392,33 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
 
   const markAll = () => setThreads(ts => ts.map(t => ({ ...t, unread: 0 })))
   const count = followedCoachIds.length
+
+  const threadRow = (t: Thread) => {
+    const c = COACHES.find(x => x.id === t.coachId)!
+    const last = t.messages[t.messages.length - 1]
+    const title = t.group?.name ?? c.name
+    return (
+      <button className="thread" key={t.id} onClick={() => onOpenChat(t.coachId)}>
+        <div className="thread-av">
+          {t.group
+            ? <div className="group-av">{t.group.memberIds.slice(0, 2).map(id => {
+                const cc = COACHES.find(x => x.id === id)!
+                return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={30} />
+              })}</div>
+            : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={count >= 4 ? 40 : 48} />}
+          {t.unread > 0 && <span className="badge">{t.unread}</span>}
+        </div>
+        <div className="thread-info">
+          <div className="thread-top">
+            <strong>{title}</strong>
+            <span className="tag mini">{t.group ? `${t.group.memberIds.length} experts` : c.domains[0]}</span>
+            <span>{last?.time}</span>
+          </div>
+          <p>{last?.from === 'me' ? 'Vous : ' : ''}{last?.text}</p>
+        </div>
+      </button>
+    )
+  }
 
   return (
     <div className="tab-page">
@@ -390,20 +461,6 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         </div>
       </div>
 
-      {count >= 3 && (
-        <div className="chip-row" style={{ marginBottom: 10 }}>
-          {([
-            ['all', `Tous (${activeThreads.length})`],
-            ['direct', 'Direct 1:1'],
-            ['group', 'Groupes Synergy'],
-          ] as const).map(([k, label]) => (
-            <button key={k} className={'chip glass-lite' + (filterKind === k ? ' on' : '')} onClick={() => setFilterKind(k)}>
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="search glass-lite">
         <Icon name="search" size={17} />
         <input placeholder="Rechercher une conversation…" value={q} onChange={e => setQ(e.target.value)} />
@@ -427,34 +484,67 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         </div>
       )}
 
-      <div className={'thread-list' + (count >= 4 ? ' compact' : count === 1 ? ' spacious' : '')}>
-        {shown.map(t => {
-          const c = COACHES.find(x => x.id === t.coachId)!
-          const last = t.messages[t.messages.length - 1]
-          const title = t.group?.name ?? c.name
-          return (
-            <button className="thread" key={t.id} onClick={() => onOpenChat(t.coachId)}>
-              <div className="thread-av">
-                {t.group
-                  ? <div className="group-av">{t.group.memberIds.slice(0, 2).map(id => {
-                      const cc = COACHES.find(x => x.id === id)!
-                      return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={30} />
-                    })}</div>
-                  : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={count >= 4 ? 40 : 48} />}
-                {t.unread > 0 && <span className="badge">{t.unread}</span>}
-              </div>
-              <div className="thread-info">
-                <div className="thread-top">
-                  <strong>{title}</strong>
-                  <span className="tag mini">{t.group ? `${t.group.memberIds.length} experts` : c.domains[0]}</span>
-                  <span>{last?.time}</span>
-                </div>
-                <p>{last?.from === 'me' ? 'Vous : ' : ''}{last?.text}</p>
-              </div>
-            </button>
-          )
-        })}
+      <div className="block-title" style={{ marginTop: 6 }}>
+        En direct <em>{directThreads.length} conversation{directThreads.length > 1 ? 's' : ''} 1:1</em>
       </div>
+      <div className={'thread-list' + (count >= 4 ? ' compact' : count === 1 ? ' spacious' : '')}>
+        {directThreads.map(threadRow)}
+        {directThreads.length === 0 && <div className="empty"><Icon name="chat" size={26} /><p>Aucune conversation directe ne correspond.</p></div>}
+      </div>
+
+      <div className="block-title">
+        Espaces Synergy <em>{groupThreads.length} groupe{groupThreads.length > 1 ? 's' : ''} avec vos coachs</em>
+      </div>
+      {groupThreads.length > 0
+        ? <div className="thread-list">{groupThreads.map(threadRow)}</div>
+        : <div className="empty"><Icon name="users" size={26} /><p>Réunissez vos coachs dans un même espace<br />pour synchroniser votre suivi.</p></div>}
+      <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={() => setCreating(true)}>
+        <Icon name="users" size={15} /><span>Réunir mes coachs dans une Synergy</span>
+      </button>
+
+      {/* JOURNALING & TRANSCRIPTION IA — déplacé de l'Écosystème vers la messagerie */}
+      <section className="card" data-zone="journal" style={{ marginTop: 18 }}>
+        <div className="card-kicker"><Icon name="edit" size={13} /> JOURNALING & TRANSCRIPTION IA</div>
+        <h2>Carnet d'évolution</h2>
+        <p>Écrivez ou dictez vos notes. EVA les structure et vous choisissez ce que vous partagez avec vos coachs.</p>
+
+        <textarea
+          className="journal"
+          rows={3}
+          style={{ marginTop: 10 }}
+          placeholder="Noter une prise de conscience, un ressenti ou dicter…"
+          value={newJournal}
+          onChange={e => setNewJournal(e.target.value)}
+        />
+        <div className="row" style={{ marginTop: 10, marginBottom: 14 }}>
+          <button className={'mic-btn' + (recording ? ' rec' : '')} onClick={toggleRec} aria-label="Dicter">
+            <Icon name={recording ? 'pause' : 'mic'} size={18} />
+            {recording && <span className="mic-wave"><i /><i /><i /></span>}
+            {recording && <em>{String(Math.floor(secs / 60)).padStart(2, '0')}:{String(secs % 60).padStart(2, '0')}</em>}
+          </button>
+          {transcribing
+            ? <span className="ai-status"><i className="dot pulsing" /> Transcription IA…</span>
+            : recording
+              ? <span className="ai-status">J’écoute…</span>
+              : null}
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-primary sm" onClick={addJournalEntry}>
+            <Icon name="check" size={14} /><span>Enregistrer</span>
+          </button>
+        </div>
+
+        <div className="eco-journal-list">
+          {journalEntries.map(j => (
+            <div key={j.id} className="eco-journal-item glass-lite">
+              <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
+                <span className="dim" style={{ fontSize: 11 }}>{j.date}</span>
+                <span className="tag mini">{j.tag}</span>
+              </div>
+              <p style={{ fontSize: 13 }}>{j.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="privacy block"><Icon name="shield" size={13} /> Canal privé · vous contrôlez les participants et les données partagées.</div>
       <footer className="tab-footer">Vos échanges restent chiffrés de bout en bout</footer>

@@ -4,14 +4,14 @@ import { Avatar } from './bits'
 import { useStore } from './store'
 import {
   COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS,
-  INITIAL_VITRINE_PROGRAMS, INITIAL_FREEBIES, EVA_SESSION_REPORTS,
+  INITIAL_VITRINE_PROGRAMS, INITIAL_FREEBIES, INITIAL_GALLERY, EVA_SESSION_REPORTS,
   type Consent, type CoachClient, type CoachGroup, type CoachCall,
-  type CoachProgram,
+  type CoachProgram, type CoachMedia,
 } from './data'
 import { CallScreen } from './screens2'
 
 export type CoachTab = 'bord' | 'vitrine' | 'statistiques' | 'clients' | 'messagerie' | 'reglages'
-export type VitrineSub = 'programmes' | 'creneaux' | 'freebies'
+export type VitrineSub = 'programmes' | 'creneaux' | 'freebies' | 'galerie'
 
 /* =====================================================
    PROFIL — réglages, confidentialité RGPD, déconnexion
@@ -263,6 +263,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   vitrineSub: VitrineSub
   onChangeVitrineSub: (s: VitrineSub) => void
 }) {
+  const { coachSync, setCoachSync } = useStore()
   const [mTab, setMTab] = useState<'messages' | 'appels' | 'visio'>('messages')
   const [month, setMonth] = useState(0) // 0 = mois courant
   const base = new Date()
@@ -293,6 +294,8 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const [programs, setPrograms] = useState<CoachProgram[]>(INITIAL_VITRINE_PROGRAMS)
   const activePrograms = programs.filter(p => p.active)
   const programRevenue = activePrograms.reduce((sum, p) => sum + p.price, 0)
+  const avgAdherence = Math.round(COACH_CLIENTS.reduce((n, c) => n + c.adherence, 0) / COACH_CLIENTS.length)
+  const clientAlerts = COACH_CLIENTS.filter(c => c.flags.some(f => f.type === 'alert')).length
   const [editingProg, setEditingProg] = useState<CoachProgram | null>(null)
   const [progTitle, setProgTitle] = useState('')
   const [progDur, setProgDur] = useState('8 semaines')
@@ -304,6 +307,11 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const [freeTitle, setFreeTitle] = useState('')
   const [freeKind, setFreeKind] = useState('Audio')
   const [freeDur, setFreeDur] = useState('5 min')
+
+  /* Galerie — photos & vidéos publiées par le coach */
+  const [gallery, setGallery] = useState<CoachMedia[]>(INITIAL_GALLERY)
+  const [mediaTitle, setMediaTitle] = useState('')
+  const [mediaKind, setMediaKind] = useState<'Photo' | 'Vidéo'>('Photo')
 
 
   /* Messagerie Coach interactive : fil porté par App pour survivre au changement d'onglet */
@@ -424,6 +432,22 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
     setFreeTitle('')
   }
 
+  const addMedia = (file?: File) => {
+    const title = mediaTitle.trim() || file?.name
+    if (!title) return
+    setGallery(gs => [
+      {
+        id: 'm' + Date.now(),
+        title,
+        kind: mediaKind,
+        meta: file ? `${Math.max(1, Math.round(file.size / 1024))} Ko` : 'Ajouté à la galerie',
+        src: file ? URL.createObjectURL(file) : undefined,
+      },
+      ...gs,
+    ])
+    setMediaTitle('')
+  }
+
   if (liveVisio) {
     return (
       <CallScreen
@@ -443,6 +467,14 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   }
 
   const sampleEvaReport = EVA_SESSION_REPORTS[0]
+  /* Statut de synchronisation réel (piloté depuis Réglages → Synchronisation) */
+  const syncLabel = coachSync.agenda && coachSync.signaux
+    ? 'Signaux et agendas synchronisés.'
+    : coachSync.agenda
+      ? 'Agenda synchronisé · signaux non partagés.'
+      : coachSync.signaux
+        ? 'Signaux synchronisés · agenda non connecté.'
+        : 'Aucune synchronisation active · configurez-la dans Réglages.'
 
   return (
     <div className="tab-page" data-zone={coachTab}>
@@ -450,9 +482,9 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
         <>
           <header className="page-head">
             <div>
-              <div className="date-line">ESPACE COACH · CABINET</div>
+              <div className="date-line">ESPACE COACH</div>
               <h1>Bonjour {COACH_FIRST_NAME}</h1>
-              <p>Vos signaux et vos agendas sont synchronisés.</p>
+              <p>{syncLabel}</p>
             </div>
             <Avatar hue="152" initials="CD" photo={COACHES.find(c => c.id === 'camille')?.photo} size={56} ring />
           </header>
@@ -477,60 +509,33 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
 
           <section className="card">
             <div className="row between" style={{ marginTop: 0, marginBottom: 8 }}>
-              <div className="card-kicker" style={{ margin: 0 }}><Icon name="calendar" size={13} /> AUJOURD'HUI (+15 MIN RETOUR AUTO)</div>
-              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={() => setEvalModal({ who: 'Alex Martin', isGroup: false })}>
-                Tester pop-up post-visio
+              <div className="card-kicker" style={{ margin: 0 }}><Icon name="calendar" size={13} /> AUJOURD'HUI</div>
+              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={() => onChangeCoachTab?.('vitrine')}>
+                Gérer mes créneaux
               </button>
             </div>
-            {(agendaDays[base.getDate()] ?? []).map(s => {
-              const sessionEnd = addMinutesToTime(s.time, s.dur)
-              const debriefEnd = addMinutesToTime(sessionEnd, 15)
-              return (
-                <div className="agenda-slot-block" key={s.time}>
-                  <button className="session" onClick={() => setLiveVisio({ who: s.who, isGroup: s.kind === 'group' })}>
-                    <div className="date-box"><strong style={{ fontSize: 13 }}>{s.time}</strong></div>
-                    <div className="session-info">
-                      <strong>{s.who}</strong>
-                      <span>{s.label} · cliquez pour lancer ou clôturer</span>
-                    </div>
-                    <span className="chev"><Icon name="video" size={16} /></span>
-                  </button>
-                  <div className="debrief-buffer glass-lite">
-                    <Icon name="clock" size={12} />
-                    <span><strong>{sessionEnd} – {debriefEnd}</strong> · Bloc auto 15 min : retour sur séance & synthèse EVA</span>
-                  </div>
+            {(agendaDays[base.getDate()] ?? []).map(s => (
+              <button className="session" key={s.time} onClick={() => setLiveVisio({ who: s.who, isGroup: s.kind === 'group' })}>
+                <div className="date-box"><strong style={{ fontSize: 13 }}>{s.time}</strong></div>
+                <div className="session-info">
+                  <strong>{s.who}</strong>
+                  <span>{s.label} · cliquez pour lancer ou clôturer</span>
                 </div>
-              )
-            })}
+                <span className="chev"><Icon name="video" size={16} /></span>
+              </button>
+            ))}
             {customSlots.filter(cs => cs.day === selectedDay).map(cs => (
-              <div className="agenda-slot-block" key={cs.id}>
-                <div className="session">
-                  <div className="date-box"><strong style={{ fontSize: 13 }}>{cs.start}</strong></div>
-                  <div className="session-info">
-                    <strong>Créneau ouvert ({cs.dur} min)</strong>
-                    <span>Disponible à la réservation · Jour {cs.day}</span>
-                  </div>
-                  <span className="tag mini">Ouvert</span>
+              <div className="session" key={cs.id}>
+                <div className="date-box"><strong style={{ fontSize: 13 }}>{cs.start}</strong></div>
+                <div className="session-info">
+                  <strong>Créneau ouvert ({cs.dur} min)</strong>
+                  <span>Disponible à la réservation · Jour {cs.day}</span>
                 </div>
-                <div className="debrief-buffer glass-lite">
-                  <Icon name="clock" size={12} />
-                  <span><strong>{cs.end} – {cs.debriefEnd}</strong> · +15 min réservés automatiquement (retour sur séance)</span>
-                </div>
+                <span className="tag mini">Ouvert</span>
               </div>
             ))}
           </section>
 
-          <section className="card">
-            <div className="card-kicker"><Icon name="calendar" size={13} /> DÉBRIEF AUTOMATIQUE</div>
-            <p className="dim" style={{ margin: 0 }}>
-              Chaque séance réserve 15 minutes de retour : disponibilités et créneaux se pilotent dans l'onglet Offre.
-            </p>
-            <button className="setting wide" onClick={() => onChangeCoachTab?.('vitrine')}>
-              <Icon name="store" size={17} />Gérer mes disponibilités & créneaux<Icon name="chevron-right" size={14} />
-            </button>
-          </section>
-
-          <button className="logout" onClick={onExit}><Icon name="chevron-left" size={15} /> Retour à l'espace coaché</button>
           <footer className="tab-footer">Interface coach · démo Evol</footer>
         </>
       )}
@@ -551,6 +556,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               ['programmes', 'Mes programmes'],
               ['creneaux', 'Disponibilités'],
               ['freebies', 'Freebies'],
+              ['galerie', 'Galerie'],
             ] as const).map(([id, label]) => (
               <button key={id} className={'subtab' + (vSub === id ? ' on' : '')} onClick={() => setVSub(id)}>
                 {label}
@@ -602,15 +608,17 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                       onChange={e => setNewSlotTime(e.target.value)}
                       style={{ maxWidth: 115 }}
                     />
-                    <select
-                      className="eco-select glass-lite"
+                    <input
+                      type="number"
+                      min={10}
+                      max={240}
+                      step={5}
+                      className="eco-input glass-lite"
+                      aria-label="Durée libre de la séance en minutes"
                       value={newSlotDur}
-                      onChange={e => setNewSlotDur(Number(e.target.value))}
-                    >
-                      <option value={30}>Séance 30 min</option>
-                      <option value={45}>Séance 45 min</option>
-                      <option value={60}>Séance 60 min</option>
-                    </select>
+                      onChange={e => setNewSlotDur(Math.max(10, Math.min(240, Number(e.target.value) || 45)))}
+                      style={{ maxWidth: 110 }}
+                    />
                     <button className="btn btn-primary sm" onClick={addAvailabilitySlot}>
                       <Icon name="plus" size={14} /><span>Ouvrir</span>
                     </button>
@@ -655,7 +663,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
           {vSub === 'programmes' && (
             <>
               <div className="row between" style={{ marginTop: 0, marginBottom: 12 }}>
-                <span className="count-line" style={{ margin: 0 }}>{programs.length} programmes exposés</span>
+                <span className="count-line" style={{ margin: 0 }}>{programs.length} programmes publiés</span>
                 <button className="btn btn-primary sm" onClick={() => { setEditingProg(null); setProgTitle(''); setProgDesc(''); setShowProgForm(true) }}>
                   <Icon name="plus" size={14} /><span>Nouveau programme</span>
                 </button>
@@ -727,7 +735,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                       <option value="Article">Article</option>
                     </select>
                     <input className="eco-input glass-lite" placeholder="Durée / taille" value={freeDur} onChange={e => setFreeDur(e.target.value)} style={{ maxWidth: 110 }} />
-                    <button className="btn btn-primary sm" onClick={addFreebie}><Icon name="plus" size={14} /><span>Exposer</span></button>
+                    <button className="btn btn-primary sm" onClick={addFreebie}><Icon name="plus" size={14} /><span>Publier</span></button>
                   </div>
                 </div>
               </section>
@@ -749,6 +757,61 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             </>
           )}
 
+          {vSub === 'galerie' && (
+            <>
+              <section className="card">
+                <div className="card-kicker"><Icon name="video" size={13} /> GALERIE · PHOTOS & VIDÉOS</div>
+                <h2>Montrez votre univers</h2>
+                <p>Studio, démonstrations, ateliers : les médias publiés sur votre vitrine publique.</p>
+                <div className="vitrine-form" style={{ marginTop: 10 }}>
+                  <input
+                    className="eco-input glass-lite"
+                    placeholder="Légende du média…"
+                    value={mediaTitle}
+                    onChange={e => setMediaTitle(e.target.value)}
+                  />
+                  <div className="row" style={{ marginTop: 0 }}>
+                    <select className="eco-select glass-lite" value={mediaKind} onChange={e => setMediaKind(e.target.value as 'Photo' | 'Vidéo')}>
+                      <option value="Photo">Photo</option>
+                      <option value="Vidéo">Vidéo</option>
+                    </select>
+                    <label className="btn btn-soft sm gallery-pick">
+                      <Icon name="plus" size={13} /><span>Choisir un fichier</span>
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) addMedia(f); e.target.value = '' }}
+                      />
+                    </label>
+                    <button className="btn btn-primary sm" onClick={() => addMedia()}>
+                      <Icon name="check" size={13} /><span>Publier</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <div className="gallery-grid">
+                {gallery.map(m => (
+                  <figure className="gallery-item glass-lite" key={m.id}>
+                    {m.src
+                      ? m.kind === 'Vidéo'
+                        ? <video src={m.src} muted playsInline />
+                        : <img src={m.src} alt={m.title} />
+                      : <div className="gallery-ph"><Icon name={m.kind === 'Vidéo' ? 'play' : 'activity'} size={18} /></div>}
+                    <figcaption>
+                      <strong>{m.title}</strong>
+                      <span>{m.kind} · {m.meta}</span>
+                    </figcaption>
+                    <button className="remove-btn" onClick={() => setGallery(gs => gs.filter(x => x.id !== m.id))} aria-label="Retirer ce média">
+                      <Icon name="close" size={12} />
+                    </button>
+                  </figure>
+                ))}
+              </div>
+              <div className="privacy"><Icon name="shield" size={13} /> Visibilité maîtrisée · retirez un média à tout moment de votre vitrine.</div>
+            </>
+          )}
+
         </>
       )}
 
@@ -757,9 +820,9 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
         <>
           <header className="page-head">
             <div>
-              <div className="date-line">STATISTIQUES & ANALYTIQUE</div>
-              <h1>Pilotage de<br />votre business.</h1>
-              <p>Revenus, formats, remplissage : gérez votre cabinet dans les moindres détails.</p>
+              <div className="date-line">STATS & CLIENTS</div>
+              <h1>Votre activité,<br />vos élèves.</h1>
+              <p>Revenus, formats, remplissage et suivi de votre base : tout au même endroit.</p>
             </div>
           </header>
 
@@ -781,6 +844,51 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             </div>
             <TrendBars data={[52, 60, 58, 70, 76, 84, 92]} />
             <div className="axis"><span>Jan</span><span>Fév</span><span>Mar</span><span>Avr</span><span>Mai</span><span>Juin</span></div>
+          </section>
+
+          <section className="card">
+            <div className="card-kicker"><Icon name="users" size={13} /> RÉSULTATS & ACTIVITÉ · CLIENTS</div>
+            <h2>Vos élèves en un regard</h2>
+            <div className="metrics" style={{ marginTop: 8 }}>
+              <div className="metric">
+                <div className="metric-top"><span>ÉLÈVES ACTIFS</span><span className="delta up">+1</span></div>
+                <span className="metric-val">{COACH_CLIENTS.length}</span>
+              </div>
+              <div className="metric">
+                <div className="metric-top"><span>ASSIDUITÉ MOYENNE</span></div>
+                <span className="metric-val">{avgAdherence}%</span>
+              </div>
+              <div className="metric">
+                <div className="metric-top"><span>ALERTES EVA</span></div>
+                <span className="metric-val">{clientAlerts}</span>
+              </div>
+            </div>
+            <div className="eco-table" style={{ marginTop: 10 }}>
+              <div className="eco-thead">
+                <span>Élève</span>
+                <span>Énergie</span>
+                <span>Assiduité</span>
+              </div>
+              {COACH_CLIENTS.slice(0, 3).map(c => (
+                <div className="eco-trow" key={c.id} onClick={() => onChangeCoachTab?.('clients')}>
+                  <div className="eco-tmain">
+                    <strong>{c.name}</strong>
+                    <span>{c.program}</span>
+                  </div>
+                  <div className="eco-ttarget">
+                    <strong>{c.energy}/100</strong>
+                    <span>{c.sleep.split(' ')[0]}</span>
+                  </div>
+                  <div className="eco-tprog">
+                    <strong>{c.adherence}%</strong>
+                    <div className="group-meter"><span style={{ width: `${c.adherence}%` }} /></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-soft sm" style={{ marginTop: 12 }} onClick={() => onChangeCoachTab?.('clients')}>
+              <Icon name="users" size={14} /><span>Ouvrir le suivi clients</span><Icon name="chevron-right" size={13} />
+            </button>
           </section>
 
           <section className="card">
@@ -1074,6 +1182,23 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             <div className="setting row between">
               <div className="setting-label"><Icon name="users" size={17} />Groupe par niveaux</div>
               <span className="switch on"><i /></span>
+            </div>
+          </section>
+
+          <section className="card">
+            <div className="card-kicker"><Icon name="refresh" size={13} /> SYNCHRONISATION</div>
+            <p className="dim" style={{ marginBottom: 6 }}>Le statut affiché sur votre Bord suit ces réglages.</p>
+            <div className="setting row between" onClick={() => setCoachSync(s => ({ ...s, agenda: !s.agenda }))}>
+              <div className="setting-label">
+                <span className="setting-txt"><strong>Agendas & créneaux</strong><span>Séances, disponibilités et réservations.</span></span>
+              </div>
+              <span className={'switch' + (coachSync.agenda ? ' on' : '')}><i /></span>
+            </div>
+            <div className="setting row between" onClick={() => setCoachSync(s => ({ ...s, signaux: !s.signaux }))}>
+              <div className="setting-label">
+                <span className="setting-txt"><strong>Signaux & biométrie</strong><span>Énergie, sommeil et alertes EVA de vos élèves.</span></span>
+              </div>
+              <span className={'switch' + (coachSync.signaux ? ' on' : '')}><i /></span>
             </div>
           </section>
 

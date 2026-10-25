@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
+import { EvaAvatar } from './bits'
 import { StoreProvider, useStore } from './store'
 import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding } from './entry'
 import { Hub, Explorer, Ecosystem, EvaPanel } from './screens1'
@@ -12,6 +13,7 @@ type Phase = 'welcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
 function Shell() {
   const {
     role, setRole, setName, setGuest, tab, setTab,
+    hideExplorer, setHideExplorer,
     setThreads, setQuizDomains, reset,
   } = useStore()
   const [phase, setPhase] = useState<Phase>('welcome')
@@ -58,7 +60,7 @@ function Shell() {
       aria-label="EVA"
       title="Interroger l'IA EVA"
     >
-      <span className="eva-fab-orb" aria-hidden />
+      <EvaAvatar size={42} />
     </button>
   ) : null
 
@@ -86,9 +88,9 @@ function Shell() {
 
   if (phase === 'welcome') return (
     <Welcome
-      onAssessment={() => setPhase('quiz')}
       onAccount={() => setPhase('consent')}
-      onGuest={() => { setGuest(true); setPhase('onboarding') }}
+      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
+      onProgramme={() => { setGuest(false); setHideExplorer(true); setName('Alex'); setRole('coache'); setPhase('app') }}
       onCoach={() => { setRole('coach'); setPhase('app'); setTab('hub') }}
     />
   )
@@ -112,7 +114,7 @@ function Shell() {
   if (phase === 'consent') return (
     <ConsentScreen
       onBack={() => setPhase('welcome')}
-      onAccept={() => enterApp('Alex', false)}
+      onAccept={() => { setHideExplorer(false); enterApp('Alex', false) }}
     />
   )
 
@@ -173,7 +175,7 @@ function Shell() {
             onOpenEva={openEva}
           />
         )}
-        {tab === 'explorer' && <Explorer onOpenCoach={c => setCoachView(c)} />}
+        {tab === 'explorer' && !hideExplorer && <Explorer onOpenCoach={c => setCoachView(c)} />}
         {tab === 'synergy' && <Synergy onOpenChat={openChat} />}
         {tab === 'profile' && <Profile onGoCoach={() => setRole('coach')} />}
       </main>
@@ -184,7 +186,7 @@ function Shell() {
         {([
           { id: 'hub', icon: 'home', label: 'Hub' },
           { id: 'ecosystem', icon: 'grid', label: 'Écosystème' },
-          { id: 'explorer', icon: 'compass', label: 'Explorer' },
+          ...(hideExplorer ? [] : [{ id: 'explorer' as const, icon: 'compass' as const, label: 'Explorer' }]),
           { id: 'synergy', icon: 'chat', label: 'Synergy' },
           { id: 'profile', icon: 'user', label: 'Profil' },
         ] as const).map(t => (

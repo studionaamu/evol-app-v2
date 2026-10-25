@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from './Icon'
-import { Avatar } from './bits'
+import { Avatar, EvaAvatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, SESSIONS, EXERCISES, QUOTES, IMAGES,
+  COACHES, SESSIONS, EXERCISES, QUOTES, IMAGES, EVENTS,
   EVA_SESSION_REPORTS, INITIAL_SHARED_DOCS, ECOSYSTEM_GOALS,
   type Coach, type SharedDocument,
 } from './data'
@@ -97,17 +97,12 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
 }) {
-  const {
-    name, setTab,
-    followedCoachIds, toggleFollowCoach,
-    selectedRadarAxis, setSelectedRadarAxis,
-  } = useStore()
+  const { name, followedCoachIds, toggleFollowCoach } = useStore()
   void onOpenExercise; void onOpenEva
   const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length))
   const [pickingCoaches, setPickingCoaches] = useState(false)
 
   const quote = QUOTES[quoteIdx]
-  const activeAxis = RADAR.find(r => r.axis === selectedRadarAxis) ?? RADAR[5]
   const followedCoaches = useMemo(
     () => followedCoachIds.map(id => COACHES.find(c => c.id === id)!).filter(Boolean),
     [followedCoachIds]
@@ -135,65 +130,6 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
         <button className="quote-refresh" onClick={() => setQuoteIdx((quoteIdx + 1 + Math.floor(Math.random() * (QUOTES.length - 1))) % QUOTES.length)} aria-label="Nouvelle citation">
           <Icon name="refresh" size={15} />
         </button>
-      </section>
-
-      <section className="card card-balance" data-zone="balance">
-        <span className="balance-wash" aria-hidden />
-        <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
-          <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> VOTRE ÉQUILIBRE</div>
-          <button
-            className="link-btn radar-expand-link"
-            onClick={() => setTab('ecosystem')}
-          >
-            <span>Développer dans l'Écosystème</span>
-            <Icon name="arrow-right" size={13} />
-          </button>
-        </div>
-        <div className="radar-head">
-          <h2>Radar de vie</h2>
-          <span className="radar-when"><Icon name="clock" size={12} /> Touchez un axe</span>
-        </div>
-
-        <RadarChart
-          scores={RADAR}
-          selectedAxis={selectedRadarAxis}
-          onSelectAxis={axis => setSelectedRadarAxis(axis)}
-        />
-
-        <div className="radar-scores">
-          {RADAR.map(r => {
-            const isSel = selectedRadarAxis === r.axis
-            return (
-              <button
-                type="button"
-                className={'radar-score' + (isSel ? ' active' : '')}
-                key={r.axis}
-                onClick={() => setSelectedRadarAxis(r.axis)}
-              >
-                <span>{r.axis}</span>
-                <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
-          <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
-            <div className="radar-axis-title">
-              <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
-              <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta}</span>
-            </div>
-            <button
-              className="btn btn-soft sm"
-              style={{ padding: '6px 11px', fontSize: 11.5 }}
-              onClick={() => { setSelectedRadarAxis(activeAxis.axis); setTab('ecosystem') }}
-            >
-              <span>Ouvrir dans Écosystème</span>
-              <Icon name="chevron-right" size={12} />
-            </button>
-          </div>
-          <p className="radar-axis-txt">{activeAxis.insight}</p>
-        </div>
       </section>
 
       <section className="card" data-zone="adaptive-coaches">
@@ -380,6 +316,32 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         ))}
       </div>
 
+      <section className="card">
+        <div className="card-kicker"><Icon name="calendar" size={13} /> PROCHAINS ÉVÈNEMENTS</div>
+        <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
+          <h2>Vivre Evol ensemble</h2>
+          <span className="tag mini">Communauté</span>
+        </div>
+        <p style={{ fontSize: 12.5, marginBottom: 10 }}>Ateliers et rencontres en visio ou en présentiel, avec les autres élèves.</p>
+        <div className="sessions">
+          {EVENTS.map(ev => (
+            <div className="session event-row" key={ev.id}>
+              <div className="date-box"><strong>{ev.day}</strong><span>{ev.month}</span></div>
+              <div className="session-info">
+                <div className="session-time">
+                  <Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={12} /> {ev.time} · {ev.mode}
+                </div>
+                <strong>{ev.title}</strong>
+                <span>{ev.host} · {ev.place} · {ev.seats} places</span>
+              </div>
+              <button className="btn btn-soft sm event-join" aria-label={`S'inscrire à ${ev.title}`}>
+                <span>Rejoindre</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="count-line">{results.length} accompagnant{results.length > 1 ? 's' : ''} · {followedCoachIds.length} dans votre équipe</div>
 
       <div className="coach-list">
@@ -433,7 +395,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
   onOpenEva: (prefill?: string) => void
 }) {
   const { consent, selectedRadarAxis, setSelectedRadarAxis, followedCoachIds } = useStore()
-  const [section, setSection] = useState<'all' | 'radar' | 'sante' | 'objectifs' | 'seances' | 'partage' | 'outils'>('all')
+  const [section, setSection] = useState<'radar' | 'sante' | 'objectifs' | 'seances' | 'partage' | 'outils'>('radar')
   const [steps, setSteps] = useState(8420)
   const [bpm, setBpm] = useState(58)
   const [measuring, setMeasuring] = useState(false)
@@ -441,41 +403,6 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
     'Votre pouls au repos (58 bpm) et vos 8 420 pas montrent une excellente récupération cardiovasculaire. EVA suggère de maintenir la séance de mobilité douce avec Marc et d’avancer le coucher de 20 min.'
   )
   const [analyzingHealth, setAnalyzingHealth] = useState(false)
-
-  /* Module de journaling complet (texte + dictée vocale IA, sans "Comment vous sentez-vous ?") */
-  const [journalEntries, setJournalEntries] = useState<{ id: string; date: string; text: string; tag: string }[]>([
-    { id: 'j1', date: 'Aujourd’hui · 08:15', text: 'Réveil plus clair après 4 cycles de 4-7-8 hier soir. Moins de raideur dans la nuque.', tag: 'Sommeil' },
-    { id: 'j2', date: 'Hier · 21:40', text: 'Journée dense mais pas d’épuisement en fin d’après-midi grâce au protocole de Nora.', tag: 'Énergie' },
-  ])
-  const [newJournal, setNewJournal] = useState('')
-  const [recording, setRecording] = useState(false)
-  const [secs, setSecs] = useState(0)
-  const [transcribing, setTranscribing] = useState(false)
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const toggleRec = () => {
-    if (recording) {
-      setRecording(false)
-      if (timer.current) clearInterval(timer.current)
-      if (secs > 0) {
-        setTranscribing(true)
-        setTimeout(() => {
-          setTranscribing(false)
-          setNewJournal(t =>
-            (t ? t + ' ' : '') +
-            (secs < 3
-              ? 'Note vocale : rythme plus posé ce matin.'
-              : 'Note vocale transcrite par EVA : la respiration m’a aidé à stabiliser mon attention avant les réunions.')
-          )
-        }, 1100)
-      }
-      setSecs(0)
-    } else {
-      setRecording(true)
-      timer.current = setInterval(() => setSecs(s => s + 1), 1000)
-    }
-  }
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
 
   const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
   const [docTitle, setDocTitle] = useState('')
@@ -504,15 +431,6 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
     }, 900)
   }
 
-  const addJournalEntry = () => {
-    if (!newJournal.trim()) return
-    setJournalEntries(es => [
-      { id: 'j' + Date.now(), date: 'À l’instant', text: newJournal.trim(), tag: selectedRadarAxis ?? 'Réflexion' },
-      ...es,
-    ])
-    setNewJournal('')
-  }
-
   const addSharedDoc = () => {
     const title = docTitle.trim() || `Note_Suivi_${new Date().toLocaleDateString('fr-FR')}.pdf`
     setDocs(ds => [
@@ -531,19 +449,18 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
         <div>
           <div className="date-line">MON ÉCOSYSTÈME</div>
           <h1>Votre évolution<br />à 360°.</h1>
-          <p>Radar développé, santé, objectifs, outils, journaling et partages.</p>
+          <p>Radar de vie développé, santé, objectifs, outils et documents partagés.</p>
         </div>
       </header>
 
       <div className="chip-row">
         {([
-          ['all', 'Vue globale'],
           ['radar', 'Radar de vie'],
           ['sante', 'Santé & IA'],
           ['objectifs', 'Stats & Objectifs'],
           ['outils', 'Outils'],
           ['seances', 'Comptes rendus EVA'],
-          ['partage', 'Journal & Docs'],
+          ['partage', 'Docs partagés'],
         ] as const).map(([id, label]) => (
           <button
             key={id}
@@ -556,7 +473,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
       </div>
 
       {/* WIDGET 0 : RADAR DE VIE DÉVELOPPÉ & INTERACTIF */}
-      {(section === 'all' || section === 'radar') && (
+      {section === 'radar' && (
         <section className="card card-balance">
           <span className="balance-wash" aria-hidden />
           <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE DÉVELOPPÉ</div>
@@ -609,7 +526,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
       )}
 
       {/* WIDGET 1 : MODULE SANTÉ (PAS, POULS & ANALYSE IA EVA) */}
-      {(section === 'all' || section === 'sante') && (
+      {section === 'sante' && (
         <section className="card eco-health-card">
           <span className="balance-wash" aria-hidden />
           <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
@@ -665,7 +582,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
       )}
 
       {/* WIDGET 2 : STATISTIQUES AVANCÉES & TABLEAUX DE SUIVI DES OBJECTIFS */}
-      {(section === 'all' || section === 'objectifs') && (
+      {section === 'objectifs' && (
         <section className="card">
           <div className="card-kicker"><Icon name="chart" size={13} /> STATISTIQUES AVANCÉES & OBJECTIFS</div>
           <h2>Tableaux de suivi ({followedCoachIds.length} coachs suivis)</h2>
@@ -714,7 +631,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
       )}
 
       {/* WIDGET OUTILS (DÉPLACÉ DEPUIS PROFIL) : EXERCICES, RENDEZ-VOUS, CONTENUS FAVORIS */}
-      {(section === 'all' || section === 'outils') && (
+      {section === 'outils' && (
         <section className="card" data-zone="outils">
           <div className="card-kicker"><Icon name="activity" size={13} /> OUTILS & PRATIQUES</div>
           <h2>Exercices, rendez-vous & favoris</h2>
@@ -778,7 +695,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
       )}
 
       {/* WIDGET 3 : COMPTES RENDUS DE SÉANCES GÉNÉRÉS PAR L'IA EVA */}
-      {(section === 'all' || section === 'seances') && (
+      {section === 'seances' && (
         <section className="card">
           <div className="card-kicker"><Icon name="sparkle" size={13} /> COMPTES RENDUS IA EVA</div>
           <h2>Synthèses de vos séances</h2>
@@ -823,54 +740,9 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
         </section>
       )}
 
-      {/* WIDGET 4 : MODULE DE JOURNALING CENTRALISÉ (SANS "COMMENT VOUS SENTEZ-VOUS ?") */}
-      {(section === 'all' || section === 'partage') && (
-        <section className="card" data-zone="journal">
-          <div className="card-kicker"><Icon name="edit" size={13} /> JOURNALING & TRANSCRIPTION IA</div>
-          <h2>Carnet d'évolution</h2>
-          <p>Écrivez ou dictez vos notes. EVA les structure et vous choisissez ce que vous partagez.</p>
-
-          <textarea
-            className="journal"
-            rows={3}
-            style={{ marginTop: 10 }}
-            placeholder="Noter une prise de conscience, un ressenti ou dicter…"
-            value={newJournal}
-            onChange={e => setNewJournal(e.target.value)}
-          />
-          <div className="row" style={{ marginTop: 10, marginBottom: 14 }}>
-            <button className={'mic-btn' + (recording ? ' rec' : '')} onClick={toggleRec} aria-label="Dicter">
-              <Icon name={recording ? 'pause' : 'mic'} size={18} />
-              {recording && <span className="mic-wave"><i /><i /><i /></span>}
-              {recording && <em>{String(Math.floor(secs / 60)).padStart(2, '0')}:{String(secs % 60).padStart(2, '0')}</em>}
-            </button>
-            {transcribing
-              ? <span className="ai-status"><i className="dot pulsing" /> Transcription IA…</span>
-              : recording
-                ? <span className="ai-status">J’écoute…</span>
-                : null}
-            <div style={{ flex: 1 }} />
-            <button className="btn btn-primary sm" onClick={addJournalEntry}>
-              <Icon name="check" size={14} /><span>Enregistrer</span>
-            </button>
-          </div>
-
-          <div className="eco-journal-list">
-            {journalEntries.map(j => (
-              <div key={j.id} className="eco-journal-item glass-lite">
-                <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
-                  <span className="dim" style={{ fontSize: 11 }}>{j.date}</span>
-                  <span className="tag mini">{j.tag}</span>
-                </div>
-                <p style={{ fontSize: 13 }}>{j.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* WIDGET 5 : ESPACE DE PARTAGE D'ÉLÉMENTS ET DE DOCUMENTS AVEC LES COACHS */}
-      {(section === 'all' || section === 'partage') && (
+      {section === 'partage' && (
         <section className="card">
           <div className="card-kicker"><Icon name="file" size={13} /> ESPACE DE PARTAGE MULTI-COACHS</div>
           <h2>Documents & éléments partagés</h2>
@@ -1050,9 +922,7 @@ export function EvaPanel({ role, prefill, onClose }: {
     <div className="screen chat-screen eva-screen">
       <header className="chat-head">
         <button className="icon-btn" onClick={onClose} aria-label="Retour"><Icon name="chevron-left" size={19} /></button>
-        <div className="eva-avatar-sm" aria-hidden>
-          <Icon name="sparkle" size={17} />
-        </div>
+        <EvaAvatar size={38} />
         <div className="chat-who">
           <strong>EVA</strong>
           <span><i className="dot" /> Assistante Evol · IA</span>
