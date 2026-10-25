@@ -17,10 +17,6 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
 }) {
   const [mailOpen, setMailOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [programmeOpen, setProgrammeOpen] = useState(false)
-  const [accessEmail, setAccessEmail] = useState('')
-  const [accessCode, setAccessCode] = useState('')
-  const accessValid = accessEmail.trim().length > 3 && accessCode.trim().length > 3
 
   return (
     <div className="screen auth">
@@ -61,8 +57,8 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
             </div>
           )}
           <div className="or-divider glass-div"><span>ou</span></div>
-          <button className="btn btn-glass ghost" onClick={() => setProgrammeOpen(true)}>
-            <Icon name="lock" size={16} /><span>J'ai un programme · accès par identifiant</span>
+          <button className="btn btn-glass ghost" onClick={onProgramme}>
+            <Icon name="lock" size={16} /><span>J'ai un programme EVOLIA · accès par identifiant</span>
           </button>
           <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
           <button className="coach-link on-photo" onClick={onCoach}>
@@ -74,36 +70,245 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
         </div>
       </div>
 
-      {programmeOpen && (
-        <div className="pay-layer" onClick={() => setProgrammeOpen(false)}>
-          <div className="pay-sheet" onClick={e => e.stopPropagation()}>
-            <div className="card-kicker" style={{ margin: 0 }}><Icon name="lock" size={12} /> ACCÈS PROGRAMME · EVOLIA</div>
-            <h2 style={{ marginBottom: 6 }}>Votre programme EVOLIA.</h2>
-            <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>
-              Utilisez l'e-mail de commande et l'identifiant reçu par e-mail pour ouvrir votre programme complet.
-            </p>
-            <div className="vitrine-form">
-              <input
-                className="eco-input glass-lite"
-                type="email"
-                placeholder="E-mail de commande"
-                value={accessEmail}
-                onChange={e => setAccessEmail(e.target.value)}
-              />
-              <input
-                className="eco-input glass-lite"
-                placeholder="Identifiant (ex. EVOL-4821-XR)"
-                value={accessCode}
-                onChange={e => setAccessCode(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-primary" disabled={!accessValid} onClick={() => { setProgrammeOpen(false); onProgramme() }}>
-              <span>Accès à mon programme Evolia</span><Icon name="arrow-right" size={16} />
-            </button>
-            <button className="btn btn-ghost" onClick={() => setProgrammeOpen(false)}>Annuler</button>
-          </div>
+    </div>
+  )
+}
+
+/* ---------- programme EVOLIA : présentation encadrée + connexion par identifiant ---------- */
+
+const PILIERS = [
+  {
+    icon: 'shield',
+    title: 'Strictement encadré',
+    text: 'Protocoles validés, séances supervisées et suivi clinique par des professionnels partenaires.',
+  },
+  {
+    icon: 'users',
+    title: 'Coachs partenaires',
+    text: 'Des intervenants sélectionnés, formés à nos programmes et coordonnés dans un même espace.',
+  },
+  {
+    icon: 'file',
+    title: 'Intermédiaires & financeurs',
+    text: 'Assurance maladie, mutuelles, employeurs : votre accès est activé selon votre prise en charge.',
+  },
+] as const
+
+const ETAPES = [
+  { t: 'Votre accès est défini', d: 'Prescription, prise en charge ou paiement : nous paramétrons votre programme et son périmètre.' },
+  { t: 'Votre identifiant est généré', d: 'Un identifiant de la forme EVOL-0000-00 est créé puis envoyé à l’adresse de rattachement.' },
+  { t: 'Vous vous connectez', d: 'Identifiant + e-mail : votre programme s’ouvre, sans la partie Explorer.' },
+] as const
+
+export function Programme({ onBack, onLogin, onGuest }: {
+  onBack: () => void
+  onLogin: () => void
+  onGuest: () => void
+}) {
+  return (
+    <div className="screen auth program">
+      <div className="auth-art" aria-hidden>
+        <div className="aurora" />
+      </div>
+      <div className="prog-wrap">
+        <header className="prog-top">
+          <button className="icon-btn prog-back" onClick={onBack} aria-label="Retour">
+            <Icon name="chevron-left" size={19} />
+          </button>
+          <span className="prog-badge"><Icon name="shield" size={11} /> PROGRAMME EVOLIA</span>
+          <span style={{ width: 40 }} />
+        </header>
+
+        <div className="prog-head">
+          <div className="prog-kicker">ACCOMPAGNEMENT SPÉCIALISÉ</div>
+          <h1>Un cadre strict,<br />une équipe autour de vous.</h1>
+          <p>
+            Evolia réunit vos coachs partenaires, les professionnels de santé et vos financeurs
+            autour d’un programme unique, défini avec vous.
+          </p>
         </div>
-      )}
+
+        <div className="prog-grid">
+          {PILIERS.map(p => (
+            <article className="prog-card" key={p.title}>
+              <span className="prog-ico"><Icon name={p.icon} size={17} /></span>
+              <div>
+                <strong>{p.title}</strong>
+                <p>{p.text}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="prog-block">
+          <div className="prog-kicker">COMMENT ÇA MARCHE</div>
+          <ol className="prog-steps">
+            {ETAPES.map((e, i) => (
+              <li key={e.t}>
+                <span className="prog-step-n">{i + 1}</span>
+                <div>
+                  <strong>{e.t}</strong>
+                  <p>{e.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="prog-cta">
+          <button className="btn btn-glass solid" onClick={onLogin}>
+            <Icon name="lock" size={16} /><span>Se connecter avec mon identifiant</span>
+          </button>
+          <button className="btn btn-glass ghost" onClick={onGuest}>
+            <span>Découvrir en mode invité</span><Icon name="arrow-right" size={15} />
+          </button>
+          <p className="prog-note">
+            Mode invité : explications illustrées, puis accès à l’app sans la partie Explorer.
+          </p>
+          <p className="prog-legal">
+            <Icon name="shield" size={11} /> Données de santé hébergées en UE · accès nominatif et tracé.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* identifiants de démonstration — aucun back-end dans cette version */
+const DEMO_CODES: Record<string, string> = { 'EVOL-4821-XR': 'Alex', 'EVOL-7710-BS': 'Sarah' }
+const CODE_SHAPE = /^EVOL-[A-Z0-9]{4}-[A-Z0-9]{2}$/
+
+export function ProgramAccess({ onBack, onAccess }: {
+  onBack: () => void
+  onAccess: (name: string, email: string) => void
+}) {
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
+  const [status, setStatus] = useState<'idle' | 'checking' | 'error'>('idle')
+  const [help, setHelp] = useState(false)
+
+  const norm = code.trim().toUpperCase()
+  const shapeOk = CODE_SHAPE.test(norm)
+  const mailOk = /.+@.+\..+/.test(email.trim())
+  const valid = shapeOk && mailOk && status !== 'checking'
+
+  const submit = () => {
+    if (!valid) return
+    setStatus('checking')
+    setTimeout(() => {
+      const who = DEMO_CODES[norm]
+      if (who) onAccess(who, email.trim())
+      else setStatus('error')
+    }, 900)
+  }
+
+  return (
+    <div className="screen auth program">
+      <div className="auth-art" aria-hidden>
+        <div className="aurora" />
+      </div>
+      <div className="prog-wrap">
+        <header className="prog-top">
+          <button className="icon-btn prog-back" onClick={onBack} aria-label="Retour">
+            <Icon name="chevron-left" size={19} />
+          </button>
+          <span className="prog-badge"><Icon name="lock" size={11} /> ACCÈS PROGRAMME</span>
+          <span style={{ width: 40 }} />
+        </header>
+
+        <div className="prog-head">
+          <div className="prog-kicker">CONNEXION · EVOLIA</div>
+          <h1>Votre identifiant<br />d’accès.</h1>
+          <p>
+            Il vous a été remis lors de la mise en place de votre programme et envoyé à votre
+            adresse de rattachement.
+          </p>
+        </div>
+
+        <div className="prog-form">
+          <label className="prog-field">
+            <span>E-mail de rattachement</span>
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="prenom@exemple.com"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setStatus('idle') }}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+            />
+          </label>
+
+          <label className="prog-field">
+            <span>Identifiant d’accès</span>
+            <input
+              className="prog-code"
+              autoComplete="one-time-code"
+              autoCapitalize="characters"
+              spellCheck={false}
+              placeholder="EVOL-0000-00"
+              value={code}
+              onChange={e => { setCode(e.target.value.toUpperCase()); setStatus('idle') }}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+            />
+            <em className={'prog-hint' + (norm && !shapeOk ? ' bad' : '')}>
+              {norm && !shapeOk ? 'Format attendu : EVOL-0000-00' : 'Format EVOL-0000-00 · fourni par votre référent'}
+            </em>
+          </label>
+
+          {status === 'error' && (
+            <div className="prog-error" role="alert">
+              <Icon name="alert" size={15} />
+              <span>
+                Identifiant inconnu ou accès non encore activé. Vérifiez auprès de votre référent
+                ou de votre caisse.
+              </span>
+            </div>
+          )}
+
+          <button className="btn btn-glass solid" disabled={!valid} onClick={submit}>
+            <span>{status === 'checking' ? 'Vérification…' : 'Ouvrir mon programme'}</span>
+            {status !== 'checking' && <Icon name="arrow-right" size={16} />}
+          </button>
+
+          <button className="prog-help-toggle" onClick={() => setHelp(v => !v)} aria-expanded={help}>
+            <Icon name={help ? 'close' : 'plus'} size={13} />
+            <span>Où trouver mon identifiant ?</span>
+          </button>
+
+          {help && (
+            <div className="prog-help">
+              <p>
+                L’identifiant est généré au moment où votre accès est paramétré : prescription,
+                prise en charge par l’Assurance maladie ou une mutuelle, ou paiement du programme.
+              </p>
+              <p>
+                Il est envoyé par e-mail ou SMS à l’adresse de rattachement, avec la durée de
+                validité de votre accès. Il est strictement personnel.
+              </p>
+              <p className="dim">
+                Rien reçu ? Contactez l’interlocuteur qui a initié votre programme : nous pouvons
+                régénérer un identifiant.
+              </p>
+            </div>
+          )}
+
+          <button
+            className="prog-demo"
+            onClick={() => { setEmail('alex@evolia.fr'); setCode('EVOL-4821-XR'); setStatus('idle') }}
+          >
+            <Icon name="sparkle" size={13} />
+            <span>Utiliser un identifiant de démonstration</span>
+          </button>
+        </div>
+
+        <div className="prog-cta">
+          <p className="prog-legal">
+            <Icon name="shield" size={11} /> Connexion chiffrée · chaque ouverture d’accès est
+            journalisée.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

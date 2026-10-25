@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
 import { EvaAvatar } from './bits'
 import { StoreProvider, useStore } from './store'
-import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding } from './entry'
+import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding, Programme, ProgramAccess } from './entry'
 import { Hub, Explorer, Ecosystem, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
 import { Profile, CoachSpace, type CoachTab, type VitrineSub } from './screens3'
 import { EXERCISES, type Coach, type Domain } from './data'
 
-type Phase = 'welcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
+type Phase = 'welcome' | 'programme' | 'programLogin' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
 
 function Shell() {
   const {
@@ -90,8 +90,23 @@ function Shell() {
     <Welcome
       onAccount={() => setPhase('consent')}
       onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
-      onProgramme={() => { setGuest(false); setHideExplorer(true); setName('Alex'); setRole('coache'); setPhase('app') }}
+      onProgramme={() => setPhase('programme')}
       onCoach={() => { setRole('coach'); setPhase('app'); setTab('hub') }}
+    />
+  )
+
+  if (phase === 'programme') return (
+    <Programme
+      onBack={() => setPhase('welcome')}
+      onLogin={() => setPhase('programLogin')}
+      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
+    />
+  )
+
+  if (phase === 'programLogin') return (
+    <ProgramAccess
+      onBack={() => setPhase('programme')}
+      onAccess={(n) => { setGuest(false); setHideExplorer(true); setName(n); setRole('coache'); setPhase('app') }}
     />
   )
 
@@ -107,7 +122,7 @@ function Shell() {
       domains={savedResults}
       onOpenCoach={c => setCoachView(c)}
       onCreateAccount={() => setPhase('consent')}
-      onGuest={() => { setGuest(true); setPhase('onboarding') }}
+      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
     />
   )
 

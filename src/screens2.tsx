@@ -304,6 +304,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [q, setQ] = useState('')
+  const [filter, setFilter] = useState<'all' | 'unread' | 'groups'>('all')
 
   /* Journaling & transcription IA — déplacé ici pour alléger l'Écosystème */
   const [journalEntries, setJournalEntries] = useState<{ id: string; date: string; text: string; tag: string; img?: string }[]>([
@@ -391,13 +392,15 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const shown = useMemo(() => {
     const ql = q.trim().toLowerCase()
     return activeThreads.filter(t => {
+      if (filter === 'unread' && t.unread === 0) return false
+      if (filter === 'groups' && !t.group) return false
       if (!ql) return true
       const c = COACHES.find(x => x.id === t.coachId)!
       const title = (t.group?.name ?? c.name).toLowerCase()
       const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
       return title.includes(ql) || last.includes(ql)
     })
-  }, [activeThreads, q])
+  }, [activeThreads, q, filter])
 
   const directThreads = shown.filter(t => !t.group)
   const groupThreads = shown.filter(t => !!t.group)
@@ -430,7 +433,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
     const last = t.messages[t.messages.length - 1]
     const title = t.group?.name ?? c.name
     return (
-      <button className="thread" key={t.id} onClick={() => onOpenChat(t.coachId)}>
+      <button className={'thread' + (t.unread > 0 ? ' unread' : '')} key={t.id} onClick={() => onOpenChat(t.coachId)}>
         <div className="thread-av">
           {t.group
             ? <div className="group-av">{t.group.memberIds.slice(0, 2).map(id => {
@@ -446,14 +449,17 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
             <span className="tag mini">{t.group ? `${t.group.memberIds.length} experts` : c.domains[0]}</span>
             <span>{last?.time}</span>
           </div>
-          <p>{last?.from === 'me' ? 'Vous : ' : ''}{last?.text}</p>
+          <p>
+            {last?.from === 'me' && <Icon name="check" size={12} />}
+            {last?.from === 'me' ? 'Vous : ' : ''}{last?.text}
+          </p>
         </div>
       </button>
     )
   }
 
   return (
-    <div className="tab-page">
+    <div className="tab-page synergy-page">
       <header className="page-head">
         <div>
           <div className="date-line">SYNERGY ROOM · {count} COACH{count > 1 ? 'S' : ''} EN CONTACT</div>
@@ -498,6 +504,15 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         <input placeholder="Rechercher une conversation…" value={q} onChange={e => setQ(e.target.value)} />
       </div>
 
+      <div className="msg-filters">
+        {([['all', 'Tous'], ['unread', 'Non lus'], ['groups', 'Synergy']] as const).map(([id, label]) => (
+          <button key={id} className={'msg-filter' + (filter === id ? ' on' : '')} onClick={() => setFilter(id)}>
+            {label}
+            {id === 'unread' && totalUnread > 0 && <em>{totalUnread}</em>}
+          </button>
+        ))}
+      </div>
+
       {count > 1 && (
         <div className="quick-row">
           {quickCoaches.map(c => (
@@ -516,20 +531,26 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         </div>
       )}
 
+      {filter !== 'groups' && (
       <div className="block-title" style={{ marginTop: 6 }}>
         En direct <em>{directThreads.length} conversation{directThreads.length > 1 ? 's' : ''} 1:1</em>
       </div>
+      )}
+      {filter !== 'groups' && (
       <div className={'thread-list' + (count >= 4 ? ' compact' : count === 1 ? ' spacious' : '')}>
         {directThreads.map(threadRow)}
         {directThreads.length === 0 && <div className="empty"><Icon name="chat" size={26} /><p>Aucune conversation directe ne correspond.</p></div>}
       </div>
+      )}
 
+      {filter !== 'unread' && (
       <div className="block-title">
         Espaces Synergy <em>{groupThreads.length} groupe{groupThreads.length > 1 ? 's' : ''} avec vos coachs</em>
       </div>
-      {groupThreads.length > 0
+      )}
+      {filter !== 'unread' && (groupThreads.length > 0
         ? <div className="thread-list">{groupThreads.map(threadRow)}</div>
-        : <div className="empty"><Icon name="users" size={26} /><p>Réunissez vos coachs dans un même espace<br />pour synchroniser votre suivi.</p></div>}
+        : <div className="empty"><Icon name="users" size={26} /><p>Réunissez vos coachs dans un même espace<br />pour synchroniser votre suivi.</p></div>)}
       <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={() => setCreating(true)}>
         <Icon name="users" size={15} /><span>Réunir mes coachs dans une Synergy</span>
       </button>
@@ -740,6 +761,7 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
       </header>
 
       <div className="chat-body">
+        <div className="date-pill">Aujourd’hui</div>
         <div className="chat-note"><Icon name="shield" size={12} /> Canal privé · vous contrôlez les participants et les données partagées.</div>
         {thread?.messages.map((m, k) => (
           <div key={k} className={'bubble-row ' + m.from}>
@@ -753,7 +775,10 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
         <div ref={endRef} />
       </div>
 
-      <div className="chat-input">
+      <div className="chat-input glass">
+        <button className="chat-plus" onClick={() => setManaging(true)} aria-label="Participants et options">
+          <Icon name="plus" size={18} />
+        </button>
         <input
           placeholder="Écrire un message…"
           value={draft}
