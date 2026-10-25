@@ -34,7 +34,7 @@ function Shell() {
     const apply = (dark: boolean) => {
       document.documentElement.classList.toggle('dark', dark)
       const meta = document.querySelector('meta[name=theme-color]')
-      if (meta) meta.setAttribute('content', dark ? '#101013' : '#FAFAF8')
+      if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
     }
     apply(stored ? stored === 'dark' : sysDark)
     /* suit les changements du système tant que l'utilisateur n'a pas choisi explicitement */

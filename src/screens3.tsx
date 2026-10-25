@@ -24,7 +24,7 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
     document.documentElement.classList.toggle('dark', dark)
     localStorage.setItem('evol-theme', dark ? 'dark' : 'light')
     const meta = document.querySelector('meta[name=theme-color]')
-    if (meta) meta.setAttribute('content', dark ? '#101013' : '#FAFAF8')
+    if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
   }, [dark])
 
   return (

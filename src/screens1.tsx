@@ -875,7 +875,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
    ===================================================== */
 
 export type EvaTone = 'stress' | 'sommeil' | 'nutrition' | 'douleur' | 'mental' | 'info'
-export type EvaMessage = { from: 'eva' | 'me'; text: string; actions?: EvaAction[] }
+export type EvaMessage = { from: 'eva' | 'me'; text: string; actions?: EvaAction[]; image?: string }
 export type EvaAction = { label: string; kind: 'coach' | 'info' | 'emergency'; coachId?: string; coachName?: string; note?: string }
 
 function evaRoutes(): { match: RegExp; tone: EvaTone; reply: string; actions: EvaAction[] }[] {
@@ -958,10 +958,27 @@ export function EvaPanel({ role, prefill, onClose }: {
   prefill?: string
   onClose: () => void
 }) {
+  const { name } = useStore()
+  const firstName = role === 'coach' ? 'Camille' : name
   const [msgs, setMsgs] = useState<EvaMessage[]>([])
   const [draft, setDraft] = useState(prefill ?? '')
   const [typing, setTyping] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+
+  /* Photo d'un plat prise à l'appareil → analyse nutritionnelle d'EVA */
+  const sendMeal = (file?: File) => {
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    setMsgs(m => [...m, { from: 'me', text: 'Photo de mon plat', image: url }])
+    setTyping(true)
+    setTimeout(() => {
+      setTyping(false)
+      setMsgs(m => [...m, {
+        from: 'eva',
+        text: 'Je vois un bowl de lentilles, avocat et œuf mollet : environ 520 kcal, 26 g de protéines, 48 g de glucides et 22 g de lipides. L’équilibre fibres/protéines est bon — ajoutez un fruit pour la vitamine C. Je peux l’ajouter à votre carnet si vous le souhaitez.',
+      }])
+    }, 1400)
+  }
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs.length, typing])
 
@@ -1004,10 +1021,17 @@ export function EvaPanel({ role, prefill, onClose }: {
 
       <div className="body eva-console">
         <div className="eva-feed">
+          <div className="eva-greet">
+            <h2>Bonjour {firstName},<br />en quoi puis-je vous aider ?</h2>
+            <p>Photo de plat, sommeil, stress, séance : je suis là pour vous orienter.</p>
+          </div>
           {msgs.map((m, k) => (
             m.from === 'me'
               ? <div key={k} className="bubble-row me">
-                  <div className="bubble"><p>{m.text}</p><span>{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                  <div className="bubble">
+                    {m.image && <img className="bubble-img" src={m.image} alt="Plat envoyé à EVA" />}
+                    <p>{m.text}</p><span>{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
               : <div key={k} className="eva-cardmsg">
                   <div className="eva-cardmsg-head"><span className="eva-orb-mini" aria-hidden /><strong>EVA</strong></div>
@@ -1030,9 +1054,19 @@ export function EvaPanel({ role, prefill, onClose }: {
         </div>
       </div>
 
-      <p className="eva-prompt">Par quoi voulez-vous commencer ?</p>
+      {msgs.length === 0 && <p className="eva-prompt">Par quoi voulez-vous commencer ?</p>}
 
       <div className="eva-composer glass">
+        <label className="eva-shot" title="Photographier mon plat">
+          <Icon name="camera" size={18} />
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            aria-label="Photographier un plat pour analyse IA"
+            onChange={e => { sendMeal(e.target.files?.[0]); e.target.value = '' }}
+          />
+        </label>
         <input
           aria-label={role === 'coach' ? 'Demander à EVA' : 'Écrire à EVA'}
           value={draft}

@@ -306,10 +306,42 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const [q, setQ] = useState('')
 
   /* Journaling & transcription IA — déplacé ici pour alléger l'Écosystème */
-  const [journalEntries, setJournalEntries] = useState<{ id: string; date: string; text: string; tag: string }[]>([
+  const [journalEntries, setJournalEntries] = useState<{ id: string; date: string; text: string; tag: string; img?: string }[]>([
     { id: 'j1', date: 'Aujourd’hui · 08:15', text: 'Réveil plus clair après 4 cycles de 4-7-8 hier soir. Moins de raideur dans la nuque.', tag: 'Sommeil' },
     { id: 'j2', date: 'Hier · 21:40', text: 'Journée dense mais pas d’épuisement en fin d’après-midi grâce au protocole de Nora.', tag: 'Énergie' },
   ])
+
+  /* Photo du plat → analyse IA des apports, puis ajout au carnet */
+  const [mealShot, setMealShot] = useState<string | null>(null)
+  const [mealName, setMealName] = useState('')
+  const [mealAnalysis, setMealAnalysis] = useState<string | null>(null)
+  const [analyzingMeal, setAnalyzingMeal] = useState(false)
+
+  const pickMeal = (file?: File) => {
+    if (!file) return
+    setMealShot(URL.createObjectURL(file))
+    setMealName(file.name)
+    setMealAnalysis(null)
+  }
+
+  const analyzeMeal = () => {
+    if (!mealShot || analyzingMeal) return
+    setAnalyzingMeal(true)
+    setTimeout(() => {
+      setAnalyzingMeal(false)
+      setMealAnalysis('Plat détecté : bowl de lentilles, avocat et œuf mollet — environ 520 kcal, 26 g de protéines, 48 g de glucides, 22 g de lipides. Bon équilibre fibres/protéines ; ajoutez un fruit pour la vitamine C.')
+    }, 1200)
+  }
+
+  const addMealEntry = () => {
+    if (!mealShot || !mealAnalysis) return
+    setJournalEntries(es => [
+      { id: 'j' + Date.now(), date: 'À l’instant', text: mealAnalysis, tag: 'Nutrition', img: mealShot },
+      ...es,
+    ])
+    setMealShot(null)
+    setMealAnalysis(null)
+  }
   const [newJournal, setNewJournal] = useState('')
   const [recording, setRecording] = useState(false)
   const [secs, setSecs] = useState(0)
@@ -516,7 +548,43 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
           value={newJournal}
           onChange={e => setNewJournal(e.target.value)}
         />
+        {mealShot && (
+          <div className="meal-preview glass-lite">
+            <img src={mealShot} alt="Photo du plat à analyser" />
+            <div className="meal-preview-body">
+              <strong>Photo du plat</strong>
+              <span>{mealName}</span>
+              {mealAnalysis
+                ? <p className="meal-analysis">{mealAnalysis}</p>
+                : <button className="btn btn-soft sm" onClick={analyzeMeal} disabled={analyzingMeal}>
+                    <Icon name="sparkle" size={13} />
+                    <span>{analyzingMeal ? 'Analyse EVA…' : 'Analyser avec EVA'}</span>
+                  </button>}
+              <div className="row" style={{ marginTop: 2 }}>
+                {mealAnalysis && (
+                  <button className="btn btn-primary sm" onClick={addMealEntry}>
+                    <Icon name="check" size={13} /><span>Ajouter au journal</span>
+                  </button>
+                )}
+                <button className="btn btn-ghost sm" onClick={() => { setMealShot(null); setMealAnalysis(null) }}>
+                  Retirer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="row" style={{ marginTop: 10, marginBottom: 14 }}>
+          <label className="mic-btn shot-btn" title="Photographier mon plat">
+            <Icon name="camera" size={18} />
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              aria-label="Photographier mon plat pour analyse IA"
+              onChange={e => { pickMeal(e.target.files?.[0]); e.target.value = '' }}
+            />
+          </label>
           <button className={'mic-btn' + (recording ? ' rec' : '')} onClick={toggleRec} aria-label="Dicter">
             <Icon name={recording ? 'pause' : 'mic'} size={18} />
             {recording && <span className="mic-wave"><i /><i /><i /></span>}
@@ -539,9 +607,9 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
               <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
                 <span className="dim" style={{ fontSize: 11 }}>{j.date}</span>
                 <span className="tag mini">{j.tag}</span>
+              </div>                {j.img && <img className="journal-img" src={j.img} alt="Plat analysé par EVA" />}
+                <p style={{ fontSize: 13 }}>{j.text}</p>
               </div>
-              <p style={{ fontSize: 13 }}>{j.text}</p>
-            </div>
           ))}
         </div>
       </section>

@@ -211,6 +211,13 @@ export function Icon({ name, size = 22, strokeWidth = 1.6, filled = false }: {
           <path d="M12 18v3" />
         </svg>
       )
+    case 'camera':
+      return (
+        <svg {...common}>
+          <path d="M4.5 8.5h2.6l1.4-2h7l1.4 2h2.6a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-7a1.5 1.5 0 0 1 1.5-1.5Z" />
+          <circle cx="12" cy="13.5" r="3.4" />
+        </svg>
+      )
     case 'pause':
       return (
         <svg {...common} strokeWidth={2}>
