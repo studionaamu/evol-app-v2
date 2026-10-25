@@ -1288,11 +1288,6 @@ html.dark .hello-name { background-image: linear-gradient(120deg, #9DB4FF, #C9A9
 .eva-cardmsg > p { color: rgba(242,241,236,0.92); font-size: 13.5px; font-weight: 300; }
 .eva-cardmsg-head { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
 .eva-cardmsg-head strong { font-size: 10.5px; letter-spacing: 0.16em; color: rgba(242,241,236,0.72); font-weight: 600; }
-.eva-orb-mini {
-  width: 15px; height: 15px; border-radius: 50%; flex: none;
-  background: #2E6BFF;
-  box-shadow: 0 0 10px rgba(46,107,255,0.55);
-}
 .eva-actions { display: flex; flex-direction: column; gap: 7px; margin: 11px 0 4px; }
 .eva-action {
   display: flex; align-items: center; gap: 8px; text-align: left;

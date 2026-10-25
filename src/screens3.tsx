@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
-import { Avatar } from './bits'
+import { Avatar, EvaAvatar } from './bits'
 import { useStore } from './store'
 import {
   COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS,
@@ -1187,7 +1187,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             <div className="eva-pre-report glass-lite">
               <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
                 <div className="transcript-head" style={{ margin: 0 }}>
-                  <span className="eva-orb-mini" style={{ width: 12, height: 12 }} /> COMPTE RENDU IA EVA (TRANSCRIT & ANALYSÉ)
+                  <EvaAvatar size={14} /> COMPTE RENDU IA EVA (TRANSCRIT & ANALYSÉ)
                 </div>
                 <span className="dim" style={{ fontSize: 10.5 }}>Prêt en 4 s</span>
               </div>

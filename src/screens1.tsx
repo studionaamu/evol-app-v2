@@ -645,7 +645,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
           <div className="eva-health-box glass-lite">
             <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
               <div className="transcript-head" style={{ margin: 0 }}>
-                <span className="eva-orb-mini" style={{ width: 11, height: 11 }} /> ANALYSE IA EVA · TEMPS RÉEL
+                <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
               </div>
               <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
                 {analyzingHealth ? 'Calcul…' : 'Actualiser'}
@@ -1041,7 +1041,7 @@ export function EvaPanel({ role, prefill, onClose }: {
                   </div>
                 </div>
               : <div key={k} className="eva-cardmsg">
-                  <div className="eva-cardmsg-head"><span className="eva-orb-mini" aria-hidden /><strong>EVA</strong></div>
+                  <div className="eva-cardmsg-head"><EvaAvatar size={16} /><strong>EVA</strong></div>
                   <p>{m.text}</p>
                   {m.actions && (
                     <div className="eva-actions">
@@ -1056,7 +1056,7 @@ export function EvaPanel({ role, prefill, onClose }: {
                   )}
                 </div>
           ))}
-          {typing && <div className="eva-cardmsg eva-typing"><span className="eva-orb-mini" /><i /><i /><i /></div>}
+          {typing && <div className="eva-cardmsg eva-typing"><EvaAvatar size={15} /><i /><i /><i /></div>}
           <div ref={endRef} />
         </div>
       </div>
