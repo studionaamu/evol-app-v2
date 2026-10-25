@@ -100,6 +100,52 @@ const ETAPES = [
   { t: 'Vous vous connectez', d: 'Identifiant + e-mail : votre programme s’ouvre, sans la partie Explorer.' },
 ] as const
 
+export function GuestWelcome({ onEnter, onBack }: { onEnter: () => void; onBack: () => void }) {
+  const team = COACHES.slice(0, 3)
+  return (
+    <div className="screen auth guest-welcome">
+      <div className="auth-art" aria-hidden>
+        <div className="aurora" />
+      </div>
+      <div className="gw-wrap">
+        <header className="prog-top">
+          <button className="icon-btn prog-back" onClick={onBack} aria-label="Retour">
+            <Icon name="chevron-left" size={19} />
+          </button>
+          <span className="prog-badge"><Icon name="users" size={11} /> MODE INVITÉ</span>
+          <span style={{ width: 40 }} />
+        </header>
+
+        <div className="gw-body">
+          <div className="gw-team">
+            {team.map((c, i) => (
+              <span className={'gw-face' + (i === 1 ? ' main' : '')} key={c.id}>
+                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={i === 1 ? 84 : 66} ring />
+              </span>
+            ))}
+          </div>
+          <div className="prog-kicker">VOS COACHS SONT DÉJÀ LÀ</div>
+          <h1>Une équipe pour vous,<br />à chaque étape.</h1>
+          <p>
+            Vos coachs partenaires sont en place et coordonnés autour de votre programme.
+            Avancez à votre rythme, sans engagement.
+          </p>
+          <div className="gw-names">
+            {team.map(c => <span key={c.id}>{c.name.split(' ')[0]}</span>)}
+          </div>
+        </div>
+
+        <div className="prog-cta">
+          <button className="btn btn-glass solid" onClick={onEnter}>
+            <span>Découvrir mon espace</span><Icon name="arrow-right" size={16} />
+          </button>
+          <p className="prog-note">Sans compte : l’Explorer reste masqué, rien n’est conservé.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Programme({ onBack, onLogin, onGuest }: {
   onBack: () => void
   onLogin: () => void
@@ -120,12 +166,7 @@ export function Programme({ onBack, onLogin, onGuest }: {
         </header>
 
         <div className="prog-head">
-          <div className="prog-kicker">ACCOMPAGNEMENT SPÉCIALISÉ</div>
-          <h1>Un cadre strict,<br />une équipe autour de vous.</h1>
-          <p>
-            Evolia réunit vos coachs partenaires, les professionnels de santé et vos financeurs
-            autour d’un programme unique, défini avec vous.
-          </p>
+          <h1>Une équipe pour vous,<br />à chaque étape de votre programme.</h1>
         </div>
 
         <div className="prog-grid">

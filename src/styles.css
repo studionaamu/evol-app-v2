@@ -2589,3 +2589,43 @@ html:not(.dark) .synergy-page::before {
 .prog-demo:hover { color: #F5D9C4; border-color: rgba(245, 217, 196, 0.4); }
 .prog-form .btn { width: 100%; }
 .prog-form .btn:disabled { opacity: 0.38; }
+
+/* ============ MODE INVITÉ — page minimale, équipe déjà en place ============ */
+.screen.auth.guest-welcome {
+  background:
+    radial-gradient(74% 46% at 12% -6%, rgba(232, 168, 124, 0.26), transparent 70%),
+    radial-gradient(60% 40% at 96% 10%, rgba(150, 116, 178, 0.22), transparent 72%),
+    linear-gradient(180deg, #16131A 0%, #100E12 58%, #0B0A0C 100%);
+}
+.screen.auth.guest-welcome .auth-art { opacity: 0.55; }
+.gw-wrap {
+  position: relative; z-index: 1; display: flex; flex-direction: column;
+  min-height: 100%;
+  padding: calc(14px + env(safe-area-inset-top)) 26px calc(26px + env(safe-area-inset-bottom));
+}
+.gw-body {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 26px 0 18px;
+}
+.gw-team { display: flex; align-items: flex-end; justify-content: center; margin-bottom: 30px; }
+.gw-face { display: flex; margin: 0 -10px; }
+.gw-face .avatar { box-shadow: 0 0 0 2px #14111A, 0 0 0 3.5px rgba(236, 197, 168, 0.5), 0 18px 34px -18px rgba(0, 0, 0, 0.9); }
+.gw-face.main { z-index: 2; }
+.gw-face .avatar img { object-position: center 20%; }
+.guest-welcome .prog-kicker { margin-bottom: 12px; color: rgba(243, 237, 231, 0.42); }
+.guest-welcome h1 {
+  font-size: 27px; line-height: 1.18; letter-spacing: -0.035em;
+  color: #FBF6F1; font-weight: 500; margin-bottom: 12px;
+}
+.guest-welcome .gw-body p {
+  font-size: 13px; line-height: 1.6; font-weight: 300;
+  color: rgba(243, 237, 231, 0.58); max-width: 30ch;
+}
+.gw-names { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
+.gw-names span {
+  font-size: 10.5px; letter-spacing: 0.02em; color: rgba(243, 237, 231, 0.5);
+  padding: 5px 11px; border-radius: 99px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}

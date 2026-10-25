@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
 import { EvaAvatar } from './bits'
 import { StoreProvider, useStore } from './store'
-import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding, Programme, ProgramAccess } from './entry'
+import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding, Programme, ProgramAccess, GuestWelcome } from './entry'
 import { Hub, Explorer, Ecosystem, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
 import { Profile, CoachSpace, type CoachTab, type VitrineSub } from './screens3'
 import { EXERCISES, type Coach, type Domain } from './data'
 
-type Phase = 'welcome' | 'programme' | 'programLogin' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
+type Phase = 'welcome' | 'programme' | 'programLogin' | 'guestWelcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
 
 function Shell() {
   const {
@@ -99,7 +99,14 @@ function Shell() {
     <Programme
       onBack={() => setPhase('welcome')}
       onLogin={() => setPhase('programLogin')}
-      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
+      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('guestWelcome') }}
+    />
+  )
+
+  if (phase === 'guestWelcome') return (
+    <GuestWelcome
+      onEnter={() => setPhase('app')}
+      onBack={() => setPhase('programme')}
     />
   )
 
