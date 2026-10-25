@@ -77,8 +77,8 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
       {programmeOpen && (
         <div className="pay-layer" onClick={() => setProgrammeOpen(false)}>
           <div className="pay-sheet" onClick={e => e.stopPropagation()}>
-            <div className="card-kicker" style={{ margin: 0 }}><Icon name="lock" size={12} /> ACCÈS PROGRAMME</div>
-            <h2 style={{ marginBottom: 6 }}>Vos accès, générés après paiement.</h2>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="lock" size={12} /> ACCÈS PROGRAMME · EVOLIA</div>
+            <h2 style={{ marginBottom: 6 }}>Votre programme EVOLIA.</h2>
             <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>
               Utilisez l'e-mail de commande et l'identifiant reçu par e-mail pour ouvrir votre programme complet.
             </p>
@@ -98,7 +98,7 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
               />
             </div>
             <button className="btn btn-primary" disabled={!accessValid} onClick={() => { setProgrammeOpen(false); onProgramme() }}>
-              <span>Ouvrir mon programme</span><Icon name="arrow-right" size={16} />
+              <span>Accès à mon programme Evolia</span><Icon name="arrow-right" size={16} />
             </button>
             <button className="btn btn-ghost" onClick={() => setProgrammeOpen(false)}>Annuler</button>
           </div>

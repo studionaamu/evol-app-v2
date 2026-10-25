@@ -230,14 +230,15 @@ export type CommunityEvent = {
   place: string
   seats: number
   tag: string
+  desc: string
 }
 
 /* événements ouverts à la communauté (visio ou présentiel) */
 export const EVENTS: CommunityEvent[] = [
-  { id: 'e1', title: 'Cohérence cardiaque collective', day: 26, month: 'JUIN', time: '07:30', mode: 'Visio', host: 'Camille Durand', place: 'Salle Synergy', seats: 12, tag: 'Respiration' },
-  { id: 'e2', title: 'Marche consciente au parc Monceau', day: 28, month: 'JUIN', time: '10:00', mode: 'Présentiel', host: 'Marc Lefèvre', place: 'Paris 8e', seats: 8, tag: 'Mouvement' },
-  { id: 'e3', title: 'Atelier petit-déjeuner protéiné', day: 2, month: 'JUIL', time: '18:30', mode: 'Visio', host: 'Nora Benali', place: 'Cuisine partagée', seats: 20, tag: 'Nutrition' },
-  { id: 'e4', title: 'Cercle d’écoute entre élèves', day: 5, month: 'JUIL', time: '19:00', mode: 'Visio', host: 'Élodie Martin', place: 'Salle confidentielle', seats: 6, tag: 'Mental' },
+  { id: 'e1', title: 'Cohérence cardiaque collective', day: 26, month: 'JUIN', time: '07:30', mode: 'Visio', host: 'Camille Durand', place: 'Salle Synergy', seats: 12, tag: 'Respiration', desc: 'Vingt minutes de cohérence cardiaque guidée à distance, puis un temps d’échange libre. Idéal pour commencer la journée le souffle posé, seul ou en famille.' },
+  { id: 'e2', title: 'Marche consciente au parc Monceau', day: 28, month: 'JUIN', time: '10:00', mode: 'Présentiel', host: 'Marc Lefèvre', place: 'Paris 8e', seats: 8, tag: 'Mouvement', desc: 'Une heure de marche lente en plein air, respiration et mobilité douce, pour retrouver de l’aisance dans le corps et rencontrer les autres élèves du programme.' },
+  { id: 'e3', title: 'Atelier petit-déjeuner protéiné', day: 2, month: 'JUIL', time: '18:30', mode: 'Visio', host: 'Nora Benali', place: 'Cuisine partagée', seats: 20, tag: 'Nutrition', desc: 'Nora prépare en direct trois petits-déjeuners simples et rassasiants. Vous recevez la liste des courses et les fiches recettes avant l’atelier.' },
+  { id: 'e4', title: 'Cercle d’écoute entre élèves', day: 5, month: 'JUIL', time: '19:00', mode: 'Visio', host: 'Élodie Martin', place: 'Salle confidentielle', seats: 6, tag: 'Mental', desc: 'Un espace de parole confidentiel, sans caméra obligatoire, animé par Élodie. Six places pour garantir un temps de parole à chacun.' },
 ]
 
 export type Message = { from: 'me' | 'coach'; text: string; time: string; author?: string }

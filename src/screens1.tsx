@@ -5,7 +5,7 @@ import { useStore } from './store'
 import {
   COACHES, SESSIONS, EXERCISES, QUOTES, IMAGES, EVENTS,
   EVA_SESSION_REPORTS, INITIAL_SHARED_DOCS, ECOSYSTEM_GOALS,
-  type Coach, type SharedDocument,
+  type Coach, type SharedDocument, type CommunityEvent,
 } from './data'
 
 function todayLabel() {
@@ -255,8 +255,6 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
           })}
         </div>
       </section>
-
-      <footer className="tab-footer">Evol · conçu pour respirer</footer>
     </div>
   )
 }
@@ -271,6 +269,8 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
   const [specialty, setSpecialty] = useState<string | null>(null)
   const [maxPrice, setMaxPrice] = useState<number | null>(null)
   const [mode, setMode] = useState<string | null>(null)
+  const [event, setEvent] = useState<CommunityEvent | null>(null)
+  const [joinedEvents, setJoinedEvents] = useState<string[]>([])
   const specialties = ['Stress', 'Nutrition', 'Mobilité', 'Anxiété']
 
   const results = useMemo(() => COACHES.filter(c => {
@@ -281,6 +281,17 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
     const matchM = !mode || c.mode === mode || (mode === 'Hybride')
     return matchQ && matchS && matchP && matchM
   }), [q, specialty, maxPrice, mode])
+
+  if (event) {
+    return (
+      <EventScreen
+        ev={event}
+        joined={joinedEvents.includes(event.id)}
+        onJoin={() => setJoinedEvents(js => js.includes(event.id) ? js.filter(x => x !== event.id) : [...js, event.id])}
+        onBack={() => setEvent(null)}
+      />
+    )
+  }
 
   return (
     <div className="tab-page">
@@ -325,7 +336,7 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         <p style={{ fontSize: 12.5, marginBottom: 10 }}>Ateliers et rencontres en visio ou en présentiel, avec les autres élèves.</p>
         <div className="sessions">
           {EVENTS.map(ev => (
-            <div className="session event-row" key={ev.id}>
+            <button className="session event-row" key={ev.id} onClick={() => setEvent(ev)} aria-label={`Voir l'évènement ${ev.title}`}>
               <div className="date-box"><strong>{ev.day}</strong><span>{ev.month}</span></div>
               <div className="session-info">
                 <div className="session-time">
@@ -334,10 +345,11 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
                 <strong>{ev.title}</strong>
                 <span>{ev.host} · {ev.place} · {ev.seats} places</span>
               </div>
-              <button className="btn btn-soft sm event-join" aria-label={`S'inscrire à ${ev.title}`}>
-                <span>Rejoindre</span>
-              </button>
-            </div>
+              <span className={'event-join' + (joinedEvents.includes(ev.id) ? ' on' : '')}>
+                {joinedEvents.includes(ev.id) ? 'Inscrit' : 'Rejoindre'}
+                <Icon name="chevron-right" size={13} />
+              </span>
+            </button>
           ))}
         </div>
       </section>
@@ -380,6 +392,67 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
       </div>
 
       <footer className="tab-footer">Coachs vérifiés et certifiés · paiement sécurisé</footer>
+    </div>
+  )
+}
+
+/* =====================================================
+   ÉVÈNEMENT COMMUNAUTÉ — page dédiée
+   ===================================================== */
+
+function EventScreen({ ev, joined, onJoin, onBack }: {
+  ev: CommunityEvent
+  joined: boolean
+  onJoin: () => void
+  onBack: () => void
+}) {
+  return (
+    <div className="event-screen">
+      <header className="chat-head">
+        <button className="icon-btn" onClick={onBack} aria-label="Retour aux évènements">
+          <Icon name="chevron-left" size={19} />
+        </button>
+        <strong style={{ fontSize: 15 }}>Évènement</strong>
+        <span className="tag mini">{ev.tag}</span>
+      </header>
+
+      <div className="event-hero">
+        <span className="event-mode">
+          <Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={13} /> {ev.mode}
+        </span>
+        <h1>{ev.title}</h1>
+        <div className="event-when">
+          <strong>{ev.day} {ev.month}</strong>
+          <span>· {ev.time}</span>
+        </div>
+      </div>
+
+      <div className="event-body">
+        <section className="card">
+          <div className="client-lines">
+            <div className="client-line"><Icon name="user" size={14} /><span>Animé par {ev.host}</span></div>
+            <div className="client-line"><Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={14} /><span>{ev.place}</span></div>
+            <div className="client-line"><Icon name="users" size={14} /><span>{ev.seats} places · élèves Evol</span></div>
+          </div>
+          <p style={{ marginTop: 12 }}>{ev.desc}</p>
+        </section>
+
+        <section className="card">
+          <div className="card-kicker"><Icon name="sparkle" size={13} /> POURQUOI Y ALLER</div>
+          <p>Un temps collectif pour pratiquer avec vos coachs et rencontrer les autres élèves — en visio ou en présentiel. EVA ajoute l’évènement à votre agenda dès l’inscription.</p>
+        </section>
+
+        <div className="privacy">
+          <Icon name="shield" size={13} /> Réservé aux élèves Evol · annulation libre jusqu’à 24 h avant.
+        </div>
+      </div>
+
+      <div className="event-cta">
+        <button className={'btn ' + (joined ? 'btn-soft' : 'btn-primary')} onClick={onJoin}>
+          <Icon name={joined ? 'check' : 'plus'} size={16} />
+          <span>{joined ? 'Inscrit · ajouté à mon agenda' : 'Je participe'}</span>
+        </button>
+      </div>
     </div>
   )
 }
@@ -459,7 +532,7 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
           ['sante', 'Santé & IA'],
           ['objectifs', 'Stats & Objectifs'],
           ['outils', 'Outils'],
-          ['seances', 'Comptes rendus EVA'],
+          ['seances', 'Comptes rendus'],
           ['partage', 'Docs partagés'],
         ] as const).map(([id, label]) => (
           <button
@@ -927,7 +1000,6 @@ export function EvaPanel({ role, prefill, onClose }: {
           <strong>EVA</strong>
           <span><i className="dot" /> Assistante Evol · IA</span>
         </div>
-        <button className="icon-btn" aria-label="Appel EVA"><Icon name="phone" size={17} /></button>
       </header>
 
       <div className="body eva-console">
@@ -958,9 +1030,11 @@ export function EvaPanel({ role, prefill, onClose }: {
         </div>
       </div>
 
+      <p className="eva-prompt">Par quoi voulez-vous commencer ?</p>
+
       <div className="eva-composer glass">
         <input
-          placeholder={role === 'coach' ? 'Demander à EVA…' : 'Demandez moi tout…'}
+          aria-label={role === 'coach' ? 'Demander à EVA' : 'Écrire à EVA'}
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}

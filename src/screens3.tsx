@@ -18,7 +18,7 @@ export type VitrineSub = 'programmes' | 'creneaux' | 'freebies' | 'galerie'
    ===================================================== */
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
-  const { name, guest, consent, setConsent, reset, role, followedCoachIds } = useStore()
+  const { name, guest, consent, setConsent, reset, role } = useStore()
   const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') === 'dark')
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -37,16 +37,6 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         </div>
         <Avatar hue="158" initials={guest ? '?' : name.slice(0, 1).toUpperCase()} photo={IMAGES.userPhoto} size={56} ring />
       </header>
-
-      {!guest && (
-        <section className="card">
-          <div className="stat-row">
-            <div><strong>12</strong><span>sessions</span></div>
-            <div><strong>86%</strong><span>régularité</span></div>
-            <div><strong>{followedCoachIds.length}</strong><span>coach{followedCoachIds.length > 1 ? 's' : ''}</span></div>
-          </div>
-        </section>
-      )}
 
       <section className="card">
         <div className="card-kicker">RÉGLAGES</div>
@@ -535,8 +525,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               </div>
             ))}
           </section>
-
-          <footer className="tab-footer">Interface coach · démo Evol</footer>
         </>
       )}
 
