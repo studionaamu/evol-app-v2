@@ -57,7 +57,14 @@ export function RadarChart({
   return (
     <div className={'radar-wrap' + (expanded ? ' expanded' : '')}>
       <svg viewBox="0 0 300 280" className="radar-svg" role="group" aria-label="Radar de vie interactif">
-        {[0.33, 0.66, 1].map(f => <polygon key={f} points={ring(R * f)} className="radar-ring" />)}
+        <defs>
+          <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1525FF" stopOpacity="0.18" />
+            <stop offset="60%" stopColor="#6D3EAD" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#1525FF" stopOpacity="0.06" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75, 1].map(f => <polygon key={f} points={ring(R * f)} className="radar-ring" />)}
         {scores.map((s, i) => {
           const [x, y] = pt(i, R)
           const isSel = selectedAxis === s.axis
@@ -1053,8 +1060,6 @@ export function EvaPanel({ role, prefill, onClose }: {
           <div ref={endRef} />
         </div>
       </div>
-
-      {msgs.length === 0 && <p className="eva-prompt">Par quoi voulez-vous commencer ?</p>}
 
       <div className="eva-composer glass">
         <label className="eva-shot" title="Photographier mon plat">

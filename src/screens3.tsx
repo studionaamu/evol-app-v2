@@ -10,7 +10,7 @@ import {
 } from './data'
 import { CallScreen } from './screens2'
 
-export type CoachTab = 'bord' | 'vitrine' | 'statistiques' | 'clients' | 'messagerie' | 'reglages'
+export type CoachTab = 'bord' | 'vitrine' | 'clients' | 'messagerie' | 'reglages'
 export type VitrineSub = 'programmes' | 'creneaux' | 'freebies' | 'galerie'
 
 /* =====================================================
@@ -803,14 +803,14 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
         </>
       )}
 
-      {/* ONGLET STATISTIQUES COACH */}
-      {coachTab === 'statistiques' && (
+      {/* ONGLET SUIVI — stats & clients réunis */}
+      {coachTab === 'clients' && (
         <>
           <header className="page-head">
             <div>
               <div className="date-line">STATS & CLIENTS</div>
               <h1>Votre activité,<br />vos élèves.</h1>
-              <p>Revenus, formats, remplissage et suivi de votre base : tout au même endroit.</p>
+              <p>Revenus, formats et suivi de votre base, au même endroit.</p>
             </div>
           </header>
 
@@ -832,83 +832,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             </div>
             <TrendBars data={[52, 60, 58, 70, 76, 84, 92]} />
             <div className="axis"><span>Jan</span><span>Fév</span><span>Mar</span><span>Avr</span><span>Mai</span><span>Juin</span></div>
-          </section>
-
-          <section className="card">
-            <div className="card-kicker"><Icon name="users" size={13} /> RÉSULTATS & ACTIVITÉ · CLIENTS</div>
-            <h2>Vos élèves en un regard</h2>
-            <div className="metrics" style={{ marginTop: 8 }}>
-              <div className="metric">
-                <div className="metric-top"><span>ÉLÈVES ACTIFS</span><span className="delta up">+1</span></div>
-                <span className="metric-val">{COACH_CLIENTS.length}</span>
-              </div>
-              <div className="metric">
-                <div className="metric-top"><span>ASSIDUITÉ MOYENNE</span></div>
-                <span className="metric-val">{avgAdherence}%</span>
-              </div>
-              <div className="metric">
-                <div className="metric-top"><span>ALERTES EVA</span></div>
-                <span className="metric-val">{clientAlerts}</span>
-              </div>
-            </div>
-            <div className="eco-table" style={{ marginTop: 10 }}>
-              <div className="eco-thead">
-                <span>Élève</span>
-                <span>Énergie</span>
-                <span>Assiduité</span>
-              </div>
-              {COACH_CLIENTS.slice(0, 3).map(c => (
-                <div className="eco-trow" key={c.id} onClick={() => onChangeCoachTab?.('clients')}>
-                  <div className="eco-tmain">
-                    <strong>{c.name}</strong>
-                    <span>{c.program}</span>
-                  </div>
-                  <div className="eco-ttarget">
-                    <strong>{c.energy}/100</strong>
-                    <span>{c.sleep.split(' ')[0]}</span>
-                  </div>
-                  <div className="eco-tprog">
-                    <strong>{c.adherence}%</strong>
-                    <div className="group-meter"><span style={{ width: `${c.adherence}%` }} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button className="btn btn-soft sm" style={{ marginTop: 12 }} onClick={() => onChangeCoachTab?.('clients')}>
-              <Icon name="users" size={14} /><span>Ouvrir le suivi clients</span><Icon name="chevron-right" size={13} />
-            </button>
-          </section>
-
-          <section className="card">
-            <div className="card-kicker"><Icon name="calendar" size={13} /> GESTION DES COURS DISPENSÉS</div>
-            <h2>Répartition par format</h2>
-            <div className="eco-table" style={{ marginTop: 10 }}>
-              <div className="eco-thead">
-                <span>Format de cours</span>
-                <span>Volume</span>
-                <span>Présence</span>
-              </div>
-              {[
-                { name: 'Respiration & Nerf Vague (1:1)', count: '22 séances', hours: '16h30', rate: 96 },
-                { name: 'Groupe Matin · Cohérence', count: '12 sessions', hours: '6h00', rate: 89 },
-                { name: 'Bilan Découverte & Audit EVA', count: '8 séances', hours: '6h00', rate: 100 },
-              ].map((row, idx) => (
-                <div className="eco-trow" key={idx}>
-                  <div className="eco-tmain">
-                    <strong>{row.name}</strong>
-                    <span>{row.hours} dispensées ce mois</span>
-                  </div>
-                  <div className="eco-ttarget">
-                    <strong>{row.count}</strong>
-                    <span>+15m débrief inclus</span>
-                  </div>
-                  <div className="eco-tprog">
-                    <strong>{row.rate}%</strong>
-                    <div className="group-meter"><span style={{ width: `${row.rate}%` }} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </section>
 
           <section className="card">
@@ -961,21 +884,56 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               ))}
             </div>
           </section>
-        </>
-      )}
 
-      {coachTab === 'clients' && (
-        <>
-          <header className="page-head">
-            <div>
-              <div className="date-line">MES CLIENTS</div>
-              <h1>Suivi long terme.</h1>
-              <p>Déroulez un profil pour voir les métriques du programme.</p>
+          <section className="card">
+            <div className="card-kicker"><Icon name="calendar" size={13} /> GESTION DES COURS DISPENSÉS</div>
+            <h2>Répartition par format</h2>
+            <div className="eco-table" style={{ marginTop: 10 }}>
+              <div className="eco-thead">
+                <span>Format de cours</span>
+                <span>Volume</span>
+                <span>Présence</span>
+              </div>
+              {[
+                { name: 'Respiration & Nerf Vague (1:1)', count: '22 séances', hours: '16h30', rate: 96 },
+                { name: 'Groupe Matin · Cohérence', count: '12 sessions', hours: '6h00', rate: 89 },
+                { name: 'Bilan Découverte & Audit EVA', count: '8 séances', hours: '6h00', rate: 100 },
+              ].map((row, idx) => (
+                <div className="eco-trow" key={idx}>
+                  <div className="eco-tmain">
+                    <strong>{row.name}</strong>
+                    <span>{row.hours} dispensées ce mois</span>
+                  </div>
+                  <div className="eco-ttarget">
+                    <strong>{row.count}</strong>
+                    <span>+15m débrief inclus</span>
+                  </div>
+                  <div className="eco-tprog">
+                    <strong>{row.rate}%</strong>
+                    <div className="group-meter"><span style={{ width: `${row.rate}%` }} /></div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </header>
+          </section>
+
           <section className="card">
             <div className="card-kicker"><Icon name="users" size={13} /> SUIVI DE LA BASE D'ÉLÈVES</div>
-            <h2>Progression & assiduité par élève</h2>
+            <h2>Progression & assiduité</h2>
+            <div className="metrics" style={{ marginTop: 8 }}>
+              <div className="metric">
+                <div className="metric-top"><span>ÉLÈVES ACTIFS</span><span className="delta up">+1</span></div>
+                <span className="metric-val">{COACH_CLIENTS.length}</span>
+              </div>
+              <div className="metric">
+                <div className="metric-top"><span>ASSIDUITÉ MOYENNE</span></div>
+                <span className="metric-val">{avgAdherence}%</span>
+              </div>
+              <div className="metric">
+                <div className="metric-top"><span>ALERTES EVA</span></div>
+                <span className="metric-val">{clientAlerts}</span>
+              </div>
+            </div>
             <div className="eco-table" style={{ marginTop: 10 }}>
               <div className="eco-thead">
                 <span>Élève & Programme</span>

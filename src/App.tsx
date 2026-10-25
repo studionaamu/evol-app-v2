@@ -140,8 +140,7 @@ function Shell() {
         {([
           { id: 'bord', icon: 'home', label: 'Bord' },
           { id: 'vitrine', icon: 'store', label: 'Offre' },
-          { id: 'statistiques', icon: 'chart', label: 'Stats' },
-          { id: 'clients', icon: 'users', label: 'Clients' },
+          { id: 'clients', icon: 'chart', label: 'Suivi' },
           { id: 'messagerie', icon: 'chat', label: 'Messages' },
           { id: 'reglages', icon: 'gear', label: 'Réglages' },
         ] as const).map(t => (
