@@ -5,8 +5,8 @@ import { useStore } from './store'
 import {
   COACHES, SESSIONS, QUOTES, IMAGES, EVENTS,
   EVA_SESSION_REPORTS, HOME_ANNOUNCEMENTS, STORIES, HORIZON_GOALS,
-  COACH_TEAM, WORKSHOPS, DOTATIONS, PSY_COACH_ID, CAREER_COACH_ID,
-  type Coach, type CommunityEvent,
+  COACH_TEAM, DOTATIONS, PSY_COACH_ID, CAREER_COACH_ID, INITIAL_SHARED_DOCS,
+  type Coach, type CommunityEvent, type SharedDocument,
 } from './data'
 
 function todayLabel() {
@@ -112,9 +112,6 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
   const [joined, setJoined] = useState<string[]>(['a1'])
   const toggleJoin = (id: string) =>
     setJoined(js => (js.includes(id) ? js.filter(x => x !== id) : [...js, id]))
-
-  /* ateliers collectifs */
-  const [joinedWorkshops, setJoinedWorkshops] = useState<string[]>(['w1'])
 
   /* flux vidéo horizontal, filtré sur les objectifs du parcours */
   const [storyFilter, setStoryFilter] = useState<'objectifs' | 'tous'>('objectifs')
@@ -262,45 +259,6 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
         </div>
       </section>
 
-      {/* ATELIERS COLLECTIFS (déplacés de l'Écosystème) */}
-      <section className="card" data-zone="ateliers">
-        <h2>Sessions thématiques de groupe</h2>
-        <div className="workshop-list">
-          {WORKSHOPS.map(w => {
-            const c = COACHES.find(x => x.id === w.coachId)!
-            const on = joinedWorkshops.includes(w.id)
-            const full = w.taken >= w.seats
-            return (
-              <article className={'workshop glass-lite' + (on ? ' on' : '')} key={w.id}>
-                <div className="ws-top">
-                  <span className="tag mini">{w.tag}</span>
-                  <span className="ws-when">
-                    <Icon name={w.mode === 'Visio' ? 'video' : 'location'} size={11} /> {w.date} · {w.time}
-                  </span>
-                </div>
-                <strong className="ws-title">{w.title}</strong>
-                <p>{w.desc}</p>
-                <div className="ws-foot">
-                  <button className="hg-coach" onClick={() => onOpenCoach(c)}>
-                    <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={18} />
-                    <span>{c.name.split(' ')[0]}</span>
-                  </button>
-                  <span className={'ws-seats' + (full ? ' full' : '')}>{w.taken}/{w.seats} inscrits</span>
-                  <button
-                    className={'btn sm ' + (on ? 'btn-registered' : 'btn-primary')}
-                    disabled={full && !on}
-                    onClick={() => setJoinedWorkshops(js => on ? js.filter(x => x !== w.id) : [...js, w.id])}
-                  >
-                    {on ? <Icon name="check" size={12} /> : !full ? <Icon name="plus" size={12} /> : null}
-                    <span>{on ? 'Inscrit' : full ? 'Complet' : 'M’inscrire'}</span>
-                  </button>
-                </div>
-              </article>
-            )
-          })}
-        </div>
-      </section>
-
       {/* JOURNALING & TRANSCRIPTION IA */}
       <section className="card" data-zone="journal">
         <h2>Carnet d’évolution</h2>
@@ -359,23 +317,30 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
    ===================================================== */
 
 export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
-  const { quizDomains, followedCoachIds, toggleFollowCoach } = useStore()
+  const { quizDomains, followedCoachIds, toggleFollowCoach, guest, program } = useStore()
   const [q, setQ] = useState('')
   const [specialty, setSpecialty] = useState<string | null>(null)
   const [maxPrice, setMaxPrice] = useState<number | null>(null)
   const [mode, setMode] = useState<string | null>(null)
+  const [city, setCity] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
   const [event, setEvent] = useState<CommunityEvent | null>(null)
   const [joinedEvents, setJoinedEvents] = useState<string[]>([])
   const specialties = ['Stress', 'Nutrition', 'Mobilité', 'Anxiété']
+  const cities = [...new Set(COACHES.map(c => c.city))]
+  /* accès invité / hors programme : textes seuls, sans photos */
+  const textOnly = guest || !program
+  const filterCount = [specialty, maxPrice, mode, city].filter(v => v != null).length
 
   const results = useMemo(() => COACHES.filter(c => {
     const ql = q.toLowerCase()
     const matchQ = !ql || c.name.toLowerCase().includes(ql) || c.role.toLowerCase().includes(ql) || c.tags.some(t => t.toLowerCase().includes(ql))
     const matchS = !specialty || c.tags.includes(specialty)
     const matchP = maxPrice == null || c.price <= maxPrice
-    const matchM = !mode || c.mode === mode || (mode === 'Hybride')
-    return matchQ && matchS && matchP && matchM
-  }), [q, specialty, maxPrice, mode])
+    const matchM = !mode || mode === 'Hybride' || c.mode === mode
+    const matchC = !city || c.city === city
+    return matchQ && matchS && matchP && matchM && matchC
+  }), [q, specialty, maxPrice, mode, city])
 
   if (event) {
     return (
@@ -393,34 +358,61 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
       <header className="page-head">
         <div>
           <div className="date-line">EXPLORER</div>
-          <h1>Les bonnes personnes<br />au bon moment.</h1>
-          <p>Choisissez vos coachs : votre Hub et votre messagerie s'adaptent automatiquement ({followedCoachIds.length} suivi{followedCoachIds.length > 1 ? 's' : ''}).</p>
+          <h1 className={textOnly ? 'explorer-slogan' : undefined}>Les bonnes personnes<br />au bon moment.</h1>
         </div>
       </header>
 
-      <div className="search glass-lite">
-        <Icon name="search" size={17} />
-        <input placeholder="Domaine, prénom, spécialité…" value={q} onChange={e => setQ(e.target.value)} />
+      <div className="search-toolbar">
+        <div className="search glass-lite">
+          <Icon name="search" size={17} />
+          <input placeholder="Domaine, prénom, spécialité…" value={q} onChange={e => setQ(e.target.value)} />
+        </div>
+        <button
+          className={'filter-btn glass-lite' + (showFilters || filterCount > 0 ? ' on' : '')}
+          onClick={() => setShowFilters(v => !v)}
+          aria-label="Filtrer par lieu et format"
+          aria-expanded={showFilters}
+        >
+          <Icon name="grid" size={17} />
+          {filterCount > 0 && <em>{filterCount}</em>}
+        </button>
       </div>
 
-      <div className="chip-row">
-        {specialties.map(s => (
-          <button key={s} className={'chip glass-lite' + (specialty === s ? ' on' : '')} onClick={() => setSpecialty(specialty === s ? null : s)}>{s}</button>
-        ))}
-        <button className={'chip glass-lite' + (maxPrice === 70 ? ' on' : '')} onClick={() => setMaxPrice(maxPrice === 70 ? null : 70)}>≤ 70 €</button>
-        <button className={'chip glass-lite' + (mode === 'Présentiel' ? ' on' : '')} onClick={() => setMode(mode === 'Présentiel' ? null : 'Présentiel')}>Présentiel</button>
-        <button className={'chip glass-lite' + (mode === 'À distance' ? ' on' : '')} onClick={() => setMode(mode === 'À distance' ? null : 'À distance')}>Distanciel</button>
-      </div>
+      {showFilters && (
+        <div className="filter-panel glass-lite">
+          <div className="filter-sub">Format</div>
+          <div className="chip-row">
+            {['Présentiel', 'À distance', 'Hybride'].map(m => (
+              <button key={m} className={'chip glass-lite' + (mode === m ? ' on' : '')} onClick={() => setMode(mode === m ? null : m)}>{m}</button>
+            ))}
+          </div>
+          <div className="filter-sub">Lieu</div>
+          <div className="chip-row">
+            {cities.map(ci => (
+              <button key={ci} className={'chip glass-lite' + (city === ci ? ' on' : '')} onClick={() => setCity(city === ci ? null : ci)}>{ci}</button>
+            ))}
+          </div>
+          <div className="filter-sub">Spécialité & budget</div>
+          <div className="chip-row" style={{ marginBottom: 0 }}>
+            {specialties.map(sp => (
+              <button key={sp} className={'chip glass-lite' + (specialty === sp ? ' on' : '')} onClick={() => setSpecialty(specialty === sp ? null : sp)}>{sp}</button>
+            ))}
+            <button className={'chip glass-lite' + (maxPrice === 70 ? ' on' : '')} onClick={() => setMaxPrice(maxPrice === 70 ? null : 70)}>≤ 70 €</button>
+          </div>
+        </div>
+      )}
 
-      {/* accès rapide façon rangée d'avatars */}
-      <div className="quick-row">
-        {COACHES.map(c => (
-          <button key={c.id} className="quick-av" onClick={() => onOpenCoach(c)}>
-            <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={58} ring={followedCoachIds.includes(c.id)} />
-            <span>{c.name.split(' ')[0]}</span>
-          </button>
-        ))}
-      </div>
+      {/* accès rapide façon rangée d'avatars — masqué en accès invité */}
+      {!textOnly && (
+        <div className="quick-row">
+          {COACHES.map(c => (
+            <button key={c.id} className="quick-av" onClick={() => onOpenCoach(c)}>
+              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={58} ring={followedCoachIds.includes(c.id)} />
+              <span>{c.name.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <section className="card">
         <div className="card-kicker"><Icon name="calendar" size={13} /> PROCHAINS ÉVÈNEMENTS</div>
@@ -455,8 +447,8 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         {results.map(c => {
           const isFollowed = followedCoachIds.includes(c.id)
           return (
-            <article className="coach-line" key={c.id} onClick={() => onOpenCoach(c)}>
-              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={54} ring={isFollowed} />
+            <article className={'coach-line' + (textOnly ? ' text-only' : '')} key={c.id} onClick={() => onOpenCoach(c)}>
+              {!textOnly && <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={54} ring={isFollowed} />}
               <div className="coach-id">
                 <strong>{c.name}{quizDomains.some(d => c.domains.includes(d as any)) && <em className="match-dot" />}</strong>
                 <span>{c.role}</span>
@@ -561,9 +553,18 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
 }) {
-  const { selectedRadarAxis, setSelectedRadarAxis } = useStore()
-  const [teamCoach, setTeamCoach] = useState<string>(CAREER_COACH_ID)
+  const { selectedRadarAxis, setSelectedRadarAxis, program } = useStore()
   const [goalCoach, setGoalCoach] = useState<string | null>(CAREER_COACH_ID)
+  const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
+  const [docTitle, setDocTitle] = useState('')
+  const shareDoc = (coachId: string) => {
+    const title = docTitle.trim() || `Note_Suivi_${new Date().toLocaleDateString('fr-FR')}.pdf`
+    setDocs(ds => [
+      { id: 'd' + Date.now(), title, kind: 'Bilan', size: '640 Ko', coachId, date: 'À l’instant', byMe: true },
+      ...ds,
+    ])
+    setDocTitle('')
+  }
 
   /* scan de repas — accès rapide depuis le haut de l'écosystème */
   const shotInput = useRef<HTMLInputElement>(null)
@@ -629,7 +630,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         <div>
           <div className="date-line">MON ÉCOSYSTÈME</div>
           <h1>Votre évolution<br />à 360°.</h1>
-          <p>Vos coachs, leurs objectifs et tous vos outils au même endroit.</p>
+          {program && <p>Vos coachs, leurs objectifs et tous vos outils au même endroit.</p>}
         </div>
         <button className="round-btn eco-cam" onClick={() => shotInput.current?.click()} aria-label="Scanner mon repas avec EVA">
           <Icon name="camera" size={19} />
@@ -642,6 +643,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         accept="image/*"
         capture="environment"
         aria-label="Photographier mon plat"
+        style={{ display: 'none' }}
         onChange={e => { onShot(e.target.files?.[0]); e.target.value = '' }}
       />
       {mealShot && (
@@ -658,22 +660,6 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
           </div>
         </div>
       )}
-
-      {/* MON ÉQUIPE — les coachs comme entrée de page */}
-      <div className="team-row eco-team-row">
-        {COACH_TEAM.map(t => {
-          const c = COACHES.find(x => x.id === t.coachId)!
-          const on = teamCoach === c.id
-          return (
-            <button key={c.id} className={'team-chip' + (on ? ' on' : '')} onClick={() => setTeamCoach(c.id)}>
-              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={42} ring={on} />
-              <span>{c.name.split(' ')[0]}</span>
-              <em className="team-chip-role">{c.role}</em>
-              {t.privacy === 'prive' && <Icon name="lock" size={10} />}
-            </button>
-          )
-        })}
-      </div>
 
       {/* RADAR DE VIE */}
       <section className="card card-balance" data-zone="radar">
@@ -777,12 +763,13 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         </div>
       </section>
 
+      {program && (
       <section className="card" data-zone="team">
         <h2>Mon référent</h2>
         <p>Votre coach référent — coach de vie et spécialiste carrière — coordonne l’équipe autour de vos objectifs.</p>
 
         {(() => {
-          const entry = COACH_TEAM.find(t => t.coachId === teamCoach) ?? COACH_TEAM[0]
+          const entry = COACH_TEAM.find(t => t.coachId === CAREER_COACH_ID) ?? COACH_TEAM[0]
           const c = COACHES.find(x => x.id === entry.coachId)!
           const evaReports = EVA_SESSION_REPORTS.filter(r => r.coachId === entry.coachId)
           return (
@@ -871,6 +858,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
           <span>Le psychologue agréé lit les comptes rendus des autres coachs ; ses propres notes ne sont vues par personne.</span>
         </div>
       </section>
+      )}
 
       {/* OBJECTIFS — vue horizontale par coach, détail au clic */}
       <section className="card" data-zone="objectifs">
@@ -931,12 +919,37 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
                   </div>
                 </article>
               ))}
+
+              <div className="goal-share">
+                <div className="card-kicker" style={{ margin: 0 }}><Icon name="file" size={12} /> ESPACE DE PARTAGE</div>
+                <div className="doc-share-bar" style={{ marginTop: 8, marginBottom: 8 }}>
+                  <input
+                    className="eco-input glass-lite"
+                    placeholder={`Partager un document avec ${c.name.split(' ')[0]}…`}
+                    value={docTitle}
+                    onChange={e => setDocTitle(e.target.value)}
+                  />
+                  <button className="btn btn-soft sm" onClick={() => shareDoc(c.id)}>
+                    <Icon name="share" size={13} /><span>Partager</span>
+                  </button>
+                </div>
+                {docs.filter(d => d.coachId === c.id).map(d => (
+                  <div className="team-report" key={d.id}>
+                    <Icon name="file" size={13} />
+                    <div className="session-info">
+                      <strong>{d.title}</strong>
+                      <span>{d.byMe ? 'Partagé par vous' : 'Reçu de votre coach'} · {d.date} · {d.size}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )
         })()}
       </section>
 
-      {/* DOTATIONS — demande au cas par cas */}
+      {/* DOTATIONS — demande au cas par cas (programme encadré) */}
+      {program && (
       <section className="card dotation-card" data-zone="dotations">
         <span className="dotation-wash" aria-hidden />
         <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
@@ -951,6 +964,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
           <Icon name="plus" size={15} /><span>Lancer une demande de matériel</span>
         </button>
       </section>
+      )}
 
     </div>
   )

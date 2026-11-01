@@ -3,8 +3,8 @@ import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, INITIAL_SHARED_DOCS, PSY_COACH_ID,
-  type Coach, type Message, type SharedDocument, type Thread,
+  COACHES, PSY_COACH_ID,
+  type Coach, type Message, type Thread,
 } from './data'
 
 /* =====================================================
@@ -307,20 +307,6 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<'all' | 'unread' | 'groups'>('all')
 
-  /* Documents & éléments partagés — déplacé de l'Écosystème vers la messagerie */
-  const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
-  const [docTitle, setDocTitle] = useState('')
-  const [docCoach, setDocCoach] = useState('camille')
-
-  const addSharedDoc = () => {
-    const title = docTitle.trim() || `Note_Suivi_${new Date().toLocaleDateString('fr-FR')}.pdf`
-    setDocs(ds => [
-      { id: 'd' + Date.now(), title, kind: 'Bilan', size: '640 Ko', coachId: docCoach, date: 'À l’instant', byMe: true },
-      ...ds,
-    ])
-    setDocTitle('')
-  }
-
   /* intervenants réunissables : le psychologue reste strictement individuel */
   const groupable = COACHES.filter(c => c.id !== PSY_COACH_ID)
   const psy = COACHES.find(c => c.id === PSY_COACH_ID)
@@ -475,55 +461,6 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
       <p className="dim" style={{ fontSize: 11.5, marginTop: 6 }}>
         L’espace du psychologue reste strictement individuel : il ne peut pas être réuni en groupe.
       </p>
-
-      {/* ESPACE DE PARTAGE — documents & éléments partagés avec les coachs */}
-      <section className="card" data-zone="partage" style={{ marginTop: 16 }}>
-        <div className="card-kicker"><Icon name="file" size={13} /> ESPACE DE PARTAGE</div>
-        <h2>Documents & éléments partagés</h2>
-        <p>Un coffre chiffré, partageable en un clic avec chaque intervenant de votre équipe.</p>
-
-        <div className="doc-share-bar" style={{ marginTop: 12, marginBottom: 12 }}>
-          <input
-            className="eco-input glass-lite"
-            placeholder="Nom du document ou bilan à partager…"
-            value={docTitle}
-            onChange={e => setDocTitle(e.target.value)}
-          />
-          <select
-            className="eco-select glass-lite"
-            value={docCoach}
-            onChange={e => setDocCoach(e.target.value)}
-            aria-label="Choisir le coach destinataire"
-          >
-            {COACHES.slice(0, 5).map(c => (
-              <option key={c.id} value={c.id}>{c.name.split(' ')[0]}</option>
-            ))}
-          </select>
-          <button className="btn btn-primary sm" onClick={addSharedDoc}>
-            <Icon name="share" size={14} /><span>Partager</span>
-          </button>
-        </div>
-
-        <div className="freelist">
-          {docs.map(d => {
-            const c = COACHES.find(x => x.id === d.coachId)!
-            return (
-              <div key={d.id} className="free-item glass-lite">
-                <span className="free-kind">{d.kind}</span>
-                <div className="session-info">
-                  <strong style={{ fontSize: 13 }}>{d.title}</strong>
-                  <span style={{ fontSize: 11 }}>
-                    {d.byMe ? `Partagé par vous avec ${c.name.split(' ')[0]}` : `Reçu de ${c.name.split(' ')[0]}`} · {d.date} · {d.size}
-                  </span>
-                </div>
-                <button className="icon-btn" style={{ width: 32, height: 32 }} onClick={() => onOpenChat(c.id)} aria-label="Ouvrir la discussion">
-                  <Icon name="chat" size={14} />
-                </button>
-              </div>
-            )
-          })}
-        </div>
-      </section>
 
       <div className="privacy block"><Icon name="shield" size={13} /> Canal privé · vous contrôlez les participants et les données partagées.</div>
       <footer className="tab-footer">Vos échanges restent chiffrés de bout en bout</footer>
