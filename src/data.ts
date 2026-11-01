@@ -204,7 +204,7 @@ export const COACHES: Coach[] = [
   {
     id: 'karim',
     name: 'Karim Bensaïd',
-    role: 'Coach carrière & réinsertion',
+    role: 'Coach de vie & spécialiste carrière',
     rating: 4.8,
     reviews: 76,
     city: 'Lille',
@@ -264,7 +264,7 @@ export const PSY_COACH_ID = 'helene'
 export const CAREER_COACH_ID = 'karim'
 
 /* Nom générique du programme d’accompagnement encadré */
-export const PROGRAM_NAME = 'Émergence'
+export const PROGRAM_NAME = 'EVOLIA'
 
 export type Session = {
   id: string
@@ -849,7 +849,7 @@ export const STORIES: Story[] = [
     domain: 'Sommeil', duration: '0:48', views: '4,2 k',
     poster: 'https://images.unsplash.com/photo-1520206183501-b80df61043c2?w=900&q=80&auto=format&fit=crop',
     quote: 'En six semaines, je me suis endormie sans écran et sans compter les heures.',
-    caption: 'Programme Émergence · suivi Camille Durand',
+    caption: 'Programme EVOLIA · suivi Camille Durand',
   },
   {
     id: 'st2', kind: 'Podcast', title: 'Retrouver un rythme après un arrêt long', author: 'Hélène Vasseur',
@@ -863,14 +863,14 @@ export const STORIES: Story[] = [
     domain: 'Mouvement', duration: '1:02', views: '3,6 k',
     poster: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop',
     quote: 'Trois séances de douze minutes par semaine, et la douleur a reculé.',
-    caption: 'Programme Émergence · suivi Marc Lefèvre',
+    caption: 'Programme EVOLIA · suivi Marc Lefèvre',
   },
   {
     id: 'st4', kind: 'Témoignage', title: '« J’ai repris le travail à mi-temps »', author: 'Nadia, 38 ans',
     domain: 'Confiance', duration: '1:14', views: '5,1 k',
     poster: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&q=80&auto=format&fit=crop',
     quote: 'On a découpé le retour en étapes que je pouvais tenir. Aucune ne m’a fait peur.',
-    caption: 'Programme Émergence · suivi Karim Bensaïd',
+    caption: 'Programme EVOLIA · suivi Karim Bensaïd',
   },
   {
     id: 'st5', kind: 'Podcast', title: 'L’assiette qui tient toute la matinée', author: 'Nora Benali',
@@ -884,7 +884,7 @@ export const STORIES: Story[] = [
     domain: 'Stress', duration: '0:56', views: '6,7 k',
     poster: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=900&q=80&auto=format&fit=crop',
     quote: 'Quatre minutes de respiration avant chaque réunion, et la journée change de couleur.',
-    caption: 'Programme Émergence · suivi Élodie Martin',
+    caption: 'Programme EVOLIA · suivi Élodie Martin',
   },
 ]
 

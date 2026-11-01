@@ -18,8 +18,9 @@ export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'freebies' | '
    ===================================================== */
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
-  const { name, guest, consent, setConsent, reset, role, program } = useStore()
+  const { name, guest, reset, role, program } = useStore()
   const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') === 'dark')
+  const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
     localStorage.setItem('evol-theme', dark ? 'dark' : 'light')
@@ -67,21 +68,34 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         </div>
       </section>
 
-      {/* ---- RGPD : révocation ---- */}
+      {/* ---- RGPD : information légale ---- */}
       <section className="card">
         <div className="card-kicker"><Icon name="shield" size={13} /> CONFIDENTIALITÉ · RGPD</div>
+        <p>Cliquez sur une ligne pour lire le détail légal.</p>
         {([
-          ['journal', 'Transcription IA du journal', 'Vos notes vocales transcrites puis chiffrées.'],
-          ['shareCoach', 'Partage avec vos coachs', 'Signaux et extraits choisis uniquement.'],
-          ['health', 'Données de santé', 'Objectifs et signaux bien-être.'],
-        ] as [keyof Consent, string, string][]).map(([k, title, desc]) => (
-          <div key={k} className="setting row between consent-line" onClick={() => setConsent(v => ({ ...v, [k]: !v[k] }))}>
-            <div className="setting-label">
-              <span className="setting-txt"><strong>{title}</strong><span>{desc}</span></span>
+          ['journal', 'Transcription IA du journal', 'Vos notes vocales transcrites puis chiffrées.',
+            'Article 9 RGPD — vos notes vocales sont transcrites par EVA puis chiffrées. Aucun accès humain sans votre accord écrit, suppression immédiate sur demande.'],
+          ['shareCoach', 'Partage avec vos coachs', 'Signaux et extraits choisis uniquement.',
+            'Partage révocable à tout instant, limité aux extraits que vous choisissez. Retirer un partage n’efface pas l’historique des séances déjà lues.'],
+          ['health', 'Données de santé', 'Objectifs et signaux bien-être.',
+            'Données de santé traitées sur base de votre consentement explicite (art. 9.2.a RGPD), hébergées en UE, conservées le temps du programme puis supprimées.'],
+        ] as [keyof Consent, string, string, string][]).map(([k, title, desc, legal]) => {
+          const open = openInfo === k
+          return (
+            <div className="consent-info" key={k}>
+              <button
+                className={'setting wide consent-row info' + (open ? ' open' : '')}
+                onClick={() => setOpenInfo(open ? null : k)}
+                aria-expanded={open}
+              >
+                <Icon name="shield" size={16} />
+                <span className="setting-txt"><strong>{title}</strong><span>{desc}</span></span>
+                <Icon name="chevron-right" size={14} />
+              </button>
+              {open && <p className="consent-legal">{legal}</p>}
             </div>
-            <span className={'switch' + (consent[k] ? ' on' : '')}><i /></span>
-          </div>
-        ))}
+          )
+        })}
         <div className="service-list">
           <button className="service-btn"><Icon name="share" size={15} /><span>Exporter mes données</span><Icon name="chevron-right" size={13} /></button>
           <button className="service-btn danger"><Icon name="close" size={15} /><span>Supprimer mon compte</span><Icon name="chevron-right" size={13} /></button>

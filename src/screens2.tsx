@@ -407,15 +407,14 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         <div>
           <div className="date-line">SYNERGY ROOM · {count} COACH{count > 1 ? 'S' : ''} EN CONTACT</div>
           <h1>Votre réseau de soin.</h1>
-          <p>
-            {count === 1
-              ? 'Canal privilégié 1:1 avec votre expert référent.'
-              : count === 2
-                ? 'Duo synchronisé : échangez en direct ou réunissez vos 2 experts.'
+          {count !== 2 && (
+            <p>
+              {count === 1
+                ? 'Canal privilégié 1:1 avec votre expert référent.'
                 : `${count} experts actifs : affichage condensé et canaux groupés sans surcharge.`}
-          </p>
+            </p>
+          )}
         </div>
-        <button className="round-btn" onClick={() => setCreating(true)} aria-label="Nouvelle Synergy"><Icon name="plus" size={20} /></button>
       </header>
 
       <div className="search glass-lite">
@@ -532,7 +531,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
       {creating && (
         <div className="pay-layer" onClick={() => setCreating(false)}>
           <div className="pay-sheet" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: 6 }}>Nouvelle Synergy</h2>
+            <h2 style={{ marginBottom: 6 }}>Réunir mes coachs</h2>
             <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>Choisissez au moins 2 intervenants à réunir.</p>
             <div className="pick-list">
               {groupable.map(c => (

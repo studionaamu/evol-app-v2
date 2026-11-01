@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
+import logoUrl from './assets/evol-logo.png'
 import { Avatar } from './bits'
 import { COACHES, QUIZ, IMAGES, PROGRAM_NAME, recommendedCoachIds, type Coach, type Domain } from './data'
 
@@ -26,7 +27,7 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
       <div className="auth-body">
         <div className="auth-head">
           <div className="auth-brand" aria-label="Evol">
-            <span>EVOL</span>
+            <img className="auth-logo-img" src={logoUrl} alt="EVOL" />
           </div>
           <h1 className="auth-slogan">votre évolution,<br />vos succès</h1>
         </div>
@@ -58,7 +59,7 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
           )}
           <div className="or-divider glass-div"><span>ou</span></div>
           <button className="btn btn-glass ghost" onClick={onProgramme}>
-            <Icon name="lock" size={16} /><span>J'ai un programme {PROGRAM_NAME} · accès par identifiant</span>
+            <Icon name="lock" size={16} /><span>Accès à mon programme {PROGRAM_NAME}</span>
           </button>
           <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
           <button className="coach-link on-photo" onClick={onCoach}>
@@ -129,9 +130,6 @@ export function GuestWelcome({ onEnter, onBack }: { onEnter: () => void; onBack:
           <p>
             Vos coachs partenaires sont en place et coordonnés autour de votre programme.
           </p>
-          <div className="gw-names">
-            {team.map(c => <span key={c.id}>{c.name.split(' ')[0]}</span>)}
-          </div>
         </div>
 
         <div className="prog-cta">
@@ -335,7 +333,7 @@ export function ProgramAccess({ onBack, onAccess }: {
 
           <button
             className="prog-demo"
-            onClick={() => { setEmail('alex@emergence.fr'); setCode('EVOL-4821-XR'); setStatus('idle') }}
+            onClick={() => { setEmail('alex@evolia.fr'); setCode('EVOL-4821-XR'); setStatus('idle') }}
           >
             <Icon name="sparkle" size={13} />
             <span>Utiliser un identifiant de démonstration</span>

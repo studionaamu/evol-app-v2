@@ -5,7 +5,7 @@ import { useStore } from './store'
 import {
   COACHES, SESSIONS, QUOTES, IMAGES, EVENTS,
   EVA_SESSION_REPORTS, HOME_ANNOUNCEMENTS, STORIES, HORIZON_GOALS,
-  COACH_TEAM, WORKSHOPS, DOTATIONS, PSY_COACH_ID,
+  COACH_TEAM, WORKSHOPS, DOTATIONS, PSY_COACH_ID, CAREER_COACH_ID,
   type Coach, type CommunityEvent,
 } from './data'
 
@@ -235,7 +235,7 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
       <section className="card" data-zone="stories">
         <h2>Des parcours qui ressemblent au vôtre</h2>
         <div className="msg-filters" style={{ marginTop: 8 }}>
-          {([['objectifs', 'Mes objectifs'], ['tous', 'Tout le fil']] as const).map(([id, label]) => (
+          {([['objectifs', 'Pour vous'], ['tous', 'Tout le fil']] as const).map(([id, label]) => (
             <button key={id} className={'msg-filter' + (storyFilter === id ? ' on' : '')} onClick={() => setStoryFilter(id)}>
               {label}
             </button>
@@ -287,11 +287,11 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
                   </button>
                   <span className={'ws-seats' + (full ? ' full' : '')}>{w.taken}/{w.seats} inscrits</span>
                   <button
-                    className={'btn sm ' + (on ? 'btn-soft' : 'btn-primary')}
+                    className={'btn sm ' + (on ? 'btn-registered' : 'btn-primary')}
                     disabled={full && !on}
                     onClick={() => setJoinedWorkshops(js => on ? js.filter(x => x !== w.id) : [...js, w.id])}
                   >
-                    <Icon name={on ? 'check' : 'plus'} size={12} />
+                    {on ? <Icon name="check" size={12} /> : !full ? <Icon name="plus" size={12} /> : null}
                     <span>{on ? 'Inscrit' : full ? 'Complet' : 'M’inscrire'}</span>
                   </button>
                 </div>
@@ -562,11 +562,11 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenEva: (prefill?: string) => void
 }) {
   const { selectedRadarAxis, setSelectedRadarAxis } = useStore()
-  const [teamCoach, setTeamCoach] = useState<string>(COACH_TEAM[0].coachId)
+  const [teamCoach, setTeamCoach] = useState<string>(CAREER_COACH_ID)
+  const [goalCoach, setGoalCoach] = useState<string | null>(CAREER_COACH_ID)
 
   /* scan de repas — accès rapide depuis le haut de l'écosystème */
   const shotInput = useRef<HTMLInputElement>(null)
-  const [swipe, setSwipe] = useState(0)
   const [mealShot, setMealShot] = useState<string | null>(null)
   const [mealAnalysis, setMealAnalysis] = useState<string | null>(null)
   const [analyzingMeal, setAnalyzingMeal] = useState(false)
@@ -631,51 +631,33 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
           <h1>Votre évolution<br />à 360°.</h1>
           <p>Vos coachs, leurs objectifs et tous vos outils au même endroit.</p>
         </div>
+        <button className="round-btn eco-cam" onClick={() => shotInput.current?.click()} aria-label="Scanner mon repas avec EVA">
+          <Icon name="camera" size={19} />
+        </button>
       </header>
 
-      {/* ACCÈS RAPIDE — SCAN DE REPAS */}
-      <section className="card scan-slider eco-scan" data-zone="scan">
-        <div className="scan-head">
-          <span><Icon name="camera" size={14} /> Scanner mon repas</span>
-          <span className="tag mini">EVA analyse</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={1}
-          value={swipe}
-          aria-label="Glisser pour ouvrir la caméra et scanner un repas"
-          onChange={e => {
-            const v = Number(e.target.value)
-            setSwipe(v)
-            if (v >= 96) { shotInput.current?.click(); setSwipe(0) }
-          }}
-        />
-        <span className="scan-hint">{swipe > 20 ? 'Continuez…' : 'Glissez vers la droite pour ouvrir la caméra'}</span>
-        <input
-          ref={shotInput}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          aria-label="Photographier mon plat"
-          onChange={e => { onShot(e.target.files?.[0]); e.target.value = '' }}
-        />
-        {mealShot && (
-          <div className="meal-preview glass-lite">
-            <img src={mealShot} alt="Photo du plat analysé par EVA" />
-            <div className="meal-preview-body">
-              <strong>Analyse nutritionnelle EVA</strong>
-              {analyzingMeal
-                ? <span className="ai-status"><i className="dot pulsing" /> EVA analyse votre assiette…</span>
-                : <p className="meal-analysis">{mealAnalysis}</p>}
-              <div className="row" style={{ marginTop: 4 }}>
-                <button className="btn btn-ghost sm" onClick={() => { setMealShot(null); setMealAnalysis(null) }}>Fermer</button>
-              </div>
+      <input
+        ref={shotInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        aria-label="Photographier mon plat"
+        onChange={e => { onShot(e.target.files?.[0]); e.target.value = '' }}
+      />
+      {mealShot && (
+        <div className="meal-preview glass-lite eco-meal">
+          <img src={mealShot} alt="Photo du plat analysé par EVA" />
+          <div className="meal-preview-body">
+            <strong>Analyse nutritionnelle EVA</strong>
+            {analyzingMeal
+              ? <span className="ai-status"><i className="dot pulsing" /> EVA analyse votre assiette…</span>
+              : <p className="meal-analysis">{mealAnalysis}</p>}
+            <div className="row" style={{ marginTop: 4 }}>
+              <button className="btn btn-ghost sm" onClick={() => { setMealShot(null); setMealAnalysis(null) }}>Fermer</button>
             </div>
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
       {/* MON ÉQUIPE — les coachs comme entrée de page */}
       <div className="team-row eco-team-row">
@@ -742,11 +724,62 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
             <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
           </div>
         </div>
+
+        <div className="radar-health glass-lite">
+          <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="heart" size={13} /> SANTÉ & BIOMÉTRIE</div>
+            <span className="tag mini"><i className="dot" /> Capteurs synchronisés</span>
+          </div>
+
+          <div className="health-bento">
+            <div className="health-tile">
+              <div className="ht-head">
+                <span>PAS QUOTIDIENS</span>
+                <span className="delta up">+14%</span>
+              </div>
+              <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
+              <span className="ht-sub">Objectif 10 000 pas · {Math.min(100, Math.round((steps / 10000) * 100))}%</span>
+              <div className="group-meter" style={{ marginTop: 8 }}>
+                <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
+              </div>
+            </div>
+
+            <div className="health-tile">
+              <div className="ht-head">
+                <span>PRISE DE POULS</span>
+                <span className="pulse-dot" />
+              </div>
+              <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
+              <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
+              <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
+                <Icon name="heart" size={13} filled />
+                <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="eva-health-box">
+            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+              <div className="transcript-head" style={{ margin: 0 }}>
+                <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
+              </div>
+              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
+                {analyzingHealth ? 'Calcul…' : 'Actualiser'}
+              </button>
+            </div>
+            <p className="eva-health-txt">{evaHealthAnalysis}</p>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
+                <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="card" data-zone="team">
-        <h2>Un référent par sujet.</h2>
-        <p>Ses objectifs assignés, ses comptes rendus et les synthèses d’EVA.</p>
+        <h2>Mon référent</h2>
+        <p>Votre coach référent — coach de vie et spécialiste carrière — coordonne l’équipe autour de vos objectifs.</p>
 
         {(() => {
           const entry = COACH_TEAM.find(t => t.coachId === teamCoach) ?? COACH_TEAM[0]
@@ -839,23 +872,47 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         </div>
       </section>
 
-      {/* OBJECTIFS, COACH PAR COACH */}
+      {/* OBJECTIFS — vue horizontale par coach, détail au clic */}
       <section className="card" data-zone="objectifs">
-        <h2>Vos objectifs, coach par coach</h2>
-        {COACH_TEAM.map(t => {
-          const c = COACHES.find(x => x.id === t.coachId)!
-          const goals = HORIZON_GOALS.filter(g => g.coachId === t.coachId)
-          if (goals.length === 0) return null
+        <h2>Vos objectifs</h2>
+
+        <div className="goal-row">
+          {COACH_TEAM.map(t => {
+            const c = COACHES.find(x => x.id === t.coachId)!
+            const goals = HORIZON_GOALS.filter(g => g.coachId === t.coachId)
+            if (goals.length === 0) return null
+            const avg = Math.round(goals.reduce((n, g) => n + g.progress, 0) / goals.length)
+            const on = goalCoach === c.id
+            return (
+              <button
+                key={c.id}
+                className={'goal-card glass-lite' + (on ? ' on' : '')}
+                onClick={() => setGoalCoach(on ? null : c.id)}
+                aria-pressed={on}
+              >
+                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={34} ring={on} />
+                <span>{c.name.split(' ')[0]}</span>
+                <strong>{avg}%</strong>
+                <div className="group-meter"><span style={{ width: `${avg}%` }} /></div>
+              </button>
+            )
+          })}
+        </div>
+
+        {(() => {
+          const c = COACHES.find(x => x.id === goalCoach)
+          if (!c) return <p className="goal-hint">Touchez un coach pour dérouler ses objectifs.</p>
+          const goals = HORIZON_GOALS.filter(g => g.coachId === c.id)
           return (
-            <div className="coach-goals" key={c.id}>
-              <button className="coach-goals-head" onClick={() => setTeamCoach(c.id)}>
-                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={30} />
+            <div className="goal-detail" key={c.id}>
+              <div className="goal-detail-head">
+                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={28} />
                 <div className="session-info">
                   <strong>{c.name}</strong>
                   <span>{c.role}</span>
                 </div>
                 <span className="tag mini">{goals.length} objectif{goals.length > 1 ? 's' : ''}</span>
-              </button>
+              </div>
               {goals.map(g => (
                 <article className="horizon-goal glass-lite" key={g.id}>
                   <div className="hg-top">
@@ -876,74 +933,25 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
               ))}
             </div>
           )
-        })}
+        })()}
       </section>
 
       {/* DOTATIONS — demande au cas par cas */}
-      <section className="card" data-zone="dotations">
+      <section className="card dotation-card" data-zone="dotations">
+        <span className="dotation-wash" aria-hidden />
         <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
         <h2>Obtenir du matériel</h2>
-        <p>Le matériel financé par l’assurance maladie est accordé au cas par cas. Lancez votre demande : votre référent et le coach concerné l’étudient.</p>
-        <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setDotationOpen(true)}>
+        <p>Le matériel financé par l’assurance maladie est accordé au cas par cas, sans avance de frais.</p>
+        <div className="dotation-chips">
+          {['Baskets de marche', 'Montre connectée', 'Tenue de sport', 'Tapis de marche', 'Balance'].map(label => (
+            <span className="dotation-chip" key={label}>{label}</span>
+          ))}
+        </div>
+        <button className="btn btn-soft" onClick={() => setDotationOpen(true)}>
           <Icon name="plus" size={15} /><span>Lancer une demande de matériel</span>
         </button>
       </section>
 
-      {/* SANTÉ & BIOMÉTRIE */}
-      <section className="card eco-health-card" data-zone="sante">
-        <span className="balance-wash" aria-hidden />
-        <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
-          <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> MODULE SANTÉ & BIOMÉTRIE</div>
-          <span className="tag mini glass-lite"><i className="dot" /> Capteurs synchronisés</span>
-        </div>
-        <h2>Pas, pouls & analyse EVA</h2>
-
-        <div className="health-bento">
-          <div className="health-tile glass-lite">
-            <div className="ht-head">
-              <span>PAS QUOTIDIENS</span>
-              <span className="delta up">+14%</span>
-            </div>
-            <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
-            <span className="ht-sub">Objectif 10 000 pas · {Math.min(100, Math.round((steps / 10000) * 100))}%</span>
-            <div className="group-meter" style={{ marginTop: 8 }}>
-              <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
-            </div>
-          </div>
-
-          <div className="health-tile glass-lite">
-            <div className="ht-head">
-              <span>PRISE DE POULS</span>
-              <span className="pulse-dot" />
-            </div>
-            <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
-            <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
-            <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
-              <Icon name="heart" size={13} filled />
-              <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="eva-health-box glass-lite">
-          <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
-            <div className="transcript-head" style={{ margin: 0 }}>
-              <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
-            </div>
-            <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
-              {analyzingHealth ? 'Calcul…' : 'Actualiser'}
-            </button>
-          </div>
-          <p className="eva-health-txt">{evaHealthAnalysis}</p>
-          <div className="row" style={{ marginTop: 10 }}>
-            <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
-              <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <footer className="tab-footer">Mon Écosystème · synchronisé par EVA</footer>
     </div>
   )
 }

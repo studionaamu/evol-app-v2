@@ -2947,3 +2947,120 @@ html.dark .prog-tag { color: #C9AFF5; background: rgba(109, 62, 173, 0.32); }
 
 /* feuille Synergy : psychologue hors groupe */
 .pick.locked { opacity: 0.6; }
+
+/* ============ CONNEXION — logo EVOL ============ */
+.auth-logo-img { height: 30px; width: auto; display: block; }
+.auth-brand { gap: 0; }
+
+/* ============ HOME — citation compacte, bouton aléatoire visible ============ */
+.card-quote { padding: 16px 18px 15px; }
+.card-quote .quote-mark { font-size: 26px; margin-bottom: 6px; }
+.card-quote p { font-size: 13.5px; line-height: 1.45; }
+.card-quote .quote-src { margin-top: 8px; font-size: 10.5px; }
+.quote-refresh { color: rgba(255, 255, 255, 0.92); }
+
+/* ============ HOME — atelier inscrit en vert ============ */
+.btn-registered {
+  background: linear-gradient(170deg, #2F9E6B 0%, #1E7A52 100%);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 22px rgba(30, 122, 82, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.btn-registered:hover { background: linear-gradient(170deg, #37AC77 0%, #238B5D 100%); }
+
+/* ============ ÉCOSYSTÈME — caméra rapide & résultat ============ */
+.eco-cam { flex: none; align-self: flex-start; }
+.eco-meal { margin-bottom: 12px; }
+
+/* ============ ÉCOSYSTÈME — boutons coachs premium ============ */
+.eco-team-row { gap: 10px; margin-bottom: 14px; padding: 2px 2px 6px; }
+.eco-team-row .team-chip {
+  padding: 11px 12px 10px; border-radius: 20px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--bg-elev) 92%, transparent), color-mix(in srgb, var(--bg-elev) 62%, transparent));
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 5%, transparent);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.eco-team-row .team-chip:hover { transform: translateY(-2px); box-shadow: 0 12px 26px color-mix(in srgb, var(--ink) 9%, transparent); }
+.eco-team-row .team-chip:active { transform: scale(0.965); }
+.eco-team-row .team-chip.on {
+  border-color: color-mix(in srgb, var(--ink) 26%, transparent);
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--ink) 12%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation: chipLift 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes chipLift {
+  from { transform: translateY(3px) scale(0.985); }
+  to { transform: none; }
+}
+.eco-team-row .team-chip .avatar { transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.eco-team-row .team-chip.on .avatar { transform: scale(1.04); }
+
+/* ============ ÉCOSYSTÈME — objectifs horizontaux ============ */
+.goal-row { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; margin-top: 10px; scrollbar-width: none; }
+.goal-row::-webkit-scrollbar { display: none; }
+.goal-card {
+  flex: none; width: 104px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 11px 10px 10px; border-radius: 18px; font-size: 10.5px; color: var(--ink-2);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.goal-card strong { font-family: var(--disp); font-size: 15px; color: var(--ink); }
+.goal-card .group-meter { width: 100%; margin-top: 2px; }
+.goal-card:hover { transform: translateY(-2px); }
+.goal-card.on {
+  border-color: color-mix(in srgb, var(--ink) 26%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--ink) 11%, transparent);
+  color: var(--ink);
+  animation: chipLift 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.goal-detail { margin-top: 12px; animation: fadeUp 0.35s ease both; }
+.goal-detail-head { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+.goal-detail-head .session-info { flex: 1; min-width: 0; }
+.goal-detail-head .session-info span { font-size: 10.5px; color: var(--ink-3); }
+.goal-hint { font-size: 11.5px; color: var(--ink-3); margin-top: 8px; }
+
+/* ============ ÉCOSYSTÈME — santé dans le radar ============ */
+.radar-health {
+  margin-top: 16px; border-radius: 18px; padding: 13px 13px 12px;
+  background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
+  border: 1px solid var(--line);
+}
+.radar-health .health-tile { background: transparent; border: none; box-shadow: none; padding: 0; }
+.radar-health .eva-health-box { background: transparent; border: none; box-shadow: none; padding: 12px 0 0; }
+
+/* ============ ÉCOSYSTÈME — dotations airy ============ */
+.dotation-card { position: relative; overflow: hidden; }
+.dotation-wash {
+  position: absolute; inset: -40% -20% auto -20%; height: 190px; pointer-events: none;
+  background:
+    radial-gradient(48% 60% at 22% 40%, rgba(76, 175, 141, 0.18), transparent 70%),
+    radial-gradient(46% 58% at 78% 30%, rgba(109, 62, 173, 0.14), transparent 72%);
+  filter: blur(18px);
+}
+.dotation-card > * { position: relative; }
+.dotation-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 4px; }
+.dotation-chip {
+  padding: 5px 10px; border-radius: 99px; font-size: 10.5px; color: var(--ink-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  border: 1px solid color-mix(in srgb, #4CAF8D 26%, transparent);
+}
+.dotation-card .btn { margin-top: 12px; }
+
+/* ============ PROFIL — confidentialité informative ============ */
+.consent-row.info {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 2px;
+  border-top: 1px solid var(--line); text-align: left; font-size: 13px; color: var(--ink);
+  transition: color 0.2s ease;
+}
+.consent-row.info:first-of-type { border-top: none; }
+.consent-row.info .consent-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.consent-row.info .consent-info strong { font-size: 13px; font-weight: 500; }
+.consent-row.info .consent-info span { font-size: 11px; color: var(--ink-3); }
+.consent-row.info > svg:last-child { color: var(--ink-3); transition: transform 0.25s ease; }
+.consent-row.info.open > svg:last-child { transform: rotate(90deg); }
+.consent-legal {
+  font-size: 11px; line-height: 1.5; color: var(--ink-2);
+  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
+  border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin: 2px 0 10px;
+  animation: fadeUp 0.3s ease both;
+}
+.consent-hint { font-size: 11px; color: var(--ink-3); margin-bottom: 6px; }

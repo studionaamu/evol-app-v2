@@ -214,7 +214,7 @@ function Shell() {
 
       <nav className="tabbar" aria-label="Navigation principale">
         {([
-          { id: 'hub', icon: 'home', label: 'Hub' },
+          { id: 'hub', icon: 'home', label: 'Home' },
           { id: 'ecosystem', icon: 'grid', label: 'Écosystème' },
           ...(hideExplorer ? [] : [{ id: 'explorer' as const, icon: 'compass' as const, label: 'Explorer' }]),
           { id: 'synergy', icon: 'chat', label: 'Synergy' },
