@@ -37,7 +37,7 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         <div>
           <div className="date-line">PROFIL</div>
           <h1>{guest ? 'Mode invité' : name}</h1>
-          <p>{guest ? 'Vos données restent sur cet appareil.' : 'Votre espace, vos règles.'}</p>
+          {guest && <p>Vos données restent sur cet appareil.</p>}
         </div>
         <Avatar hue="158" initials={guest ? '?' : name.slice(0, 1).toUpperCase()} photo={IMAGES.userPhoto} size={56} ring />
       </header>
