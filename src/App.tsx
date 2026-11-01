@@ -84,7 +84,6 @@ function Shell() {
   if (phase === 'welcome') return (
     <Welcome
       onAccount={() => setPhase('consent')}
-      onGuest={() => { setGuest(true); setProgram(false); setHideExplorer(true); setPhase('onboarding') }}
       onProgramme={() => setPhase('programme')}
       onCoach={() => { setRole('coach'); setPhase('app'); setTab('hub') }}
     />
@@ -134,7 +133,6 @@ function Shell() {
       domains={savedResults}
       onOpenCoach={c => setCoachView(c)}
       onCreateAccount={() => setPhase('consent')}
-      onGuest={() => { setGuest(true); setProgram(false); setHideExplorer(true); setPhase('onboarding') }}
     />
   )
 

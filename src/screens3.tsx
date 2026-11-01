@@ -55,7 +55,7 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
             <div className="client-line"><Icon name="clock" size={14} /><span><strong>Coach carrière</strong> · Karim Bensaïd, contact toutes les 2 semaines</span></div>
           </div>
           <div className="privacy" style={{ marginTop: 10 }}>
-            <Icon name="shield" size={13} /> Toutes les options de confidentialité sont activées par défaut pour votre programme : transcription IA et partage avec l'équipe inclus. Vous pouvez tout désactiver à tout moment ci-dessous.
+            <Icon name="shield" size={13} /> Toutes les options de confidentialité sont activées par défaut pour votre programme : transcription IA et partage avec l'équipe inclus.
           </div>
         </section>
       )}

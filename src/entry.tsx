@@ -10,9 +10,8 @@ import { COACHES, QUIZ, IMAGES, PROGRAM_NAME, recommendedCoachIds, type Coach, t
 
 /* ---------- welcome ---------- */
 
-export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
+export function Welcome({ onAccount, onCoach, onProgramme }: {
   onAccount: (email?: string) => void
-  onGuest: () => void
   onCoach: () => void
   onProgramme: () => void
 }) {
@@ -61,7 +60,6 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
           <button className="btn btn-glass ghost" onClick={onProgramme}>
             <Icon name="lock" size={16} /><span>Accès à mon programme {PROGRAM_NAME}</span>
           </button>
-          <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
           <button className="coach-link on-photo" onClick={onCoach}>
             <Icon name="user" size={15} /> Espace coach
           </button>
@@ -402,11 +400,10 @@ export function Quiz({ onDone, onExit }: { onDone: (domains: Domain[]) => void; 
 
 /* ---------- quiz results ---------- */
 
-export function QuizResults({ domains, onOpenCoach, onCreateAccount, onGuest }: {
+export function QuizResults({ domains, onOpenCoach, onCreateAccount }: {
   domains: Domain[]
   onOpenCoach: (c: Coach) => void
   onCreateAccount: () => void
-  onGuest: () => void
 }) {
   const recos = useMemo(() => {
     const ids = recommendedCoachIds(domains)
@@ -448,7 +445,7 @@ export function QuizResults({ domains, onOpenCoach, onCreateAccount, onGuest }: 
         <button className="btn btn-primary" onClick={onCreateAccount}>
           <span>Créer mon compte pour réserver</span><Icon name="arrow-right" size={17} />
         </button>
-        <button className="btn btn-ghost" onClick={onGuest}>Continuer en invité</button>
+
       </div>
     </div>
   )
