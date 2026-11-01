@@ -3,7 +3,7 @@ import { Icon } from './Icon'
 import { Avatar, EvaAvatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS,
+  COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS, DOTATIONS,
   INITIAL_VITRINE_PROGRAMS, INITIAL_FREEBIES, INITIAL_GALLERY, EVA_SESSION_REPORTS,
   type Consent, type CoachClient, type CoachGroup, type CoachCall,
   type CoachProgram, type CoachMedia,
@@ -21,12 +21,15 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
   const { name, guest, reset, role, program } = useStore()
   const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') !== 'light')
   const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
+  const [dotationOpen, setDotationOpen] = useState(false)
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
     localStorage.setItem('evol-theme', dark ? 'dark' : 'light')
     const meta = document.querySelector('meta[name=theme-color]')
     if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
   }, [dark])
+
+  if (dotationOpen) return <DotationRequest onBack={() => setDotationOpen(false)} />
 
   return (
     <div className="tab-page" data-zone="profile">
@@ -58,6 +61,22 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
             <Icon name="shield" size={13} /> Toutes les options de confidentialité sont activées par défaut pour votre programme : transcription IA et partage avec l'équipe inclus.
           </div>
         </section>
+      )}
+
+      {program && (
+      <section className="card dotation-card" data-zone="dotations">
+        <span className="dotation-wash" aria-hidden />
+        <div className="card-kicker"><Icon name="shield" size={13} /> OBTENIR DU MATÉRIEL</div>
+        <p style={{ marginTop: 10 }}>Le matériel financé par l’assurance maladie est accordé au cas par cas, sans avance de frais.</p>
+        <div className="dotation-chips">
+          {['Baskets de marche', 'Montre connectée', 'Tenue de sport', 'Tapis de marche', 'Balance'].map(label => (
+            <span className="dotation-chip" key={label}>{label}</span>
+          ))}
+        </div>
+        <button className="btn btn-soft" onClick={() => setDotationOpen(true)}>
+          <Icon name="plus" size={15} /><span>Lancer une demande de matériel</span>
+        </button>
+      </section>
       )}
 
       <section className="card">
@@ -1296,3 +1315,81 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
 
 /* sessions partagées (coaché) — gardé pour référence futur onglet agenda coaché */
 export const COACH_AGENDA_SEED = SESSIONS
+
+/* =====================================================
+   DEMANDE DE MATÉRIEL — page dédiée (au cas par cas)
+   ===================================================== */
+
+function DotationRequest({ onBack }: { onBack: () => void }) {
+  const [item, setItem] = useState(DOTATIONS[2].name)
+  const [reason, setReason] = useState('')
+  const [sent, setSent] = useState(false)
+
+  return (
+    <div className="dotation-screen">
+      <header className="chat-head">
+        <button className="icon-btn" onClick={onBack} aria-label="Retour à mon profil">
+          <Icon name="chevron-left" size={19} />
+        </button>
+        <strong style={{ fontSize: 15 }}>Demande de matériel</strong>
+        <span style={{ width: 40 }} />
+      </header>
+
+      <div className="dotation-body">
+        {sent ? (
+          <section className="card">
+            <div className="card-kicker"><Icon name="check" size={13} /> DEMANDE ENREGISTRÉE</div>
+            <h2>Votre demande est partie.</h2>
+            <p>
+              Votre référent programme et l’organisme de prise en charge étudient le matériel demandé
+              au cas par cas. Vous serez informé·e ici et par e-mail.
+            </p>
+            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onBack}>
+              <span>Retour à mon profil</span>
+            </button>
+          </section>
+        ) : (
+          <section className="card">
+            <div className="card-kicker"><Icon name="shield" size={13} /> OBTENIR DU MATÉRIEL</div>
+            <h2>Quel matériel vous aiderait ?</h2>
+            <p>Une demande à la fois, avec votre besoin réel : c’est ce qui permet d’y répondre.</p>
+
+            <label className="prog-field" style={{ marginTop: 14 }}>
+              <span>Matériel souhaité</span>
+              <select className="eco-select glass-lite" value={item} onChange={e => setItem(e.target.value)}>
+                {DOTATIONS.map(d => (
+                  <option key={d.id} value={d.name}>{d.name} · {d.value}</option>
+                ))}
+                <option value="Autre matériel">Autre matériel</option>
+              </select>
+            </label>
+
+            <label className="prog-field" style={{ marginTop: 12 }}>
+              <span>Votre besoin</span>
+              <textarea
+                className="journal"
+                rows={4}
+                placeholder="Ce que ça changerait dans votre quotidien, ce que votre coach a suggéré…"
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+              />
+            </label>
+
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: 16 }}
+              disabled={!reason.trim()}
+              onClick={() => setSent(true)}
+            >
+              <Icon name="send" size={15} /><span>Envoyer la demande</span>
+            </button>
+
+            <p className="prog-legal" style={{ marginTop: 10 }}>
+              <Icon name="shield" size={11} /> Transmise à votre référent et à l’organisme de prise en charge.
+            </p>
+          </section>
+        )}
+      </div>
+    </div>
+  )
+}

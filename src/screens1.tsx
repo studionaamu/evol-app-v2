@@ -5,7 +5,7 @@ import { useStore } from './store'
 import {
   COACHES, SESSIONS, QUOTES, IMAGES, EVENTS,
   EVA_SESSION_REPORTS, HOME_ANNOUNCEMENTS, STORIES, HORIZON_GOALS,
-  COACH_TEAM, DOTATIONS, PSY_COACH_ID, CAREER_COACH_ID, INITIAL_SHARED_DOCS,
+  COACH_TEAM, PSY_COACH_ID, CAREER_COACH_ID, INITIAL_SHARED_DOCS,
   type Coach, type CommunityEvent, type SharedDocument,
 } from './data'
 
@@ -622,13 +622,8 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
     }, 900)
   }
 
-  /* demande de matériel : page dédiée */
-  const [dotationOpen, setDotationOpen] = useState(false)
-
   const activeAxis = RADAR.find(r => r.axis === selectedRadarAxis) ?? RADAR[5]
   const axisCoach = COACHES.find(c => c.id === activeAxis.coachId) ?? COACHES[0]
-
-  if (dotationOpen) return <DotationRequest onBack={() => setDotationOpen(false)} />
 
   return (
     <div className="tab-page" data-zone="ecosystem">
@@ -949,101 +944,6 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         })()}
       </section>
 
-      {/* DOTATIONS — demande au cas par cas (programme encadré) */}
-      {program && (
-      <section className="card dotation-card" data-zone="dotations">
-        <span className="dotation-wash" aria-hidden />
-        <div className="card-kicker"><Icon name="shield" size={13} /> OBTENIR DU MATÉRIEL</div>
-        <p style={{ marginTop: 10 }}>Le matériel financé par l’assurance maladie est accordé au cas par cas, sans avance de frais.</p>
-        <div className="dotation-chips">
-          {['Baskets de marche', 'Montre connectée', 'Tenue de sport', 'Tapis de marche', 'Balance'].map(label => (
-            <span className="dotation-chip" key={label}>{label}</span>
-          ))}
-        </div>
-        <button className="btn btn-soft" onClick={() => setDotationOpen(true)}>
-          <Icon name="plus" size={15} /><span>Lancer une demande de matériel</span>
-        </button>
-      </section>
-      )}
-
-    </div>
-  )
-}
-
-/* =====================================================
-   DEMANDE DE MATÉRIEL — page dédiée (au cas par cas)
-   ===================================================== */
-
-function DotationRequest({ onBack }: { onBack: () => void }) {
-  const [item, setItem] = useState(DOTATIONS[2].name)
-  const [reason, setReason] = useState('')
-  const [sent, setSent] = useState(false)
-
-  return (
-    <div className="dotation-screen">
-      <header className="chat-head">
-        <button className="icon-btn" onClick={onBack} aria-label="Retour à mon écosystème">
-          <Icon name="chevron-left" size={19} />
-        </button>
-        <strong style={{ fontSize: 15 }}>Demande de matériel</strong>
-        <span style={{ width: 40 }} />
-      </header>
-
-      <div className="dotation-body">
-        {sent ? (
-          <section className="card">
-            <div className="card-kicker"><Icon name="check" size={13} /> DEMANDE ENREGISTRÉE</div>
-            <h2>Votre demande est partie.</h2>
-            <p>
-              Votre référent programme et l’organisme de prise en charge étudient le matériel demandé
-              au cas par cas. Vous serez informé·e ici et par e-mail.
-            </p>
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onBack}>
-              <span>Retour à mon écosystème</span>
-            </button>
-          </section>
-        ) : (
-          <section className="card">
-            <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
-            <h2>Quel matériel vous aiderait ?</h2>
-            <p>Une demande à la fois, avec votre besoin réel : c’est ce qui permet d’y répondre.</p>
-
-            <label className="prog-field" style={{ marginTop: 14 }}>
-              <span>Matériel souhaité</span>
-              <select className="eco-select glass-lite" value={item} onChange={e => setItem(e.target.value)}>
-                {DOTATIONS.map(d => (
-                  <option key={d.id} value={d.name}>{d.name} · {d.value}</option>
-                ))}
-                <option value="Autre matériel">Autre matériel</option>
-              </select>
-            </label>
-
-            <label className="prog-field" style={{ marginTop: 12 }}>
-              <span>Votre besoin</span>
-              <textarea
-                className="journal"
-                rows={4}
-                placeholder="Ce que ça changerait dans votre quotidien, ce que votre coach a suggéré…"
-                value={reason}
-                onChange={e => setReason(e.target.value)}
-              />
-            </label>
-
-            <button
-              className="btn btn-primary"
-              style={{ marginTop: 16 }}
-              disabled={!reason.trim()}
-              onClick={() => setSent(true)}
-            >
-              <Icon name="send" size={15} /><span>Envoyer la demande</span>
-            </button>
-
-            <p className="prog-legal" style={{ marginTop: 10 }}>
-              <Icon name="shield" size={11} /> Transmise à votre référent et à l’organisme de prise en charge.
-            </p>
-          </section>
-        )}
-      </div>
     </div>
   )
 }
