@@ -11,14 +11,14 @@ import {
 import { CallScreen } from './screens2'
 
 export type CoachTab = 'bord' | 'vitrine' | 'clients' | 'messagerie' | 'reglages'
-export type VitrineSub = 'programmes' | 'creneaux' | 'freebies' | 'galerie'
+export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'freebies' | 'galerie'
 
 /* =====================================================
    PROFIL — réglages, confidentialité RGPD, déconnexion
    ===================================================== */
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
-  const { name, guest, consent, setConsent, reset, role } = useStore()
+  const { name, guest, consent, setConsent, reset, role, program } = useStore()
   const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') === 'dark')
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -37,6 +37,27 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         </div>
         <Avatar hue="158" initials={guest ? '?' : name.slice(0, 1).toUpperCase()} photo={IMAGES.userPhoto} size={56} ring />
       </header>
+
+      {program && (
+        <section className="card prog-profile-card">
+          <div className="row between" style={{ marginTop: 0, marginBottom: 8 }}>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="shield" size={13} /> PROGRAMME · ACCÈS ENCADRÉ</div>
+            <span className="tag mini glass-lite">Confidentialité maximale</span>
+          </div>
+          <h2>Votre cadre d’accompagnement</h2>
+          <div className="client-lines" style={{ marginTop: 8 }}>
+            <div className="client-line"><Icon name="check" size={14} /><span><strong>Statut</strong> · programme encadré, accès nominatif</span></div>
+            <div className="client-line"><Icon name="user" size={14} /><span><strong>Prescripteur</strong> · Dr L. Perrin, médecin traitant</span></div>
+            <div className="client-line"><Icon name="file" size={14} /><span><strong>Prise en charge</strong> · Assurance maladie, dossier 74-221 908</span></div>
+            <div className="client-line"><Icon name="users" size={14} /><span><strong>Référent programme</strong> · Camille Durand</span></div>
+            <div className="client-line"><Icon name="calendar" size={14} /><span><strong>Période</strong> · 12 nov. 2026 → 12 nov. 2027</span></div>
+            <div className="client-line"><Icon name="clock" size={14} /><span><strong>Coach carrière</strong> · Karim Bensaïd, contact toutes les 2 semaines</span></div>
+          </div>
+          <div className="privacy" style={{ marginTop: 10 }}>
+            <Icon name="shield" size={13} /> Confidentialité maximale appliquée par défaut : transcription IA et partage avec l’équipe désactivés.
+          </div>
+        </section>
+      )}
 
       <section className="card">
         <div className="card-kicker">RÉGLAGES</div>
@@ -491,9 +512,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               <button className="btn sm btn-soft" onClick={() => onOpenEva?.('Ajuste le plan de Sofia M. (récupération)')}>
                 <Icon name="sparkle" size={14} /><span>Ajuster avec EVA</span>
               </button>
-              <button className="btn sm btn-soft" onClick={() => setEvalModal({ who: 'Sofia M.', isGroup: false })}>
-                <Icon name="file" size={14} /><span>Évaluer fin de visio</span>
-              </button>
             </div>
           </section>
 
@@ -541,6 +559,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
 
           <div className="subtabs">
             {([
+              ['business', 'Business'],
               ['programmes', 'Mes programmes'],
               ['creneaux', 'Disponibilités'],
               ['freebies', 'Freebies'],
@@ -551,6 +570,97 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               </button>
             ))}
           </div>
+
+          {vSub === 'business' && (
+            <>
+              <section className="card">
+                <div className="card-kicker"><Icon name="chart" size={13} /> REVENUS & FACTURATION · CE MOIS</div>
+                <h2>Votre business, dans le détail</h2>
+                <div className="metrics" style={{ marginTop: 8 }}>
+                  <div className="metric">
+                    <div className="metric-top"><span>CHIFFRE D'AFFAIRES</span><span className="delta up">+12%</span></div>
+                    <span className="metric-val good">6 840 €</span>
+                  </div>
+                  <div className="metric">
+                    <div className="metric-top"><span>CATALOGUE ACTIF</span></div>
+                    <span className="metric-val">{programRevenue} €</span>
+                  </div>
+                  <div className="metric">
+                    <div className="metric-top"><span>TAUX DE REMPLISSAGE</span><span className="delta up">+6%</span></div>
+                    <span className="metric-val good">87%</span>
+                  </div>
+                  <div className="metric">
+                    <div className="metric-top"><span>SÉANCES NON HONORÉES</span><span className="delta down">-2</span></div>
+                    <span className="metric-val bad">3</span>
+                  </div>
+                </div>
+                <div className="eco-table" style={{ marginTop: 12 }}>
+                  <div className="eco-thead">
+                    <span>Source de revenus</span>
+                    <span>Encaissé</span>
+                    <span>Part de l'objectif</span>
+                  </div>
+                  {[
+                    { name: 'Programmes & accompagnements', detail: `${activePrograms.length} offres publiées`, amount: '3 420 €', share: 74 },
+                    { name: 'Séances 1:1', detail: '22 séances · 16h30', amount: '1 870 €', share: 62 },
+                    { name: 'Groupes & ateliers', detail: '12 sessions', amount: '980 €', share: 41 },
+                    { name: 'Freebies convertis', detail: '5 nouveaux élèves', amount: '570 €', share: 28 },
+                  ].map(row => (
+                    <div className="eco-trow" key={row.name}>
+                      <div className="eco-tmain">
+                        <strong>{row.name}</strong>
+                        <span>{row.detail}</span>
+                      </div>
+                      <div className="eco-ttarget">
+                        <strong>{row.amount}</strong>
+                        <span>ce mois</span>
+                      </div>
+                      <div className="eco-tprog">
+                        <strong className={row.share < 50 ? 'bad' : 'good'}>{row.share}%</strong>
+                        <div className="group-meter"><span style={{ width: `${row.share}%` }} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card">
+                <div className="card-kicker"><Icon name="calendar" size={13} /> GESTION DES COURS DISPENSÉS</div>
+                <h2>Répartition par format</h2>
+                <div className="eco-table" style={{ marginTop: 10 }}>
+                  <div className="eco-thead">
+                    <span>Format de cours</span>
+                    <span>Volume</span>
+                    <span>Présence</span>
+                  </div>
+                  {[
+                    { name: 'Respiration & Nerf Vague (1:1)', count: '22 séances', hours: '16h30', rate: 96 },
+                    { name: 'Groupe Matin · Cohérence', count: '12 sessions', hours: '6h00', rate: 89 },
+                    { name: 'Bilan Découverte & Audit EVA', count: '8 séances', hours: '6h00', rate: 100 },
+                  ].map((row, idx) => (
+                    <div className="eco-trow" key={idx}>
+                      <div className="eco-tmain">
+                        <strong>{row.name}</strong>
+                        <span>{row.hours} dispensées ce mois</span>
+                      </div>
+                      <div className="eco-ttarget">
+                        <strong>{row.count}</strong>
+                        <span>+15m débrief inclus</span>
+                      </div>
+                      <div className="eco-tprog">
+                        <strong className={row.rate >= 85 ? 'good' : 'bad'}>{row.rate}%</strong>
+                        <div className="group-meter"><span style={{ width: `${row.rate}%` }} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <div className="privacy">
+                <Icon name="shield" size={13} /> Montants nets de commission · facturation aux organismes partenaires incluse.
+              </div>
+            </>
+          )}
 
           {vSub === 'creneaux' && (
             <>
@@ -808,9 +918,9 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
         <>
           <header className="page-head">
             <div>
-              <div className="date-line">STATS & CLIENTS</div>
+              <div className="date-line">SUIVI DE LA BASE</div>
               <h1>Votre activité,<br />vos élèves.</h1>
-              <p>Revenus, formats et suivi de votre base, au même endroit.</p>
+              <p>Assiduité, alertes EVA et progression de votre base. Vos revenus sont dans Offre → Business.</p>
             </div>
           </header>
 
@@ -835,103 +945,20 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
           </section>
 
           <section className="card">
-            <div className="card-kicker"><Icon name="chart" size={13} /> REVENUS & FACTURATION · CE MOIS</div>
-            <h2>Votre business, dans le détail</h2>
-            <div className="metrics" style={{ marginTop: 8 }}>
-              <div className="metric">
-                <div className="metric-top"><span>CHIFFRE D'AFFAIRES</span><span className="delta up">+12%</span></div>
-                <span className="metric-val">6 840 €</span>
-              </div>
-              <div className="metric">
-                <div className="metric-top"><span>CATALOGUE ACTIF</span></div>
-                <span className="metric-val">{programRevenue} €</span>
-              </div>
-              <div className="metric">
-                <div className="metric-top"><span>TAUX DE REMPLISSAGE</span><span className="delta up">+6%</span></div>
-                <span className="metric-val">87%</span>
-              </div>
-              <div className="metric">
-                <div className="metric-top"><span>SÉANCES NON HONORÉES</span><span className="delta down">-2</span></div>
-                <span className="metric-val">3</span>
-              </div>
-            </div>
-            <div className="eco-table" style={{ marginTop: 12 }}>
-              <div className="eco-thead">
-                <span>Source de revenus</span>
-                <span>Encaissé</span>
-                <span>Part de l'objectif</span>
-              </div>
-              {[
-                { name: 'Programmes & accompagnements', detail: `${activePrograms.length} offres publiées`, amount: '3 420 €', share: 74 },
-                { name: 'Séances 1:1', detail: '22 séances · 16h30', amount: '1 870 €', share: 62 },
-                { name: 'Groupes & ateliers', detail: '12 sessions', amount: '980 €', share: 41 },
-                { name: 'Freebies convertis', detail: '5 nouveaux élèves', amount: '570 €', share: 28 },
-              ].map(row => (
-                <div className="eco-trow" key={row.name}>
-                  <div className="eco-tmain">
-                    <strong>{row.name}</strong>
-                    <span>{row.detail}</span>
-                  </div>
-                  <div className="eco-ttarget">
-                    <strong>{row.amount}</strong>
-                    <span>ce mois</span>
-                  </div>
-                  <div className="eco-tprog">
-                    <strong>{row.share}%</strong>
-                    <div className="group-meter"><span style={{ width: `${row.share}%` }} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="card">
-            <div className="card-kicker"><Icon name="calendar" size={13} /> GESTION DES COURS DISPENSÉS</div>
-            <h2>Répartition par format</h2>
-            <div className="eco-table" style={{ marginTop: 10 }}>
-              <div className="eco-thead">
-                <span>Format de cours</span>
-                <span>Volume</span>
-                <span>Présence</span>
-              </div>
-              {[
-                { name: 'Respiration & Nerf Vague (1:1)', count: '22 séances', hours: '16h30', rate: 96 },
-                { name: 'Groupe Matin · Cohérence', count: '12 sessions', hours: '6h00', rate: 89 },
-                { name: 'Bilan Découverte & Audit EVA', count: '8 séances', hours: '6h00', rate: 100 },
-              ].map((row, idx) => (
-                <div className="eco-trow" key={idx}>
-                  <div className="eco-tmain">
-                    <strong>{row.name}</strong>
-                    <span>{row.hours} dispensées ce mois</span>
-                  </div>
-                  <div className="eco-ttarget">
-                    <strong>{row.count}</strong>
-                    <span>+15m débrief inclus</span>
-                  </div>
-                  <div className="eco-tprog">
-                    <strong>{row.rate}%</strong>
-                    <div className="group-meter"><span style={{ width: `${row.rate}%` }} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="card">
             <div className="card-kicker"><Icon name="users" size={13} /> SUIVI DE LA BASE D'ÉLÈVES</div>
             <h2>Progression & assiduité</h2>
             <div className="metrics" style={{ marginTop: 8 }}>
               <div className="metric">
                 <div className="metric-top"><span>ÉLÈVES ACTIFS</span><span className="delta up">+1</span></div>
-                <span className="metric-val">{COACH_CLIENTS.length}</span>
+                <span className="metric-val good">{COACH_CLIENTS.length}</span>
               </div>
               <div className="metric">
                 <div className="metric-top"><span>ASSIDUITÉ MOYENNE</span></div>
-                <span className="metric-val">{avgAdherence}%</span>
+                <span className={'metric-val ' + (avgAdherence >= 85 ? 'good' : 'bad')}>{avgAdherence}%</span>
               </div>
               <div className="metric">
                 <div className="metric-top"><span>ALERTES EVA</span></div>
-                <span className="metric-val">{clientAlerts}</span>
+                <span className={'metric-val ' + (clientAlerts > 0 ? 'bad' : 'good')}>{clientAlerts}</span>
               </div>
             </div>
             <div className="eco-table" style={{ marginTop: 10 }}>
@@ -947,11 +974,11 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                     <span>{c.program} ({c.startedAgo})</span>
                   </div>
                   <div className="eco-ttarget">
-                    <strong>{c.energy}/100</strong>
+                    <strong className={c.energy < 50 || c.adherence < 70 ? 'bad' : 'good'}>{c.energy}/100</strong>
                     <span>{c.sleep.split(' ')[0]}</span>
                   </div>
                   <div className="eco-tprog">
-                    <strong>{c.adherence}%</strong>
+                    <strong className={c.adherence < 70 ? 'bad' : c.adherence >= 85 ? 'good' : ''}>{c.adherence}%</strong>
                     <div className="group-meter"><span style={{ width: `${c.adherence}%` }} /></div>
                   </div>
                 </div>

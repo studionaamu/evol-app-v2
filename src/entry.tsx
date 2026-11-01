@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
-import { Avatar } from './bits'
-import { COACHES, QUIZ, IMAGES, recommendedCoachIds, type Coach, type Domain } from './data'
+import { Avatar, Logo } from './bits'
+import { COACHES, QUIZ, IMAGES, PROGRAM_NAME, recommendedCoachIds, type Coach, type Domain } from './data'
 
 /* =====================================================
    ENTRY FLOW: welcome → quiz → signup → tour → app
@@ -58,12 +58,13 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
           )}
           <div className="or-divider glass-div"><span>ou</span></div>
           <button className="btn btn-glass ghost" onClick={onProgramme}>
-            <Icon name="lock" size={16} /><span>J'ai un programme EVOLIA · accès par identifiant</span>
+            <Icon name="lock" size={16} /><span>J'ai un programme {PROGRAM_NAME} · accès par identifiant</span>
           </button>
           <button className="btn btn-glass ghost" onClick={onGuest}>Explorer en mode invité</button>
           <button className="coach-link on-photo" onClick={onCoach}>
             <Icon name="user" size={15} /> Espace coach
           </button>
+          <PartnerLogos />
           <p className="auth-legal glass-div">
             Espace confidentiel · chiffré et hébergé en UE.
           </p>
@@ -74,7 +75,52 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
   )
 }
 
-/* ---------- programme EVOLIA : présentation encadrée + connexion par identifiant ---------- */
+/* ---------- logos partenaires (marques vectorielles, sobres) ---------- */
+
+function PartnerLogos() {
+  const marks: { label: string; node: ReactNode }[] = [
+    { label: 'Evol', node: <Logo size={17} /> },
+    {
+      label: 'Assurance Maladie',
+      node: (
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <rect x="2.5" y="2.5" width="19" height="19" rx="6" />
+          <path d="M12 7.6v8.8M7.6 12h8.8" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Mutuelle',
+      node: (
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <circle cx="9.2" cy="12" r="6" />
+          <circle cx="14.8" cy="12" r="6" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Employeur',
+      node: (
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <path d="M4 20.5V5.2A1.2 1.2 0 0 1 5.2 4h8.1a1.2 1.2 0 0 1 1.2 1.2v15.3M14.5 9.5h3.8a1.2 1.2 0 0 1 1.2 1.2v9.8M2.5 20.5h19" strokeLinecap="round" />
+          <path d="M7 8h3M7 12h3M7 16h3" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+  ]
+  return (
+    <div className="auth-logos" aria-label="Partenaires du programme">
+      {marks.map(m => (
+        <span className="auth-logo" key={m.label}>
+          {m.node}
+          <em>{m.label}</em>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/* ---------- programme encadré : présentation + connexion par identifiant ---------- */
 
 const PILIERS = [
   {
@@ -128,7 +174,6 @@ export function GuestWelcome({ onEnter, onBack }: { onEnter: () => void; onBack:
           <h1>Une équipe pour vous,<br />à chaque étape.</h1>
           <p>
             Vos coachs partenaires sont en place et coordonnés autour de votre programme.
-            Avancez à votre rythme, sans engagement.
           </p>
           <div className="gw-names">
             {team.map(c => <span key={c.id}>{c.name.split(' ')[0]}</span>)}
@@ -161,7 +206,7 @@ export function Programme({ onBack, onLogin, onGuest }: {
           <button className="icon-btn prog-back" onClick={onBack} aria-label="Retour">
             <Icon name="chevron-left" size={19} />
           </button>
-          <span className="prog-badge"><Icon name="shield" size={11} /> PROGRAMME EVOLIA</span>
+          <span className="prog-badge"><Icon name="shield" size={11} /> PROGRAMME {PROGRAM_NAME.toUpperCase()}</span>
           <span style={{ width: 40 }} />
         </header>
 
@@ -198,7 +243,7 @@ export function Programme({ onBack, onLogin, onGuest }: {
 
         <div className="prog-cta">
           <button className="btn btn-glass solid" onClick={onLogin}>
-            <Icon name="lock" size={16} /><span>Se connecter avec mon identifiant</span>
+            <Icon name="lock" size={16} /><span>Se connecter au programme {PROGRAM_NAME}</span>
           </button>
           <button className="btn btn-glass ghost" onClick={onGuest}>
             <span>Découvrir en mode invité</span><Icon name="arrow-right" size={15} />
@@ -258,7 +303,7 @@ export function ProgramAccess({ onBack, onAccess }: {
         </header>
 
         <div className="prog-head">
-          <div className="prog-kicker">CONNEXION · EVOLIA</div>
+          <div className="prog-kicker">CONNEXION · {PROGRAM_NAME.toUpperCase()}</div>
           <h1>Votre identifiant<br />d’accès.</h1>
           <p>
             Il vous a été remis lors de la mise en place de votre programme et envoyé à votre
@@ -308,7 +353,7 @@ export function ProgramAccess({ onBack, onAccess }: {
           )}
 
           <button className="btn btn-glass solid" disabled={!valid} onClick={submit}>
-            <span>{status === 'checking' ? 'Vérification…' : 'Ouvrir mon programme'}</span>
+            <span>{status === 'checking' ? 'Vérification…' : `Se connecter au programme ${PROGRAM_NAME}`}</span>
             {status !== 'checking' && <Icon name="arrow-right" size={16} />}
           </button>
 
@@ -336,7 +381,7 @@ export function ProgramAccess({ onBack, onAccess }: {
 
           <button
             className="prog-demo"
-            onClick={() => { setEmail('alex@evolia.fr'); setCode('EVOL-4821-XR'); setStatus('idle') }}
+            onClick={() => { setEmail('alex@emergence.fr'); setCode('EVOL-4821-XR'); setStatus('idle') }}
           >
             <Icon name="sparkle" size={13} />
             <span>Utiliser un identifiant de démonstration</span>

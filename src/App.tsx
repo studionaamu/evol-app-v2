@@ -15,11 +15,12 @@ function Shell() {
     role, setRole, setName, setGuest, tab, setTab,
     hideExplorer, setHideExplorer,
     setThreads, setQuizDomains, reset,
+    setProgram, setConsent,
   } = useStore()
   const [phase, setPhase] = useState<Phase>('welcome')
   const [coachTab, setCoachTab] = useState<CoachTab>('bord')
   const [coachThreadId, setCoachThreadId] = useState<string | null>(null)
-  const [coachVSub, setCoachVSub] = useState<VitrineSub>('programmes')
+  const [coachVSub, setCoachVSub] = useState<VitrineSub>('business')
   const [coachView, setCoachView] = useState<Coach | null>(null)
   const [chatId, setChatId] = useState<string | null>(null)
   const [exerciseId, setExerciseId] = useState<string | null>(null)
@@ -89,7 +90,7 @@ function Shell() {
   if (phase === 'welcome') return (
     <Welcome
       onAccount={() => setPhase('consent')}
-      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
+      onGuest={() => { setGuest(true); setProgram(false); setHideExplorer(true); setPhase('onboarding') }}
       onProgramme={() => setPhase('programme')}
       onCoach={() => { setRole('coach'); setPhase('app'); setTab('hub') }}
     />
@@ -99,7 +100,7 @@ function Shell() {
     <Programme
       onBack={() => setPhase('welcome')}
       onLogin={() => setPhase('programLogin')}
-      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('guestWelcome') }}
+      onGuest={() => { setGuest(true); setProgram(false); setHideExplorer(true); setPhase('guestWelcome') }}
     />
   )
 
@@ -113,7 +114,17 @@ function Shell() {
   if (phase === 'programLogin') return (
     <ProgramAccess
       onBack={() => setPhase('programme')}
-      onAccess={(n) => { setGuest(false); setHideExplorer(true); setName(n); setRole('coache'); setPhase('app') }}
+      onAccess={(n) => {
+        setGuest(false)
+        setHideExplorer(true)
+        setProgram(true)
+        /* programme encadré : confidentialité maximale par défaut, rien n'est partagé */
+        setConsent({ account: true, health: true, journal: false, shareCoach: false })
+        setName(n)
+        setRole('coache')
+        setTab('hub')
+        setPhase('app')
+      }}
     />
   )
 
@@ -129,7 +140,7 @@ function Shell() {
       domains={savedResults}
       onOpenCoach={c => setCoachView(c)}
       onCreateAccount={() => setPhase('consent')}
-      onGuest={() => { setGuest(true); setHideExplorer(true); setPhase('onboarding') }}
+      onGuest={() => { setGuest(true); setProgram(false); setHideExplorer(true); setPhase('onboarding') }}
     />
   )
 

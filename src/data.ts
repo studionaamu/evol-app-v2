@@ -201,7 +201,70 @@ export const COACHES: Coach[] = [
     ],
     slots: ['Mer 25 · 14:00', 'Ven 27 · 11:00', 'Mar 01 · 09:00'],
   },
+  {
+    id: 'karim',
+    name: 'Karim Bensaïd',
+    role: 'Coach carrière & réinsertion',
+    rating: 4.8,
+    reviews: 76,
+    city: 'Lille',
+    mode: 'Présentiel',
+    tags: ['Réinsertion', 'Carrière', 'Confiance'],
+    domains: ['Confiance', 'Mental'],
+    price: 60,
+    available: true,
+    initials: 'KB',
+    hue: '24',
+    photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&q=80&auto=format&fit=crop',
+    bio: 'Retour à l’emploi après une longue interruption : reprise de confiance, rythme de travail et étapes réalistes, sans pression.',
+    experience: ['Coach professionnel certifié RNCP', '10 ans en insertion par l’activité', 'Partenaire France Travail & Cap Emploi'],
+    students: 140,
+    successRate: 90,
+    video: { duration: '1:34', views: '3,9k', thumb: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&q=80&auto=format&fit=crop' },
+    freeContent: [
+      { title: 'Préparer un retour progressif', kind: 'Guide', duration: '6 min' },
+    ],
+    testimonial: [
+      { text: 'Il a découpé le retour au travail en petites étapes que je pouvais vraiment tenir.', author: 'Nadia F.' },
+    ],
+    slots: ['Mar 01 · 14:00', 'Mar 15 · 14:00', 'Mar 29 · 10:00'],
+  },
+  {
+    id: 'helene',
+    name: 'Hélène Vasseur',
+    role: 'Psychologue agréée · espace confidentiel',
+    rating: 4.9,
+    reviews: 61,
+    city: 'Paris',
+    mode: 'À distance',
+    tags: ['Écoute', 'Trauma', 'Confidentialité'],
+    domains: ['Mental'],
+    price: 85,
+    available: true,
+    initials: 'HV',
+    hue: '282',
+    photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&q=80&auto=format&fit=crop',
+    bio: 'Psychologue agréée, tenue au secret professionnel. Ses notes restent strictement privées : aucun autre intervenant du programme n’y a accès.',
+    experience: ['Psychologue clinicienne agréée (ADELI)', 'Trauma & reconstruction', '12 ans de pratique'],
+    students: 95,
+    successRate: 93,
+    video: { duration: '1:20', views: '2,4k', thumb: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=900&q=80&auto=format&fit=crop' },
+    freeContent: [
+      { title: 'Ce qui se dit ici reste ici', kind: 'Article', duration: '3 min' },
+    ],
+    testimonial: [
+      { text: 'Un espace à part, où rien ne ressort. C’est ce qui m’a permis de parler.', author: 'Anonyme' },
+    ],
+    slots: ['Jeu 26 · 17:00', 'Ven 27 · 12:30', 'Lun 30 · 16:00'],
+  },
 ]
+
+/* Identifiants des rôles sensibles du programme */
+export const PSY_COACH_ID = 'helene'
+export const CAREER_COACH_ID = 'karim'
+
+/* Nom générique du programme d’accompagnement encadré */
+export const PROGRAM_NAME = 'Émergence'
 
 export type Session = {
   id: string
@@ -723,3 +786,251 @@ export const ECOSYSTEM_GOALS: GoalTracker[] = [
   { id: 'g-3', title: 'Mobilité scapulaire & dos sans douleur', domain: 'Mouvement', coachId: 'marc', progress: 64, current: '2 / 3 séances', target: '3 / sem', streak: '3 sem' },
 ]
 
+
+/* =====================================================
+   PROGRAMME — flux Home, témoignages vidéo, objectifs,
+   équipe par coach, ateliers collectifs, dotations
+   ===================================================== */
+
+/* Annonces de groupe de la semaine (flux Home) */
+export type HomeAnnouncement = {
+  id: string
+  title: string
+  host: string
+  when: string
+  time: string
+  mode: 'Visio' | 'Présentiel'
+  tag: string
+  seats: string
+  place: string
+  note: string
+}
+
+export const HOME_ANNOUNCEMENTS: HomeAnnouncement[] = [
+  {
+    id: 'a1', title: 'Cohérence cardiaque collective', host: 'Camille Durand',
+    when: 'Mardi 26', time: '07:30', mode: 'Visio', tag: 'Respiration',
+    seats: '12 places', place: 'Salle Synergy', note: 'Vingt minutes guidées, puis un temps d’échange. Idéal pour ouvrir la semaine.',
+  },
+  {
+    id: 'a2', title: 'Atelier réinsertion : premier entretien', host: 'Karim Bensaïd',
+    when: 'Mercredi 27', time: '14:00', mode: 'Visio', tag: 'Carrière',
+    seats: '8 places', place: 'Salle Carrière', note: 'Préparer un entretien sans pression : ce qu’on dit, ce qu’on peut taire.',
+  },
+  {
+    id: 'a3', title: 'Marche consciente au parc', host: 'Marc Lefèvre',
+    when: 'Jeudi 28', time: '10:00', mode: 'Présentiel', tag: 'Mouvement',
+    seats: '8 places', place: 'Paris 8e', note: 'Une heure de marche lente, respiration et mobilité douce, en petit groupe.',
+  },
+]
+
+/* Flux vidéo vertical : témoignages & podcasts, filtrés par objectifs */
+export type Story = {
+  id: string
+  kind: 'Témoignage' | 'Podcast'
+  title: string
+  author: string
+  domain: Domain
+  duration: string
+  views: string
+  poster: string
+  quote: string
+  caption: string
+}
+
+export const STORIES: Story[] = [
+  {
+    id: 'st1', kind: 'Témoignage', title: '« Je dors enfin sept heures »', author: 'Sarah, 34 ans',
+    domain: 'Sommeil', duration: '0:48', views: '4,2 k',
+    poster: 'https://images.unsplash.com/photo-1520206183501-b80df61043c2?w=900&q=80&auto=format&fit=crop',
+    quote: 'En six semaines, je me suis endormie sans écran et sans compter les heures.',
+    caption: 'Programme Émergence · suivi Camille Durand',
+  },
+  {
+    id: 'st2', kind: 'Podcast', title: 'Retrouver un rythme après un arrêt long', author: 'Hélène Vasseur',
+    domain: 'Mental', duration: '12:10', views: '2,8 k',
+    poster: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=900&q=80&auto=format&fit=crop',
+    quote: 'Le retour ne se négocie pas en une décision, il se construit en petites preuves.',
+    caption: 'Podcast · 12 minutes, à écouter en marchant',
+  },
+  {
+    id: 'st3', kind: 'Témoignage', title: '« Mon dos ne me réveille plus »', author: 'Thomas, 41 ans',
+    domain: 'Mouvement', duration: '1:02', views: '3,6 k',
+    poster: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop',
+    quote: 'Trois séances de douze minutes par semaine, et la douleur a reculé.',
+    caption: 'Programme Émergence · suivi Marc Lefèvre',
+  },
+  {
+    id: 'st4', kind: 'Témoignage', title: '« J’ai repris le travail à mi-temps »', author: 'Nadia, 38 ans',
+    domain: 'Confiance', duration: '1:14', views: '5,1 k',
+    poster: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&q=80&auto=format&fit=crop',
+    quote: 'On a découpé le retour en étapes que je pouvais tenir. Aucune ne m’a fait peur.',
+    caption: 'Programme Émergence · suivi Karim Bensaïd',
+  },
+  {
+    id: 'st5', kind: 'Podcast', title: 'L’assiette qui tient toute la matinée', author: 'Nora Benali',
+    domain: 'Nutrition', duration: '9:35', views: '1,9 k',
+    poster: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900&q=80&auto=format&fit=crop',
+    quote: 'Aucun interdit : juste de quoi ne plus avoir faim à onze heures.',
+    caption: 'Podcast · 9 minutes, avec la fiche recette',
+  },
+  {
+    id: 'st6', kind: 'Témoignage', title: '« Le stress ne décide plus de mes journées »', author: 'Julien, 29 ans',
+    domain: 'Stress', duration: '0:56', views: '6,7 k',
+    poster: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=900&q=80&auto=format&fit=crop',
+    quote: 'Quatre minutes de respiration avant chaque réunion, et la journée change de couleur.',
+    caption: 'Programme Émergence · suivi Élodie Martin',
+  },
+]
+
+/* Objectifs à moyen et long terme */
+export type HorizonGoal = {
+  id: string
+  title: string
+  horizon: 'Moyen terme' | 'Long terme'
+  coachId: string
+  progress: number
+  due: string
+  detail: string
+  steps: { label: string; done: boolean }[]
+}
+
+export const HORIZON_GOALS: HorizonGoal[] = [
+  {
+    id: 'h1', title: 'Retour au travail à mi-temps', horizon: 'Moyen terme', coachId: 'karim',
+    progress: 62, due: 'Mars 2027',
+    detail: 'Reprise progressive validée avec le médecin du travail, deux matinées par semaine.',
+    steps: [
+      { label: 'Bilan de compétences posé', done: true },
+      { label: 'Entretien avec l’employeur', done: true },
+      { label: 'Deux matinées par semaine tenues', done: false },
+      { label: 'Passage à trois matinées', done: false },
+    ],
+  },
+  {
+    id: 'h2', title: 'Sept heures de sommeil stables', horizon: 'Moyen terme', coachId: 'camille',
+    progress: 78, due: 'Décembre 2026',
+    detail: 'Endormissement avant 23h, réveil sans réveil-matin les week-ends.',
+    steps: [
+      { label: 'Rituel du soir 21h45', done: true },
+      { label: 'Écrans coupés au lit', done: true },
+      { label: 'Quatre nuits sur sept à 7h30', done: false },
+    ],
+  },
+  {
+    id: 'h3', title: 'Reprendre une activité physique régulière', horizon: 'Long terme', coachId: 'marc',
+    progress: 35, due: 'Juin 2027',
+    detail: 'Trois séances par semaine, sans douleur, avec un objectif de reprise en club.',
+    steps: [
+      { label: 'Mobilité quotidienne 12 min', done: true },
+      { label: 'Séance encadrée 1×/sem', done: false },
+      { label: 'Reprise en club', done: false },
+    ],
+  },
+  {
+    id: 'h4', title: 'Reconstruire une confiance durable', horizon: 'Long terme', coachId: 'helene',
+    progress: 48, due: 'Septembre 2027',
+    detail: 'Un espace confidentiel pour nommer ce qui bloque, sans que rien ne sorte de la séance.',
+    steps: [
+      { label: 'Premières séances posées', done: true },
+      { label: 'Situations déclencheuses identifiées', done: true },
+      { label: 'Outils d’ancrage en autonomie', done: false },
+    ],
+  },
+]
+
+/* Équipe vue par coach : objectifs assignés et comptes rendus partagés */
+export type CoachTeamEntry = {
+  coachId: string
+  cadence: string
+  objective: string
+  goals: string[]
+  reports: { date: string; title: string; shared: boolean }[]
+  privacy: 'equipe' | 'prive'
+  privacyNote: string
+}
+
+export const COACH_TEAM: CoachTeamEntry[] = [
+  {
+    coachId: 'karim', cadence: 'Contact bimensuel · présentiel ou distanciel',
+    objective: 'Réinsertion professionnelle progressive, sans pression de calendrier.',
+    goals: ['Retour au travail à mi-temps', 'Entretien employeur préparé', 'Rythme de sommeil compatible'],
+    reports: [
+      { date: '14 nov.', title: 'Bilan de reprise · étapes validées avec l’employeur', shared: true },
+      { date: '31 oct.', title: 'Point bimensuel · charge mentale encore élevée en matinée', shared: true },
+    ],
+    privacy: 'equipe',
+    privacyNote: 'Comptes rendus partagés avec l’équipe du programme et l’assurance maladie.',
+  },
+  {
+    coachId: 'camille', cadence: 'Contact hebdomadaire · distanciel',
+    objective: 'Réguler le système nerveux et consolider le sommeil profond.',
+    goals: ['Sept heures de sommeil stables', 'Cohérence cardiaque quotidienne'],
+    reports: [
+      { date: '18 nov.', title: 'Séance respiration #4 · apnée portée à 29 s', shared: true },
+      { date: '11 nov.', title: 'Bilan sommeil · endormissement à 15 min', shared: true },
+    ],
+    privacy: 'equipe',
+    privacyNote: 'Comptes rendus partagés avec l’équipe du programme.',
+  },
+  {
+    coachId: 'marc', cadence: 'Contact hebdomadaire · présentiel',
+    objective: 'Mobilité sans douleur et reprise progressive de l’activité.',
+    goals: ['Mobilité scapulaire', 'Reprise en club à long terme'],
+    reports: [
+      { date: '16 nov.', title: 'Séance mobilité · amplitude +12°', shared: true },
+    ],
+    privacy: 'equipe',
+    privacyNote: 'Comptes rendus partagés avec l’équipe du programme.',
+  },
+  {
+    coachId: 'helene', cadence: 'Contact hebdomadaire · espace confidentiel',
+    objective: 'Nommer ce qui bloque, à votre rythme, dans un cadre strictement privé.',
+    goals: ['Confiance durable', 'Outils d’ancrage en autonomie'],
+    reports: [
+      { date: '19 nov.', title: 'Séance confidentielle · notes non partagées', shared: false },
+    ],
+    privacy: 'prive',
+    privacyNote: 'Notes strictement privées · secret professionnel. Personne dans l’équipe n’y a accès ; le psychologue, lui, peut lire les comptes rendus des autres coachs.',
+  },
+]
+
+/* Ateliers collectifs thématiques */
+export type Workshop = {
+  id: string
+  title: string
+  coachId: string
+  date: string
+  time: string
+  mode: 'Visio' | 'Présentiel'
+  seats: number
+  taken: number
+  tag: string
+  desc: string
+}
+
+export const WORKSHOPS: Workshop[] = [
+  { id: 'w1', title: 'Sommeil : reconstruire un rituel réaliste', coachId: 'camille', date: 'Mar 1 déc.', time: '18:30', mode: 'Visio', seats: 12, taken: 9, tag: 'Sommeil', desc: 'Comprendre son chronotype, choisir deux rituels tenables et repartir avec un plan de deux semaines.' },
+  { id: 'w2', title: 'Entretien d’embauche : s’entraîner sans se juger', coachId: 'karim', date: 'Jeu 3 déc.', time: '14:00', mode: 'Visio', seats: 8, taken: 6, tag: 'Carrière', desc: 'Jeux de rôle en petits groupes, avec retours bienveillants et phrases d’ouverture prêtes à l’emploi.' },
+  { id: 'w3', title: 'Cuisine du quotidien pour la semaine', coachId: 'nora', date: 'Sam 5 déc.', time: '10:00', mode: 'Présentiel', seats: 10, taken: 10, tag: 'Nutrition', desc: 'Trois bases à décliner en cinq repas, et une liste de courses envoyée la veille.' },
+  { id: 'w4', title: 'Bouger en douceur malgré la douleur', coachId: 'marc', date: 'Mar 8 déc.', time: '18:00', mode: 'Présentiel', seats: 8, taken: 3, tag: 'Mouvement', desc: 'Séance guidée de mobilité adaptée, avec adaptations assises et sans matériel spécifique.' },
+]
+
+/* Dotations financées par l’assurance maladie */
+export type Dotation = {
+  id: string
+  name: string
+  category: string
+  value: string
+  state: 'Débloqué' | 'En cours' | 'À débloquer'
+  condition: string
+  icon: string
+}
+
+export const DOTATIONS: Dotation[] = [
+  { id: 'd1', name: 'Baskets de marche', category: 'Chaussures', value: '110 €', state: 'Débloqué', condition: 'Débloqué à l’entrée du programme', icon: 'check' },
+  { id: 'd2', name: 'Montre connectée', category: 'Mesure', value: '180 €', state: 'En cours', condition: 'Livraison prévue le 2 décembre', icon: 'clock' },
+  { id: 'd3', name: 'Tenue de sport', category: 'Textile', value: '90 €', state: 'À débloquer', condition: 'Débloquée après 4 séances encadrées', icon: 'lock' },
+  { id: 'd4', name: 'Tapis de marche pliable', category: 'Domicile', value: '320 €', state: 'À débloquer', condition: 'Sur prescription du coach, si pratique à domicile', icon: 'lock' },
+  { id: 'd5', name: 'Balance à impédance', category: 'Mesure', value: '75 €', state: 'À débloquer', condition: 'Débloquée après le bilan nutrition du 2e mois', icon: 'lock' },
+]
