@@ -118,8 +118,8 @@ function Shell() {
         setGuest(false)
         setHideExplorer(true)
         setProgram(true)
-        /* programme encadré : confidentialité maximale par défaut, rien n'est partagé */
-        setConsent({ account: true, health: true, journal: false, shareCoach: false })
+        /* programme encadré : toutes les options sont activées par défaut */
+        setConsent({ account: true, health: true, journal: true, shareCoach: true })
         setName(n)
         setRole('coache')
         setTab('hub')
@@ -193,7 +193,6 @@ function Shell() {
       <main className="tab-content" key={tab}>
         {tab === 'hub' && (
           <Hub
-            onOpenExercise={setExerciseId}
             onOpenCoach={c => setCoachView(c)}
             onOpenChat={openChat}
             onOpenEva={openEva}
@@ -201,7 +200,6 @@ function Shell() {
         )}
         {tab === 'ecosystem' && (
           <Ecosystem
-            onOpenExercise={setExerciseId}
             onOpenCoach={c => setCoachView(c)}
             onOpenChat={openChat}
             onOpenEva={openEva}

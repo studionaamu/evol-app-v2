@@ -1,6 +1,6 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
-import { Avatar, Logo } from './bits'
+import { Avatar } from './bits'
 import { COACHES, QUIZ, IMAGES, PROGRAM_NAME, recommendedCoachIds, type Coach, type Domain } from './data'
 
 /* =====================================================
@@ -64,58 +64,12 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
           <button className="coach-link on-photo" onClick={onCoach}>
             <Icon name="user" size={15} /> Espace coach
           </button>
-          <PartnerLogos />
           <p className="auth-legal glass-div">
             Espace confidentiel · chiffré et hébergé en UE.
           </p>
         </div>
       </div>
 
-    </div>
-  )
-}
-
-/* ---------- logos partenaires (marques vectorielles, sobres) ---------- */
-
-function PartnerLogos() {
-  const marks: { label: string; node: ReactNode }[] = [
-    { label: 'Evol', node: <Logo size={17} /> },
-    {
-      label: 'Assurance Maladie',
-      node: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <rect x="2.5" y="2.5" width="19" height="19" rx="6" />
-          <path d="M12 7.6v8.8M7.6 12h8.8" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    {
-      label: 'Mutuelle',
-      node: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <circle cx="9.2" cy="12" r="6" />
-          <circle cx="14.8" cy="12" r="6" />
-        </svg>
-      ),
-    },
-    {
-      label: 'Employeur',
-      node: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <path d="M4 20.5V5.2A1.2 1.2 0 0 1 5.2 4h8.1a1.2 1.2 0 0 1 1.2 1.2v15.3M14.5 9.5h3.8a1.2 1.2 0 0 1 1.2 1.2v9.8M2.5 20.5h19" strokeLinecap="round" />
-          <path d="M7 8h3M7 12h3M7 16h3" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-  ]
-  return (
-    <div className="auth-logos" aria-label="Partenaires du programme">
-      {marks.map(m => (
-        <span className="auth-logo" key={m.label}>
-          {m.node}
-          <em>{m.label}</em>
-        </span>
-      ))}
     </div>
   )
 }

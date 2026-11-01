@@ -440,13 +440,14 @@ export type CoachClient = {
   sleep: string
   adherence: number
   journal?: string
+  encadre?: boolean
   flags: { type: 'alert' | 'watch' | 'ok'; text: string }[]
 }
 
 export const COACH_CLIENTS: CoachClient[] = [
   {
     id: 'alex', name: 'Alex Martin', initials: 'AM', hue: '152', photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&q=80&auto=format&fit=crop',
-    program: 'Respiration & sommeil · 6 mois', startedAgo: 'mois 3', nextSession: 'Demain 09:30',
+    program: 'Respiration & sommeil · 6 mois', encadre: true, startedAgo: 'mois 3', nextSession: 'Demain 09:30',
     metrics: [
       { label: 'Énergie', value: '78', delta: '+8%', up: true },
       { label: 'Sommeil', value: '7h42', delta: 'stable' },
@@ -458,7 +459,7 @@ export const COACH_CLIENTS: CoachClient[] = [
   },
   {
     id: 'sofia', name: 'Sofia M.', initials: 'SM', hue: '8', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80&auto=format&fit=crop',
-    program: 'Force & mobilité · 6 mois', startedAgo: 'mois 2', nextSession: 'Jeu 26 · 14:00',
+    program: 'Force & mobilité · 6 mois', encadre: true, startedAgo: 'mois 2', nextSession: 'Jeu 26 · 14:00',
     metrics: [
       { label: 'Énergie', value: '41', delta: '-12%', up: false },
       { label: 'Récupération', value: 'faible', delta: 'alerte' },
@@ -804,6 +805,7 @@ export type HomeAnnouncement = {
   seats: string
   place: string
   note: string
+  img: string
 }
 
 export const HOME_ANNOUNCEMENTS: HomeAnnouncement[] = [
@@ -811,16 +813,19 @@ export const HOME_ANNOUNCEMENTS: HomeAnnouncement[] = [
     id: 'a1', title: 'Cohérence cardiaque collective', host: 'Camille Durand',
     when: 'Mardi 26', time: '07:30', mode: 'Visio', tag: 'Respiration',
     seats: '12 places', place: 'Salle Synergy', note: 'Vingt minutes guidées, puis un temps d’échange. Idéal pour ouvrir la semaine.',
+    img: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=900&q=80&auto=format&fit=crop',
   },
   {
     id: 'a2', title: 'Atelier réinsertion : premier entretien', host: 'Karim Bensaïd',
     when: 'Mercredi 27', time: '14:00', mode: 'Visio', tag: 'Carrière',
     seats: '8 places', place: 'Salle Carrière', note: 'Préparer un entretien sans pression : ce qu’on dit, ce qu’on peut taire.',
+    img: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&q=80&auto=format&fit=crop',
   },
   {
     id: 'a3', title: 'Marche consciente au parc', host: 'Marc Lefèvre',
     when: 'Jeudi 28', time: '10:00', mode: 'Présentiel', tag: 'Mouvement',
     seats: '8 places', place: 'Paris 8e', note: 'Une heure de marche lente, respiration et mobilité douce, en petit groupe.',
+    img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop',
   },
 ]
 

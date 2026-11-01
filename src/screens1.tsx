@@ -3,11 +3,10 @@ import { Icon } from './Icon'
 import { Avatar, EvaAvatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, SESSIONS, EXERCISES, QUOTES, IMAGES, EVENTS,
-  EVA_SESSION_REPORTS, INITIAL_SHARED_DOCS, ECOSYSTEM_GOALS,
-  HOME_ANNOUNCEMENTS, STORIES, HORIZON_GOALS, COACH_TEAM, WORKSHOPS, DOTATIONS,
-  PSY_COACH_ID,
-  type Coach, type SharedDocument, type CommunityEvent,
+  COACHES, SESSIONS, QUOTES, IMAGES, EVENTS,
+  EVA_SESSION_REPORTS, HOME_ANNOUNCEMENTS, STORIES, HORIZON_GOALS,
+  COACH_TEAM, WORKSHOPS, DOTATIONS, PSY_COACH_ID,
+  type Coach, type CommunityEvent,
 } from './data'
 
 function todayLabel() {
@@ -100,23 +99,24 @@ export function RadarChart({
   )
 }
 
-export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
-  onOpenExercise: (id: string) => void
+export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenCoach: (c: Coach) => void
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
 }) {
   const { name, quizDomains } = useStore()
-  void onOpenExercise
   const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length))
   const quote = QUOTES[quoteIdx]
 
-  /* --- flux Home : annonces de groupe de la semaine --- */
+  /* flux Home : annonces de groupe de la semaine */
   const [joined, setJoined] = useState<string[]>(['a1'])
   const toggleJoin = (id: string) =>
     setJoined(js => (js.includes(id) ? js.filter(x => x !== id) : [...js, id]))
 
-  /* --- flux vidéo vertical, filtré sur les objectifs du parcours --- */
+  /* ateliers collectifs */
+  const [joinedWorkshops, setJoinedWorkshops] = useState<string[]>(['w1'])
+
+  /* flux vidéo horizontal, filtré sur les objectifs du parcours */
   const [storyFilter, setStoryFilter] = useState<'objectifs' | 'tous'>('objectifs')
   const stories = useMemo(() => {
     const mine = quizDomains ?? []
@@ -126,8 +126,8 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
     return [...match, ...rest]
   }, [quizDomains, storyFilter])
 
-  /* --- journaling & transcription IA (déplacé de Synergy) --- */
-  const [entries, setEntries] = useState<{ id: string; date: string; text: string; tag: string; img?: string }[]>([
+  /* journaling & transcription IA */
+  const [entries, setEntries] = useState<{ id: string; date: string; text: string; tag: string }[]>([
     { id: 'j1', date: 'Aujourd’hui · 08:15', text: 'Réveil plus clair après 4 cycles de 4-7-8 hier soir. Moins de raideur dans la nuque.', tag: 'Sommeil' },
     { id: 'j2', date: 'Hier · 21:40', text: 'Journée dense mais pas d’épuisement en fin d’après-midi grâce au protocole de Nora.', tag: 'Énergie' },
   ])
@@ -162,50 +162,12 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
     setDraft('')
   }
 
-  /* --- scan de repas : slider → caméra → analyse EVA automatique --- */
-  const shotInput = useRef<HTMLInputElement>(null)
-  const [swipe, setSwipe] = useState(0)
-  const [mealShot, setMealShot] = useState<string | null>(null)
-  const [mealName, setMealName] = useState('')
-  const [mealAnalysis, setMealAnalysis] = useState<string | null>(null)
-  const [analyzingMeal, setAnalyzingMeal] = useState(false)
-
-  const runMealAnalysis = () => {
-    setAnalyzingMeal(true)
-    setTimeout(() => {
-      setAnalyzingMeal(false)
-      setMealAnalysis('Repas détecté : bowl de lentilles, avocat et œuf mollet — environ 520 kcal, 26 g de protéines, 48 g de glucides, 22 g de lipides. Équilibre fibres/protéines solide ; ajoutez un fruit pour la vitamine C.')
-    }, 1100)
-  }
-
-  const onShot = (file?: File) => {
-    if (!file) return
-    setMealShot(URL.createObjectURL(file))
-    setMealName(file.name)
-    setMealAnalysis(null)
-    runMealAnalysis()
-  }
-
-  const addMealEntry = () => {
-    if (!mealShot || !mealAnalysis) return
-    setEntries(es => [{ id: 'j' + Date.now(), date: 'À l’instant', text: mealAnalysis, tag: 'Nutrition', img: mealShot }, ...es])
-    setMealShot(null)
-    setMealAnalysis(null)
-  }
-
-  const signals = [
-    { label: 'Sommeil', v: 34, up: false },
-    { label: 'Énergie', v: 38, up: false },
-    { label: 'Social', v: 80, up: true },
-  ]
-
   return (
     <div className="tab-page" data-zone="hub">
       <header className="page-head">
         <div>
           <div className="date-line">{todayLabel()}</div>
           <h1>{greeting()}, <em className="hello-name">{name}</em></h1>
-          <p>Votre espace pour avancer, un jour à la fois.</p>
         </div>
         <div className="head-user">
           <span className="user-presence" aria-hidden />
@@ -222,55 +184,35 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
         </button>
       </section>
 
-      <div className="hub-signals">
-        {signals.map(s => (
-          <div className={'hub-signal ' + (s.up ? 'good' : 'bad')} key={s.label}>
-            <span>{s.label}</span>
-            <strong>{s.v}</strong>
-            <Icon name={s.up ? 'activity' : 'alert'} size={11} />
-          </div>
-        ))}
-      </div>
-
-      {/* FLUX HOME : la semaine du programme */}
       <section className="card" data-zone="home-feed">
-        <div className="card-kicker"><Icon name="bell" size={13} /> HOME · LA SEMAINE DU PROGRAMME</div>
         <h2>Ce qui se passe cette semaine</h2>
-        <p>Les temps de groupe de votre programme, et vos prochains rendez-vous.</p>
 
         <div className="feed-list">
           {HOME_ANNOUNCEMENTS.map(a => {
             const on = joined.includes(a.id)
             return (
               <article className={'feed-item glass-lite' + (on ? ' on' : '')} key={a.id}>
-                <div className="feed-when">
-                  <strong>{a.when.split(' ')[1]}</strong>
-                  <span>{a.when.split(' ')[0]}</span>
-                </div>
-                <div className="feed-main">
+                <img className="feed-img" src={a.img} alt="" loading="lazy" />
+                <div className="feed-body">
                   <div className="feed-meta">
                     <span className="tag mini">{a.tag}</span>
-                    <span className="feed-time"><Icon name={a.mode === 'Visio' ? 'video' : 'location'} size={11} /> {a.time} · {a.mode}</span>
+                    <span className="feed-time"><Icon name={a.mode === 'Visio' ? 'video' : 'location'} size={11} /> {a.when} · {a.time}</span>
                   </div>
                   <strong>{a.title}</strong>
                   <span className="feed-sub">{a.host} · {a.place} · {a.seats}</span>
                   <p className="feed-note">{a.note}</p>
+                  <button className={'feed-join' + (on ? ' on' : '')} onClick={() => toggleJoin(a.id)} aria-pressed={on}>
+                    <Icon name={on ? 'check' : 'plus'} size={13} />
+                    <span>{on ? 'Inscrit' : 'Rejoindre'}</span>
+                  </button>
                 </div>
-                <button
-                  className={'feed-join' + (on ? ' on' : '')}
-                  onClick={() => toggleJoin(a.id)}
-                  aria-pressed={on}
-                >
-                  <Icon name={on ? 'check' : 'plus'} size={13} />
-                  <span>{on ? 'Inscrit' : 'Rejoindre'}</span>
-                </button>
               </article>
             )
           })}
         </div>
 
         <div className="feed-sessions">
-          <div className="card-kicker" style={{ marginBottom: 8 }}><Icon name="calendar" size={13} /> VOS PROCHAINS RENDEZ-VOUS</div>
+          <div className="block-title" style={{ marginTop: 0 }}>Vos prochains rendez-vous</div>
           <div className="sessions">
             {SESSIONS.map(s => {
               const c = COACHES.find(x => x.id === s.coachId)!
@@ -290,23 +232,15 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
         </div>
       </section>
 
-      {/* FIL DE TÉMOIGNAGES & PODCASTS */}
       <section className="card" data-zone="stories">
-        <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
-          <div className="card-kicker" style={{ margin: 0 }}><Icon name="play" size={13} /> TÉMOIGNAGES & PODCASTS</div>
-          <span className="tag mini">Toujours positif</span>
-        </div>
         <h2>Des parcours qui ressemblent au vôtre</h2>
-        <p>Des réussites et des podcasts choisis pour vos objectifs. Un geste vers le haut pour passer au suivant.</p>
-
-        <div className="msg-filters" style={{ marginTop: 10 }}>
+        <div className="msg-filters" style={{ marginTop: 8 }}>
           {([['objectifs', 'Mes objectifs'], ['tous', 'Tout le fil']] as const).map(([id, label]) => (
             <button key={id} className={'msg-filter' + (storyFilter === id ? ' on' : '')} onClick={() => setStoryFilter(id)}>
               {label}
             </button>
           ))}
         </div>
-
         <div className="story-feed">
           {stories.map(s => (
             <article className="story-slide" key={s.id}>
@@ -317,86 +251,66 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
                   <span className="story-kind">
                     <Icon name={s.kind === 'Podcast' ? 'mic' : 'video'} size={11} /> {s.kind}
                   </span>
-                  <span className="story-dur">{s.duration} · {s.views} vues</span>
+                  <span className="story-dur">{s.duration}</span>
                 </div>
                 <h3>{s.title}</h3>
                 <p className="story-quote">{s.quote}</p>
                 <span className="story-by">{s.author}</span>
-                <span className="story-caption">{s.caption}</span>
-                <div className="story-actions">
-                  <button className="round-btn sm" aria-label="Lire le témoignage"><Icon name="play" size={14} filled /></button>
-                  <span className="tag mini glass-lite">{s.domain}</span>
-                </div>
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      {/* JOURNALING & TRANSCRIPTION IA + SCAN DE REPAS */}
-      <section className="card" data-zone="journal">
-        <div className="card-kicker"><Icon name="edit" size={13} /> JOURNALING & TRANSCRIPTION IA</div>
-        <h2>Carnet d’évolution</h2>
-        <p>Écrivez ou dictez vos notes. EVA les structure et vous choisissez ce que vous partagez avec vos coachs.</p>
-
-        <div className="scan-slider glass-lite">
-          <div className="scan-head">
-            <span><Icon name="camera" size={13} /> Scanner mon repas</span>
-            <span className="tag mini">EVA analyse</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={swipe}
-            aria-label="Glisser pour ouvrir la caméra et scanner un repas"
-            onChange={e => {
-              const v = Number(e.target.value)
-              setSwipe(v)
-              if (v >= 96) { shotInput.current?.click(); setSwipe(0) }
-            }}
-          />
-          <span className="scan-hint">{swipe > 20 ? 'Continuez…' : 'Glissez vers la droite pour ouvrir la caméra'}</span>
-          <input
-            ref={shotInput}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            aria-label="Photographier mon plat"
-            onChange={e => { onShot(e.target.files?.[0]); e.target.value = '' }}
-          />
+      {/* ATELIERS COLLECTIFS (déplacés de l'Écosystème) */}
+      <section className="card" data-zone="ateliers">
+        <h2>Sessions thématiques de groupe</h2>
+        <div className="workshop-list">
+          {WORKSHOPS.map(w => {
+            const c = COACHES.find(x => x.id === w.coachId)!
+            const on = joinedWorkshops.includes(w.id)
+            const full = w.taken >= w.seats
+            return (
+              <article className={'workshop glass-lite' + (on ? ' on' : '')} key={w.id}>
+                <div className="ws-top">
+                  <span className="tag mini">{w.tag}</span>
+                  <span className="ws-when">
+                    <Icon name={w.mode === 'Visio' ? 'video' : 'location'} size={11} /> {w.date} · {w.time}
+                  </span>
+                </div>
+                <strong className="ws-title">{w.title}</strong>
+                <p>{w.desc}</p>
+                <div className="ws-foot">
+                  <button className="hg-coach" onClick={() => onOpenCoach(c)}>
+                    <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={18} />
+                    <span>{c.name.split(' ')[0]}</span>
+                  </button>
+                  <span className={'ws-seats' + (full ? ' full' : '')}>{w.taken}/{w.seats} inscrits</span>
+                  <button
+                    className={'btn sm ' + (on ? 'btn-soft' : 'btn-primary')}
+                    disabled={full && !on}
+                    onClick={() => setJoinedWorkshops(js => on ? js.filter(x => x !== w.id) : [...js, w.id])}
+                  >
+                    <Icon name={on ? 'check' : 'plus'} size={12} />
+                    <span>{on ? 'Inscrit' : full ? 'Complet' : 'M’inscrire'}</span>
+                  </button>
+                </div>
+              </article>
+            )
+          })}
         </div>
+      </section>
 
+      {/* JOURNALING & TRANSCRIPTION IA */}
+      <section className="card" data-zone="journal">
+        <h2>Carnet d’évolution</h2>
         <textarea
           className="journal"
           rows={3}
-          style={{ marginTop: 12 }}
           placeholder="Noter une prise de conscience, un ressenti ou dicter…"
           value={draft}
           onChange={e => setDraft(e.target.value)}
         />
-
-        {mealShot && (
-          <div className="meal-preview glass-lite">
-            <img src={mealShot} alt="Photo du plat analysé par EVA" />
-            <div className="meal-preview-body">
-              <strong>Analyse nutritionnelle EVA</strong>
-              <span>{mealName}</span>
-              {analyzingMeal
-                ? <span className="ai-status"><i className="dot pulsing" /> EVA analyse votre assiette…</span>
-                : <p className="meal-analysis">{mealAnalysis}</p>}
-              <div className="row" style={{ marginTop: 4 }}>
-                {mealAnalysis && (
-                  <button className="btn btn-primary sm" onClick={addMealEntry}>
-                    <Icon name="check" size={13} /><span>Ajouter au journal</span>
-                  </button>
-                )}
-                <button className="btn btn-ghost sm" onClick={() => { setMealShot(null); setMealAnalysis(null) }}>Retirer</button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="row" style={{ marginTop: 10, marginBottom: 14 }}>
           <button className={'mic-btn' + (recording ? ' rec' : '')} onClick={toggleRec} aria-label="Dicter une note">
@@ -422,7 +336,6 @@ export function Hub({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
                 <span className="dim" style={{ fontSize: 11 }}>{j.date}</span>
                 <span className="tag mini">{j.tag}</span>
               </div>
-              {j.img && <img className="journal-img" src={j.img} alt="Plat analysé par EVA" />}
               <p style={{ fontSize: 13 }}>{j.text}</p>
             </div>
           ))}
@@ -643,36 +556,50 @@ function EventScreen({ ev, joined, onJoin, onBack }: {
    MON ÉCOSYSTÈME — espace centralisé en widgets/grille
    ===================================================== */
 
-export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }: {
-  onOpenExercise: (id: string) => void
+export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenCoach: (c: Coach) => void
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
 }) {
-  const { consent, selectedRadarAxis, setSelectedRadarAxis, followedCoachIds } = useStore()
+  const { selectedRadarAxis, setSelectedRadarAxis } = useStore()
   const [teamCoach, setTeamCoach] = useState<string>(COACH_TEAM[0].coachId)
-  const [joinedWorkshops, setJoinedWorkshops] = useState<string[]>(['w1'])
-  const [requested, setRequested] = useState<string[]>([])
+
+  /* scan de repas — accès rapide depuis le haut de l'écosystème */
+  const shotInput = useRef<HTMLInputElement>(null)
+  const [swipe, setSwipe] = useState(0)
+  const [mealShot, setMealShot] = useState<string | null>(null)
+  const [mealAnalysis, setMealAnalysis] = useState<string | null>(null)
+  const [analyzingMeal, setAnalyzingMeal] = useState(false)
+
+  const runMealAnalysis = () => {
+    setAnalyzingMeal(true)
+    setTimeout(() => {
+      setAnalyzingMeal(false)
+      setMealAnalysis('Repas détecté : bowl de lentilles, avocat et œuf mollet — environ 520 kcal, 26 g de protéines, 48 g de glucides, 22 g de lipides. Équilibre fibres/protéines solide ; ajoutez un fruit pour la vitamine C.')
+    }, 1100)
+  }
+
+  const onShot = (file?: File) => {
+    if (!file) return
+    setMealShot(URL.createObjectURL(file))
+    setMealAnalysis(null)
+    runMealAnalysis()
+  }
+
+  /* biométrie */
   const [steps, setSteps] = useState(8420)
   const [bpm, setBpm] = useState(58)
   const [measuring, setMeasuring] = useState(false)
+  const [analyzingHealth, setAnalyzingHealth] = useState(false)
   const [evaHealthAnalysis, setEvaHealthAnalysis] = useState<string | null>(
     'Votre pouls au repos (58 bpm) et vos 8 420 pas montrent une excellente récupération cardiovasculaire. EVA suggère de maintenir la séance de mobilité douce avec Marc et d’avancer le coucher de 20 min.'
   )
-  const [analyzingHealth, setAnalyzingHealth] = useState(false)
-
-  const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
-  const [docTitle, setDocTitle] = useState('')
-  const [docCoach, setDocCoach] = useState('camille')
-  const [expandedReport, setExpandedReport] = useState<string | null>('r1')
-  const [toolTab, setToolTab] = useState<'exercices' | 'rdv' | 'favoris'>('exercices')
 
   const triggerPulseMeasure = () => {
     if (measuring) return
     setMeasuring(true)
     setTimeout(() => {
-      const nextBpm = 56 + Math.floor(Math.random() * 7)
-      setBpm(nextBpm)
+      setBpm(56 + Math.floor(Math.random() * 7))
       setSteps(s => s + 180)
       setMeasuring(false)
     }, 1100)
@@ -688,17 +615,13 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
     }, 900)
   }
 
-  const addSharedDoc = () => {
-    const title = docTitle.trim() || `Note_Suivi_${new Date().toLocaleDateString('fr-FR')}.pdf`
-    setDocs(ds => [
-      { id: 'd' + Date.now(), title, kind: 'Bilan', size: '640 Ko', coachId: docCoach, date: 'À l’instant', byMe: true },
-      ...ds,
-    ])
-    setDocTitle('')
-  }
+  /* demande de matériel : page dédiée */
+  const [dotationOpen, setDotationOpen] = useState(false)
 
   const activeAxis = RADAR.find(r => r.axis === selectedRadarAxis) ?? RADAR[5]
   const axisCoach = COACHES.find(c => c.id === activeAxis.coachId) ?? COACHES[0]
+
+  if (dotationOpen) return <DotationRequest onBack={() => setDotationOpen(false)} />
 
   return (
     <div className="tab-page" data-zone="ecosystem">
@@ -706,10 +629,55 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
         <div>
           <div className="date-line">MON ÉCOSYSTÈME</div>
           <h1>Votre évolution<br />à 360°.</h1>
-          <p>Vos coachs, leurs objectifs partagés et tous vos modules au même endroit.</p>
+          <p>Vos coachs, leurs objectifs et tous vos outils au même endroit.</p>
         </div>
       </header>
 
+      {/* ACCÈS RAPIDE — SCAN DE REPAS */}
+      <section className="card scan-slider eco-scan" data-zone="scan">
+        <div className="scan-head">
+          <span><Icon name="camera" size={14} /> Scanner mon repas</span>
+          <span className="tag mini">EVA analyse</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={swipe}
+          aria-label="Glisser pour ouvrir la caméra et scanner un repas"
+          onChange={e => {
+            const v = Number(e.target.value)
+            setSwipe(v)
+            if (v >= 96) { shotInput.current?.click(); setSwipe(0) }
+          }}
+        />
+        <span className="scan-hint">{swipe > 20 ? 'Continuez…' : 'Glissez vers la droite pour ouvrir la caméra'}</span>
+        <input
+          ref={shotInput}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          aria-label="Photographier mon plat"
+          onChange={e => { onShot(e.target.files?.[0]); e.target.value = '' }}
+        />
+        {mealShot && (
+          <div className="meal-preview glass-lite">
+            <img src={mealShot} alt="Photo du plat analysé par EVA" />
+            <div className="meal-preview-body">
+              <strong>Analyse nutritionnelle EVA</strong>
+              {analyzingMeal
+                ? <span className="ai-status"><i className="dot pulsing" /> EVA analyse votre assiette…</span>
+                : <p className="meal-analysis">{mealAnalysis}</p>}
+              <div className="row" style={{ marginTop: 4 }}>
+                <button className="btn btn-ghost sm" onClick={() => { setMealShot(null); setMealAnalysis(null) }}>Fermer</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* MON ÉQUIPE — les coachs comme entrée de page */}
       <div className="team-row eco-team-row">
         {COACH_TEAM.map(t => {
           const c = COACHES.find(x => x.id === t.coachId)!
@@ -718,511 +686,342 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
             <button key={c.id} className={'team-chip' + (on ? ' on' : '')} onClick={() => setTeamCoach(c.id)}>
               <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={42} ring={on} />
               <span>{c.name.split(' ')[0]}</span>
+              <em className="team-chip-role">{c.role}</em>
               {t.privacy === 'prive' && <Icon name="lock" size={10} />}
             </button>
           )
         })}
       </div>
 
-      {/* WIDGET ÉQUIPE — vue par coach, objectifs assignés & comptes rendus */}
-        <section className="card" data-zone="team">
-          <div className="card-kicker"><Icon name="users" size={13} /> MON ÉQUIPE D'ACCOMPAGNEMENT</div>
-          <h2>Un référent par sujet.</h2>
-          <p>Sélectionnez un coach : ses objectifs assignés et les comptes rendus partagés avec l'ensemble de l'équipe.</p>
+      {/* RADAR DE VIE */}
+      <section className="card card-balance" data-zone="radar">
+        <span className="balance-wash" aria-hidden />
+        <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE</div>
+        <div className="radar-head">
+          <h2>Analyse par domaine</h2>
+          <span className="tag mini glass-lite">{activeAxis.axis} sélectionné</span>
+        </div>
 
-          {(() => {
-            const entry = COACH_TEAM.find(t => t.coachId === teamCoach) ?? COACH_TEAM[0]
-            const c = COACHES.find(x => x.id === entry.coachId)!
+        <RadarChart
+          scores={RADAR}
+          selectedAxis={selectedRadarAxis}
+          onSelectAxis={axis => setSelectedRadarAxis(axis)}
+          expanded
+        />
+
+        <div className="radar-scores">
+          {RADAR.map(r => {
+            const isSel = selectedRadarAxis === r.axis
             return (
-              <div className="team-detail glass-lite" key={c.id}>
-                <div className="team-head">
-                  <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={50} ring />
-                  <div className="session-info">
-                    <strong>{c.name}</strong>
-                    <span>{c.role}</span>
-                  </div>
-                  <span className={'tag mini team-badge ' + entry.privacy}>
-                    <Icon name={entry.privacy === 'prive' ? 'lock' : 'users'} size={10} />
-                    {entry.privacy === 'prive' ? 'Privé' : 'Équipe'}
-                  </span>
-                </div>
-
-                <div className="client-line"><Icon name="clock" size={14} /><span>{entry.cadence}</span></div>
-                <div className="client-line"><Icon name="activity" size={14} /><span>{entry.objective}</span></div>
-
-                <div className="team-sub">Objectifs assignés</div>
-                <div className="team-goals">
-                  {entry.goals.map(g => (
-                    <span className="team-goal" key={g}><Icon name="check" size={11} />{g}</span>
-                  ))}
-                </div>
-
-                <div className="team-sub">
-                  {entry.privacy === 'prive' ? 'Notes confidentielles' : 'Comptes rendus partagés'}
-                </div>
-                {entry.reports.map(r => (
-                  <div className={'team-report' + (r.shared ? '' : ' locked')} key={r.title}>
-                    <Icon name={r.shared ? 'file' : 'lock'} size={13} />
-                    <div className="session-info">
-                      <strong>{r.title}</strong>
-                      <span>{r.date}{r.shared ? ' · visible par l’équipe' : ' · visible par vous et le psychologue uniquement'}</span>
-                    </div>
-                  </div>
-                ))}
-
-                <div className={'team-privacy ' + entry.privacy}>
-                  <Icon name={entry.privacy === 'prive' ? 'shield' : 'users'} size={12} />
-                  <span>{entry.privacyNote}</span>
-                </div>
-
-                <div className="row" style={{ marginTop: 12 }}>
-                  <button className="btn btn-soft sm" onClick={() => onOpenCoach(c)}>
-                    <Icon name="user" size={13} /><span>Fiche du coach</span>
-                  </button>
-                  {entry.coachId === 'karim' && (
-                    <button className="btn btn-ghost sm" onClick={() => onOpenEva('Prends rendez-vous avec Karim, mon coach carrière, pour notre point bimensuel')}>
-                      <Icon name="sparkle" size={13} /><span>Déléguer le RDV à EVA</span>
-                    </button>
-                  )}
-                  {entry.coachId === PSY_COACH_ID && (
-                    <button className="btn btn-ghost sm" onClick={() => onOpenChat(c.id)}>
-                      <Icon name="chat" size={13} /><span>Espace confidentiel</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              <button
+                type="button"
+                className={'radar-score' + (isSel ? ' active' : '')}
+                key={r.axis}
+                onClick={() => setSelectedRadarAxis(r.axis)}
+              >
+                <span>{r.axis}</span>
+                <strong>{r.v}</strong>
+              </button>
             )
-          })()}
+          })}
+        </div>
 
-          <div className="privacy" style={{ marginTop: 12 }}>
-            <Icon name="shield" size={12} />
-            <span>Le psychologue agréé lit les comptes rendus des autres coachs ; ses propres notes ne sont vues par personne.</span>
-          </div>
-        </section>
-
-      {/* STATISTIQUES AVANCÉES & OBJECTIFS */}
-        <section className="card">
-          <div className="card-kicker"><Icon name="chart" size={13} /> STATISTIQUES AVANCÉES & OBJECTIFS</div>
-          <h2>Tableaux de suivi ({followedCoachIds.length} coachs suivis)</h2>
-          <div className="metrics" style={{ marginTop: 10, marginBottom: 14 }}>
-            <div className="metric">
-              <div className="metric-top"><span>ASSIDUITÉ</span><span className="delta up">+9%</span></div>
-              <span className="metric-val good">91%</span>
+        <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
+          <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+            <div className="radar-axis-title">
+              <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
+              <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta} sur 30 j</span>
             </div>
-            <div className="metric">
-              <div className="metric-top"><span>SCORE GLOBAL</span><span className="delta up">+12 pts</span></div>
-              <span className="metric-val good">78<span className="of">/100</span></span>
-            </div>
-            <div className="metric">
-              <div className="metric-top"><span>SÉRIES ACTIVES</span></div>
-              <span className="metric-val">12 j</span>
-            </div>
-          </div>
-
-          <div className="horizon-block">
-            <div className="card-kicker"><Icon name="compass" size={13} /> OBJECTIFS À MOYEN & LONG TERME</div>
-            <div className="horizon-grid">
-              {(['Moyen terme', 'Long terme'] as const).map(h => (
-                <div className="horizon-col" key={h}>
-                  <div className="horizon-col-head">{h}</div>
-                  {HORIZON_GOALS.filter(g => g.horizon === h).map(g => {
-                    const c = COACHES.find(x => x.id === g.coachId)!
-                    const tone = g.progress >= 85 ? 'good' : g.progress < 50 ? 'bad' : ''
-                    return (
-                      <article className={'horizon-goal glass-lite' + (tone ? ' ' + tone : '')} key={g.id}>
-                        <div className="hg-top">
-                          <span className="hg-due">{g.due}</span>
-                          <strong className={tone || undefined}>{g.progress}%</strong>
-                        </div>
-                        <strong className="hg-title">{g.title}</strong>
-                        <p>{g.detail}</p>
-                        <div className={'group-meter ' + (tone || '')}><span style={{ width: `${g.progress}%` }} /></div>
-                        <div className="hg-steps">
-                          {g.steps.map(st => (
-                            <span className={'hg-step' + (st.done ? ' done' : '')} key={st.label}>
-                              <Icon name={st.done ? 'check' : 'plus'} size={10} />{st.label}
-                            </span>
-                          ))}
-                        </div>
-                        <button className="hg-coach" onClick={() => onOpenCoach(c)}>
-                          <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={18} />
-                          <span>{c.name.split(' ')[0]}</span>
-                        </button>
-                      </article>
-                    )
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="eco-table">
-            <div className="eco-thead">
-              <span>Objectif & domaine</span>
-              <span>Cible</span>
-              <span>Progression</span>
-            </div>
-            {ECOSYSTEM_GOALS.map(g => {
-              const c = COACHES.find(x => x.id === g.coachId)!
-              return (
-                <div className="eco-trow" key={g.id} onClick={() => onOpenCoach(c)}>
-                  <div className="eco-tmain">
-                    <strong>{g.title}</strong>
-                    <span>{g.domain} · suivi par {c.name.split(' ')[0]} · {g.streak}</span>
-                  </div>
-                  <div className="eco-ttarget">
-                    <strong>{g.current}</strong>
-                    <span>cible {g.target}</span>
-                  </div>
-                  <div className="eco-tprog">
-                    <strong className={g.progress >= 80 ? 'good' : g.progress < 70 ? 'bad' : undefined}>{g.progress}%</strong>
-                    <div className={'group-meter ' + (g.progress >= 80 ? 'good' : g.progress < 70 ? 'bad' : '')}><span style={{ width: `${g.progress}%` }} /></div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-      {/* WIDGET OUTILS (DÉPLACÉ DEPUIS PROFIL) : EXERCICES, RENDEZ-VOUS, CONTENUS FAVORIS */}
-        <section className="card" data-zone="ateliers">
-          <div className="card-kicker"><Icon name="calendar" size={13} /> ATELIERS COLLECTIFS</div>
-          <h2>Sessions thématiques de groupe</h2>
-          <p>En petit comité, animés par votre équipe. Inscription immédiate, annulation libre jusqu’à 24 h avant.</p>
-          <div className="workshop-list">
-            {WORKSHOPS.map(w => {
-              const c = COACHES.find(x => x.id === w.coachId)!
-              const on = joinedWorkshops.includes(w.id)
-              const full = w.taken >= w.seats
-              return (
-                <article className={'workshop glass-lite' + (on ? ' on' : '')} key={w.id}>
-                  <div className="ws-top">
-                    <span className="tag mini">{w.tag}</span>
-                    <span className="ws-when">
-                      <Icon name={w.mode === 'Visio' ? 'video' : 'location'} size={11} /> {w.date} · {w.time}
-                    </span>
-                  </div>
-                  <strong className="ws-title">{w.title}</strong>
-                  <p>{w.desc}</p>
-                  <div className="ws-foot">
-                    <button className="hg-coach" onClick={() => onOpenCoach(c)}>
-                      <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={18} />
-                      <span>{c.name.split(' ')[0]}</span>
-                    </button>
-                    <span className={'ws-seats' + (full ? ' full' : '')}>{w.taken}/{w.seats} inscrits</span>
-                    <button
-                      className={'btn sm ' + (on ? 'btn-soft' : 'btn-primary')}
-                      disabled={full && !on}
-                      onClick={() => setJoinedWorkshops(js => on ? js.filter(x => x !== w.id) : [...js, w.id])}
-                    >
-                      <Icon name={on ? 'check' : 'plus'} size={12} />
-                      <span>{on ? 'Inscrit' : full ? 'Complet' : 'M’inscrire'}</span>
-                    </button>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-
-      {/* WIDGET DOTATIONS — matériel financé */}
-        <section className="card" data-zone="dotations">
-          <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
-          <h2>Votre matériel financé</h2>
-          <p>Équipement financé par l’assurance maladie : débloquez-le au fil du programme, sans avance de frais.</p>
-          <div className="dotation-list">
-            {DOTATIONS.map(d => {
-              const asked = requested.includes(d.id)
-              const state = asked ? 'En cours' : d.state
-              const tone = state === 'Débloqué' ? 'good' : state === 'En cours' ? 'watch' : 'bad'
-              return (
-                <article className={'dotation glass-lite ' + tone} key={d.id}>
-                  <span className="dotation-ico"><Icon name={d.icon} size={15} /></span>
-                  <div className="session-info">
-                    <strong>{d.name}</strong>
-                    <span>{d.category} · {d.value} · {d.condition}</span>
-                  </div>
-                  <span className={'dotation-state ' + tone}>
-                    {state === 'Débloqué' ? <Icon name="check" size={11} /> : state === 'En cours' ? <Icon name="clock" size={11} /> : <Icon name="lock" size={11} />}
-                    {state}
-                  </span>
-                  {state === 'À débloquer' && (
-                    <button className="btn btn-primary sm" onClick={() => setRequested(r => [...r, d.id])}>
-                      <span>Débloquer</span>
-                    </button>
-                  )}
-                </article>
-              )
-            })}
-          </div>
-          <div className="privacy" style={{ marginTop: 12 }}>
-            <Icon name="shield" size={12} />
-            <span>Prise en charge validée par l’assurance maladie · aucune avance de frais, aucun partage de vos données bancaires.</span>
-          </div>
-        </section>
-
-      {/* WIDGET 0 : RADAR DE VIE DÉVELOPPÉ & INTERACTIF */}
-        <section className="card card-balance">
-          <span className="balance-wash" aria-hidden />
-          <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE DÉVELOPPÉ</div>
-          <div className="radar-head">
-            <h2>Analyse par domaine</h2>
-            <span className="tag mini glass-lite">{activeAxis.axis} sélectionné</span>
-          </div>
-
-          <RadarChart
-            scores={RADAR}
-            selectedAxis={selectedRadarAxis}
-            onSelectAxis={axis => setSelectedRadarAxis(axis)}
-            expanded
-          />
-
-          <div className="radar-scores">
-            {RADAR.map(r => {
-              const isSel = selectedRadarAxis === r.axis
-              return (
-                <button
-                  type="button"
-                  className={'radar-score' + (isSel ? ' active' : '')}
-                  key={r.axis}
-                  onClick={() => setSelectedRadarAxis(r.axis)}
-                >
-                  <span>{r.axis}</span>
-                  <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
-            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
-              <div className="radar-axis-title">
-                <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
-                <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta} sur 30 j</span>
-              </div>
-              <button className="btn btn-soft sm" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => onOpenCoach(axisCoach)}>
-                <span>Expert : {axisCoach.name.split(' ')[0]}</span>
-              </button>
-            </div>
-            <p className="radar-axis-txt">{activeAxis.insight}</p>
-            <div className="radar-rec-line">
-              <Icon name="sparkle" size={12} />
-              <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
-            </div>
-          </div>
-        </section>
-
-      {/* WIDGET 1 : MODULE SANTÉ (PAS, POULS & ANALYSE IA EVA) */}
-        <section className="card eco-health-card">
-          <span className="balance-wash" aria-hidden />
-          <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
-            <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> MODULE SANTÉ & BIOMÉTRIE</div>
-            <span className="tag mini glass-lite"><i className="dot" /> Capteurs synchronisés</span>
-          </div>
-          <h2>Pas, pouls & analyse EVA</h2>
-
-          <div className="health-bento">
-            <div className="health-tile glass-lite">
-              <div className="ht-head">
-                <span>PAS QUOTIDIENS</span>
-                <span className="delta up">+14%</span>
-              </div>
-              <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
-              <span className="ht-sub">Objectif 10 000 pas · {(Math.min(100, Math.round((steps / 10000) * 100)))}%</span>
-              <div className="group-meter" style={{ marginTop: 8 }}>
-                <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
-              </div>
-            </div>
-
-            <div className="health-tile glass-lite">
-              <div className="ht-head">
-                <span>PRISE DE POULS</span>
-                <span className="pulse-dot" />
-              </div>
-              <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
-              <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
-              <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
-                <Icon name="heart" size={13} filled />
-                <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="eva-health-box glass-lite">
-            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
-              <div className="transcript-head" style={{ margin: 0 }}>
-                <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
-              </div>
-              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
-                {analyzingHealth ? 'Calcul…' : 'Actualiser'}
-              </button>
-            </div>
-            <p className="eva-health-txt">{evaHealthAnalysis}</p>
-            <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
-                <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-      {/* WIDGET 2 : STATISTIQUES AVANCÉES & TABLEAUX DE SUIVI DES OBJECTIFS */}
-        <section className="card" data-zone="outils">
-          <div className="card-kicker"><Icon name="activity" size={13} /> OUTILS & PRATIQUES</div>
-          <h2>Exercices, rendez-vous & favoris</h2>
-          <div className="subtabs" style={{ marginTop: 10, marginBottom: 12 }}>
-            {([
-              ['exercices', 'Mes exercices'],
-              ['rdv', 'Mes rendez-vous'],
-              ['favoris', 'Contenus favoris'],
-            ] as const).map(([k, label]) => (
-              <button key={k} className={'subtab' + (toolTab === k ? ' on' : '')} onClick={() => setToolTab(k)}>
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {toolTab === 'exercices' && (
-            <div className="freelist">
-              {EXERCISES.map(ex => (
-                <button key={ex.id} className="free-item glass-lite" onClick={() => onOpenExercise(ex.id)}>
-                  <span className="free-kind">{ex.level}</span>
-                  <span className="free-title">{ex.title}</span>
-                  <span className="free-dur">{ex.duration} min</span>
-                  <Icon name="play" size={14} />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {toolTab === 'rdv' && (
-            <div className="sessions" style={{ marginTop: 4 }}>
-              {SESSIONS.map(s => {
-                const c = COACHES.find(x => x.id === s.coachId)!
-                return (
-                  <button className="session" key={s.id} onClick={() => onOpenCoach(c)}>
-                    <div className="date-box"><strong>{s.day}</strong><span>{s.month}</span></div>
-                    <div className="session-info">
-                      <div className="session-time"><Icon name="clock" size={12} /> {s.time} · {s.mode}</div>
-                      <strong>{c.name}</strong>
-                      <span>{s.title} · {s.duration} min</span>
-                    </div>
-                    <span className="chev"><Icon name="chevron-right" size={15} /></span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          {toolTab === 'favoris' && (
-            <div className="freelist">
-              {COACHES.slice(0, 3).flatMap(c => c.freeContent.slice(0, 1).map(f => ({ ...f, coachName: c.name.split(' ')[0], coach: c }))).map((item, i) => (
-                <button key={i} className="free-item glass-lite" onClick={() => onOpenCoach(item.coach)}>
-                  <span className="free-kind">{item.kind}</span>
-                  <span className="free-title">{item.title} · {item.coachName}</span>
-                  <span className="free-dur">{item.duration}</span>
-                  <Icon name="heart" size={14} filled />
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-      {/* WIDGET 3 : COMPTES RENDUS DE SÉANCES GÉNÉRÉS PAR L'IA EVA */}
-        <section className="card">
-          <div className="card-kicker"><Icon name="sparkle" size={13} /> COMPTES RENDUS IA EVA</div>
-          <h2>Synthèses de vos séances</h2>
-          <p>Enregistrées, transcrites et structurées automatiquement par EVA.</p>
-          <div className="eva-reports-list" style={{ marginTop: 12 }}>
-            {EVA_SESSION_REPORTS.map(r => {
-              const isOpen = expandedReport === r.id
-              const c = COACHES.find(x => x.id === r.coachId)!
-              return (
-                <div key={r.id} className={'eva-report-item glass-lite' + (isOpen ? ' open' : '')}>
-                  <button className="eva-report-head" onClick={() => setExpandedReport(isOpen ? null : r.id)}>
-                    <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={38} />
-                    <div className="session-info">
-                      <strong>{r.title}</strong>
-                      <span>{r.coachName} · {r.date} · {r.duration}</span>
-                    </div>
-                    <span className="tag mini">IA EVA</span>
-                  </button>
-                  {isOpen && (
-                    <div className="eva-report-body">
-                      <p className="eva-report-sum">{r.summary}</p>
-                      <div className="eva-report-sub">Points clés retenus</div>
-                      <ul className="eva-report-ul">
-                        {r.keyTakeaways.map((k, idx) => <li key={idx}><Icon name="check" size={13} /><span>{k}</span></li>)}
-                      </ul>
-                      <div className="eva-report-sub">Prochaines actions recommandées</div>
-                      <ul className="eva-report-ul">
-                        {r.nextActions.map((a, idx) => <li key={idx}><Icon name="arrow-right" size={13} /><span>{a}</span></li>)}
-                      </ul>
-                      <div className="row between" style={{ marginTop: 10 }}>
-                        <span className="dim" style={{ fontSize: 11 }}>État détecté : {r.sentiment}</span>
-                        <button className="btn btn-soft sm" onClick={() => onOpenChat(r.coachId)}>
-                          <Icon name="chat" size={13} /><span>Discuter avec {c.name.split(' ')[0]}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-
-      {/* WIDGET 5 : ESPACE DE PARTAGE D'ÉLÉMENTS ET DE DOCUMENTS AVEC LES COACHS */}
-        <section className="card">
-          <div className="card-kicker"><Icon name="file" size={13} /> ESPACE DE PARTAGE MULTI-COACHS</div>
-          <h2>Documents & éléments partagés</h2>
-          <p>{consent.shareCoach ? 'Partage sélectif actif avec votre équipe.' : 'Coffre chiffré — partageable en un clic avec chaque expert.'}</p>
-
-          <div className="doc-share-bar" style={{ marginTop: 12, marginBottom: 12 }}>
-            <input
-              className="eco-input glass-lite"
-              placeholder="Nom du document ou bilan à partager…"
-              value={docTitle}
-              onChange={e => setDocTitle(e.target.value)}
-            />
-            <select
-              className="eco-select glass-lite"
-              value={docCoach}
-              onChange={e => setDocCoach(e.target.value)}
-              aria-label="Choisir le coach destinataire"
-            >
-              {COACHES.slice(0, 4).map(c => (
-                <option key={c.id} value={c.id}>{c.name.split(' ')[0]}</option>
-              ))}
-            </select>
-            <button className="btn btn-primary sm" onClick={addSharedDoc}>
-              <Icon name="share" size={14} /><span>Partager</span>
+            <button className="btn btn-soft sm" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => onOpenCoach(axisCoach)}>
+              <span>Coach : {axisCoach.name.split(' ')[0]}</span>
             </button>
           </div>
-
-          <div className="freelist">
-            {docs.map(d => {
-              const c = COACHES.find(x => x.id === d.coachId)!
-              return (
-                <div key={d.id} className="free-item glass-lite">
-                  <span className="free-kind">{d.kind}</span>
-                  <div className="session-info">
-                    <strong style={{ fontSize: 13 }}>{d.title}</strong>
-                    <span style={{ fontSize: 11 }}>
-                      {d.byMe ? `Partagé par vous avec ${c.name.split(' ')[0]}` : `Reçu de ${c.name.split(' ')[0]}`} · {d.date} · {d.size}
-                    </span>
-                  </div>
-                  <button className="icon-btn" style={{ width: 32, height: 32 }} onClick={() => onOpenChat(c.id)} aria-label="Ouvrir la discussion">
-                    <Icon name="chat" size={14} />
-                  </button>
-                </div>
-              )
-            })}
+          <p className="radar-axis-txt">{activeAxis.insight}</p>
+          <div className="radar-rec-line">
+            <Icon name="sparkle" size={12} />
+            <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
           </div>
-        </section>
+        </div>
+      </section>
+
+      <section className="card" data-zone="team">
+        <h2>Un référent par sujet.</h2>
+        <p>Ses objectifs assignés, ses comptes rendus et les synthèses d’EVA.</p>
+
+        {(() => {
+          const entry = COACH_TEAM.find(t => t.coachId === teamCoach) ?? COACH_TEAM[0]
+          const c = COACHES.find(x => x.id === entry.coachId)!
+          const evaReports = EVA_SESSION_REPORTS.filter(r => r.coachId === entry.coachId)
+          return (
+            <div className="team-detail glass-lite" key={c.id}>
+              <div className="team-head">
+                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={50} ring />
+                <div className="session-info">
+                  <strong>{c.name}</strong>
+                  <span>{c.role}</span>
+                </div>
+                <span className={'tag mini team-badge ' + entry.privacy}>
+                  <Icon name={entry.privacy === 'prive' ? 'lock' : 'users'} size={10} />
+                  {entry.privacy === 'prive' ? 'Privé' : 'Équipe'}
+                </span>
+              </div>
+
+              <div className="client-line"><Icon name="clock" size={14} /><span>{entry.cadence}</span></div>
+              <div className="client-line"><Icon name="activity" size={14} /><span>{entry.objective}</span></div>
+
+              <div className="team-sub">Objectifs assignés</div>
+              <div className="team-goals">
+                {entry.goals.map(g => (
+                  <span className="team-goal" key={g}><Icon name="check" size={11} />{g}</span>
+                ))}
+              </div>
+
+              <div className="team-sub">Comptes rendus IA EVA</div>
+              {evaReports.length > 0 ? evaReports.map(r => (
+                <details className="team-eva" key={r.id}>
+                  <summary>
+                    <Icon name="sparkle" size={12} />
+                    <span>{r.title}</span>
+                    <em>{r.date}</em>
+                  </summary>
+                  <p>{r.summary}</p>
+                  <ul className="eva-report-ul">
+                    {r.nextActions.map((a, i) => <li key={i}><Icon name="arrow-right" size={12} /><span>{a}</span></li>)}
+                  </ul>
+                </details>
+              )) : (
+                <div className="team-eva empty">
+                  <Icon name="sparkle" size={12} />
+                  <span>Aucun enregistrement sur ce cycle — EVA préparera la synthèse de votre prochaine séance.</span>
+                </div>
+              )}
+
+              <div className="team-sub">
+                {entry.privacy === 'prive' ? 'Notes confidentielles' : 'Comptes rendus partagés'}
+              </div>
+              {entry.reports.map(r => (
+                <div className={'team-report' + (r.shared ? '' : ' locked')} key={r.title}>
+                  <Icon name={r.shared ? 'file' : 'lock'} size={13} />
+                  <div className="session-info">
+                    <strong>{r.title}</strong>
+                    <span>{r.date}{r.shared ? ' · visible par l’équipe' : ' · visible par vous et le psychologue uniquement'}</span>
+                  </div>
+                </div>
+              ))}
+
+              <div className={'team-privacy ' + entry.privacy}>
+                <Icon name={entry.privacy === 'prive' ? 'shield' : 'users'} size={12} />
+                <span>{entry.privacyNote}</span>
+              </div>
+
+              <div className="row" style={{ marginTop: 12 }}>
+                <button className="btn btn-soft sm" onClick={() => onOpenCoach(c)}>
+                  <Icon name="user" size={13} /><span>Fiche du coach</span>
+                </button>
+                {entry.coachId === 'karim' && (
+                  <button className="btn btn-ghost sm" onClick={() => onOpenEva('Prends rendez-vous avec Karim, mon coach carrière, pour notre point bimensuel')}>
+                    <Icon name="sparkle" size={13} /><span>Déléguer le RDV à EVA</span>
+                  </button>
+                )}
+                {entry.coachId === PSY_COACH_ID && (
+                  <button className="btn btn-ghost sm" onClick={() => onOpenChat(c.id)}>
+                    <Icon name="chat" size={13} /><span>Espace confidentiel</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
+        <div className="privacy" style={{ marginTop: 12 }}>
+          <Icon name="shield" size={12} />
+          <span>Le psychologue agréé lit les comptes rendus des autres coachs ; ses propres notes ne sont vues par personne.</span>
+        </div>
+      </section>
+
+      {/* OBJECTIFS, COACH PAR COACH */}
+      <section className="card" data-zone="objectifs">
+        <h2>Vos objectifs, coach par coach</h2>
+        {COACH_TEAM.map(t => {
+          const c = COACHES.find(x => x.id === t.coachId)!
+          const goals = HORIZON_GOALS.filter(g => g.coachId === t.coachId)
+          if (goals.length === 0) return null
+          return (
+            <div className="coach-goals" key={c.id}>
+              <button className="coach-goals-head" onClick={() => setTeamCoach(c.id)}>
+                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={30} />
+                <div className="session-info">
+                  <strong>{c.name}</strong>
+                  <span>{c.role}</span>
+                </div>
+                <span className="tag mini">{goals.length} objectif{goals.length > 1 ? 's' : ''}</span>
+              </button>
+              {goals.map(g => (
+                <article className="horizon-goal glass-lite" key={g.id}>
+                  <div className="hg-top">
+                    <span className="hg-due">{g.horizon} · {g.due}</span>
+                    <strong>{g.progress}%</strong>
+                  </div>
+                  <strong className="hg-title">{g.title}</strong>
+                  <p>{g.detail}</p>
+                  <div className="group-meter"><span style={{ width: `${g.progress}%` }} /></div>
+                  <div className="hg-steps">
+                    {g.steps.map(st => (
+                      <span className={'hg-step' + (st.done ? ' done' : '')} key={st.label}>
+                        <Icon name={st.done ? 'check' : 'plus'} size={10} />{st.label}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )
+        })}
+      </section>
+
+      {/* DOTATIONS — demande au cas par cas */}
+      <section className="card" data-zone="dotations">
+        <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
+        <h2>Obtenir du matériel</h2>
+        <p>Le matériel financé par l’assurance maladie est accordé au cas par cas. Lancez votre demande : votre référent et le coach concerné l’étudient.</p>
+        <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setDotationOpen(true)}>
+          <Icon name="plus" size={15} /><span>Lancer une demande de matériel</span>
+        </button>
+      </section>
+
+      {/* SANTÉ & BIOMÉTRIE */}
+      <section className="card eco-health-card" data-zone="sante">
+        <span className="balance-wash" aria-hidden />
+        <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
+          <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> MODULE SANTÉ & BIOMÉTRIE</div>
+          <span className="tag mini glass-lite"><i className="dot" /> Capteurs synchronisés</span>
+        </div>
+        <h2>Pas, pouls & analyse EVA</h2>
+
+        <div className="health-bento">
+          <div className="health-tile glass-lite">
+            <div className="ht-head">
+              <span>PAS QUOTIDIENS</span>
+              <span className="delta up">+14%</span>
+            </div>
+            <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
+            <span className="ht-sub">Objectif 10 000 pas · {Math.min(100, Math.round((steps / 10000) * 100))}%</span>
+            <div className="group-meter" style={{ marginTop: 8 }}>
+              <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
+            </div>
+          </div>
+
+          <div className="health-tile glass-lite">
+            <div className="ht-head">
+              <span>PRISE DE POULS</span>
+              <span className="pulse-dot" />
+            </div>
+            <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
+            <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
+            <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
+              <Icon name="heart" size={13} filled />
+              <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="eva-health-box glass-lite">
+          <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+            <div className="transcript-head" style={{ margin: 0 }}>
+              <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
+            </div>
+            <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
+              {analyzingHealth ? 'Calcul…' : 'Actualiser'}
+            </button>
+          </div>
+          <p className="eva-health-txt">{evaHealthAnalysis}</p>
+          <div className="row" style={{ marginTop: 10 }}>
+            <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
+              <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
+            </button>
+          </div>
+        </div>
+      </section>
 
       <footer className="tab-footer">Mon Écosystème · synchronisé par EVA</footer>
+    </div>
+  )
+}
+
+/* =====================================================
+   DEMANDE DE MATÉRIEL — page dédiée (au cas par cas)
+   ===================================================== */
+
+function DotationRequest({ onBack }: { onBack: () => void }) {
+  const [item, setItem] = useState(DOTATIONS[2].name)
+  const [reason, setReason] = useState('')
+  const [sent, setSent] = useState(false)
+
+  return (
+    <div className="dotation-screen">
+      <header className="chat-head">
+        <button className="icon-btn" onClick={onBack} aria-label="Retour à mon écosystème">
+          <Icon name="chevron-left" size={19} />
+        </button>
+        <strong style={{ fontSize: 15 }}>Demande de matériel</strong>
+        <span style={{ width: 40 }} />
+      </header>
+
+      <div className="dotation-body">
+        {sent ? (
+          <section className="card">
+            <div className="card-kicker"><Icon name="check" size={13} /> DEMANDE ENREGISTRÉE</div>
+            <h2>Votre demande est partie.</h2>
+            <p>
+              Votre référent programme et l’organisme de prise en charge étudient le matériel demandé
+              au cas par cas. Vous serez informé·e ici et par e-mail.
+            </p>
+            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onBack}>
+              <span>Retour à mon écosystème</span>
+            </button>
+          </section>
+        ) : (
+          <section className="card">
+            <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
+            <h2>Quel matériel vous aiderait ?</h2>
+            <p>Une demande à la fois, avec votre besoin réel : c’est ce qui permet d’y répondre.</p>
+
+            <label className="prog-field" style={{ marginTop: 14 }}>
+              <span>Matériel souhaité</span>
+              <select className="eco-select glass-lite" value={item} onChange={e => setItem(e.target.value)}>
+                {DOTATIONS.map(d => (
+                  <option key={d.id} value={d.name}>{d.name} · {d.value}</option>
+                ))}
+                <option value="Autre matériel">Autre matériel</option>
+              </select>
+            </label>
+
+            <label className="prog-field" style={{ marginTop: 12 }}>
+              <span>Votre besoin</span>
+              <textarea
+                className="journal"
+                rows={4}
+                placeholder="Ce que ça changerait dans votre quotidien, ce que votre coach a suggéré…"
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+              />
+            </label>
+
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: 16 }}
+              disabled={!reason.trim()}
+              onClick={() => setSent(true)}
+            >
+              <Icon name="send" size={15} /><span>Envoyer la demande</span>
+            </button>
+
+            <p className="prog-legal" style={{ marginTop: 10 }}>
+              <Icon name="shield" size={11} /> Transmise à votre référent et à l’organisme de prise en charge.
+            </p>
+          </section>
+        )}
+      </div>
     </div>
   )
 }

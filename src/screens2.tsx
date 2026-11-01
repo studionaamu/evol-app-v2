@@ -3,7 +3,8 @@ import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, type Coach, type Message, type Thread,
+  COACHES, INITIAL_SHARED_DOCS, PSY_COACH_ID,
+  type Coach, type Message, type SharedDocument, type Thread,
 } from './data'
 
 /* =====================================================
@@ -300,11 +301,29 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
    ===================================================== */
 
 export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void }) {
-  const { threads, setThreads, followedCoachIds, toggleFollowCoach } = useStore()
+  const { threads, setThreads, followedCoachIds } = useStore()
   const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<'all' | 'unread' | 'groups'>('all')
+
+  /* Documents & éléments partagés — déplacé de l'Écosystème vers la messagerie */
+  const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
+  const [docTitle, setDocTitle] = useState('')
+  const [docCoach, setDocCoach] = useState('camille')
+
+  const addSharedDoc = () => {
+    const title = docTitle.trim() || `Note_Suivi_${new Date().toLocaleDateString('fr-FR')}.pdf`
+    setDocs(ds => [
+      { id: 'd' + Date.now(), title, kind: 'Bilan', size: '640 Ko', coachId: docCoach, date: 'À l’instant', byMe: true },
+      ...ds,
+    ])
+    setDocTitle('')
+  }
+
+  /* intervenants réunissables : le psychologue reste strictement individuel */
+  const groupable = COACHES.filter(c => c.id !== PSY_COACH_ID)
+  const psy = COACHES.find(c => c.id === PSY_COACH_ID)
 
   /* Filtre les fils selon les coachs suivis par l'utilisateur */
   const activeThreads = useMemo(() => {
@@ -399,30 +418,6 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         <button className="round-btn" onClick={() => setCreating(true)} aria-label="Nouvelle Synergy"><Icon name="plus" size={20} /></button>
       </header>
 
-      {/* Sélecteur rapide de coachs suivis pour voir l'adaptation en temps réel */}
-      <div className="coach-selector-drawer glass-lite" style={{ marginBottom: 12 }}>
-        <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
-          <span className="dim" style={{ fontSize: 11 }}>Coachs en contact ({count})</span>
-          <span className="tag mini">{count === 1 ? 'Focus 1:1' : count === 2 ? 'Duo' : 'Multi-coachs condensé'}</span>
-        </div>
-        <div className="coach-selector-pills">
-          {COACHES.map(c => {
-            const on = followedCoachIds.includes(c.id)
-            return (
-              <button
-                key={c.id}
-                className={'coach-pick-chip' + (on ? ' on' : '')}
-                onClick={() => toggleFollowCoach(c.id)}
-              >
-                <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={20} />
-                <span>{c.name.split(' ')[0]}</span>
-                <Icon name={on ? 'check' : 'plus'} size={11} />
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
       <div className="search glass-lite">
         <Icon name="search" size={17} />
         <input placeholder="Rechercher une conversation…" value={q} onChange={e => setQ(e.target.value)} />
@@ -476,8 +471,60 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         ? <div className="thread-list">{groupThreads.map(threadRow)}</div>
         : <div className="empty"><Icon name="users" size={26} /><p>Réunissez vos coachs dans un même espace<br />pour synchroniser votre suivi.</p></div>)}
       <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={() => setCreating(true)}>
-        <Icon name="users" size={15} /><span>Réunir mes coachs dans une Synergy</span>
+        <Icon name="users" size={15} /><span>Réunir mes coachs par groupe</span>
       </button>
+      <p className="dim" style={{ fontSize: 11.5, marginTop: 6 }}>
+        L’espace du psychologue reste strictement individuel : il ne peut pas être réuni en groupe.
+      </p>
+
+      {/* ESPACE DE PARTAGE — documents & éléments partagés avec les coachs */}
+      <section className="card" data-zone="partage" style={{ marginTop: 16 }}>
+        <div className="card-kicker"><Icon name="file" size={13} /> ESPACE DE PARTAGE</div>
+        <h2>Documents & éléments partagés</h2>
+        <p>Un coffre chiffré, partageable en un clic avec chaque intervenant de votre équipe.</p>
+
+        <div className="doc-share-bar" style={{ marginTop: 12, marginBottom: 12 }}>
+          <input
+            className="eco-input glass-lite"
+            placeholder="Nom du document ou bilan à partager…"
+            value={docTitle}
+            onChange={e => setDocTitle(e.target.value)}
+          />
+          <select
+            className="eco-select glass-lite"
+            value={docCoach}
+            onChange={e => setDocCoach(e.target.value)}
+            aria-label="Choisir le coach destinataire"
+          >
+            {COACHES.slice(0, 5).map(c => (
+              <option key={c.id} value={c.id}>{c.name.split(' ')[0]}</option>
+            ))}
+          </select>
+          <button className="btn btn-primary sm" onClick={addSharedDoc}>
+            <Icon name="share" size={14} /><span>Partager</span>
+          </button>
+        </div>
+
+        <div className="freelist">
+          {docs.map(d => {
+            const c = COACHES.find(x => x.id === d.coachId)!
+            return (
+              <div key={d.id} className="free-item glass-lite">
+                <span className="free-kind">{d.kind}</span>
+                <div className="session-info">
+                  <strong style={{ fontSize: 13 }}>{d.title}</strong>
+                  <span style={{ fontSize: 11 }}>
+                    {d.byMe ? `Partagé par vous avec ${c.name.split(' ')[0]}` : `Reçu de ${c.name.split(' ')[0]}`} · {d.date} · {d.size}
+                  </span>
+                </div>
+                <button className="icon-btn" style={{ width: 32, height: 32 }} onClick={() => onOpenChat(c.id)} aria-label="Ouvrir la discussion">
+                  <Icon name="chat" size={14} />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </section>
 
       <div className="privacy block"><Icon name="shield" size={13} /> Canal privé · vous contrôlez les participants et les données partagées.</div>
       <footer className="tab-footer">Vos échanges restent chiffrés de bout en bout</footer>
@@ -488,7 +535,7 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
             <h2 style={{ marginBottom: 6 }}>Nouvelle Synergy</h2>
             <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>Choisissez au moins 2 intervenants à réunir.</p>
             <div className="pick-list">
-              {COACHES.map(c => (
+              {groupable.map(c => (
                 <button key={c.id} className={'pick' + (picked.includes(c.id) ? ' on' : '')} onClick={() =>
                   setPicked(p => p.includes(c.id) ? p.filter(x => x !== c.id) : [...p, c.id])
                 }>
@@ -499,6 +546,13 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
                   </span>
                 </button>
               ))}
+              {psy && (
+                <div className="pick locked">
+                  <Avatar hue={psy.hue} initials={psy.initials} photo={psy.photo} size={40} />
+                  <span className="pick-name"><strong>{psy.name}</strong><span>Espace confidentiel · hors groupe</span></span>
+                  <Icon name="lock" size={15} />
+                </div>
+              )}
             </div>
             <button className="btn btn-primary" disabled={picked.length < 2} onClick={createGroup}>
               <span>{picked.length < 2 ? 'Choisissez 2 intervenants' : 'Créer la Synergy'}</span>

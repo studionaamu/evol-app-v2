@@ -42,7 +42,7 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         <section className="card prog-profile-card">
           <div className="row between" style={{ marginTop: 0, marginBottom: 8 }}>
             <div className="card-kicker" style={{ margin: 0 }}><Icon name="shield" size={13} /> PROGRAMME · ACCÈS ENCADRÉ</div>
-            <span className="tag mini glass-lite">Confidentialité maximale</span>
+            <span className="tag mini glass-lite">Programme encadré</span>
           </div>
           <h2>Votre cadre d’accompagnement</h2>
           <div className="client-lines" style={{ marginTop: 8 }}>
@@ -54,7 +54,7 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
             <div className="client-line"><Icon name="clock" size={14} /><span><strong>Coach carrière</strong> · Karim Bensaïd, contact toutes les 2 semaines</span></div>
           </div>
           <div className="privacy" style={{ marginTop: 10 }}>
-            <Icon name="shield" size={13} /> Confidentialité maximale appliquée par défaut : transcription IA et partage avec l’équipe désactivés.
+            <Icon name="shield" size={13} /> Toutes les options de confidentialité sont activées par défaut pour votre programme : transcription IA et partage avec l'équipe inclus. Vous pouvez tout désactiver à tout moment ci-dessous.
           </div>
         </section>
       )}
@@ -133,12 +133,13 @@ function ClientCard({ c, onMessage }: { c: CoachClient; onMessage: (id: string) 
   const hasAlert = c.flags.some(f => f.type === 'alert')
   const hasWatch = c.flags.some(f => f.type === 'watch')
   return (
-    <section className={'card client-card' + (open ? ' open' : '')}>
+    <section className={'card client-card' + (open ? ' open' : '') + (c.encadre ? ' prog-client' : '')}>
       <button className="client-row wide" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={44} ring />
         <div className="session-info">
           <strong>
             {c.name}
+            {c.encadre && <span className="prog-tag">Programme</span>}
             {hasAlert && <em className="flag-dot alert" title="Alerte" />}
             {hasWatch && !hasAlert && <em className="flag-dot watch" title="À surveiller" />}
           </strong>
@@ -970,7 +971,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               {COACH_CLIENTS.map(c => (
                 <div className="eco-trow" key={c.id}>
                   <div className="eco-tmain">
-                    <strong>{c.name}</strong>
+                    <strong>{c.name}{c.encadre && <span className="prog-tag">Programme</span>}</strong>
                     <span>{c.program} ({c.startedAgo})</span>
                   </div>
                   <div className="eco-ttarget">

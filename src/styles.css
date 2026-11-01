@@ -2880,3 +2880,70 @@ html.dark .dotation-state.watch { color: #F0C071; }
 .eco-team-row { margin: 2px -2px 16px; gap: 12px; }
 .eco-team-row .team-chip { padding: 10px 12px 9px; }
 .eco-team-row .team-chip.on { box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 12%, transparent); }
+
+/* ============ HUB — événements illustrés & fil horizontal ============ */
+.feed-item { display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; align-items: stretch; }
+.feed-img { width: 100%; height: 108px; object-fit: cover; display: block; }
+.feed-body { display: flex; flex-direction: column; gap: 4px; padding: 11px 12px 12px; }
+.feed-body > strong { font-size: 13.5px; }
+.feed-join { align-self: flex-start; margin-top: 6px; }
+
+.story-feed {
+  flex-direction: row; height: auto; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; padding-bottom: 4px; margin-right: -2px;
+}
+.story-slide { width: 80%; height: 360px; scroll-snap-align: center; }
+
+.eco-scan { margin-top: 0; }
+.eco-scan .scan-hint { text-align: left; }
+
+/* ============ ÉCOSYSTÈME — rôles sous les prénoms ============ */
+.team-chip-role {
+  font-style: normal; font-size: 8.5px; line-height: 1.2; color: var(--ink-3);
+  max-width: 92px; text-align: center; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.team-chip.on .team-chip-role { color: var(--ink-2); }
+
+/* ============ ÉCOSYSTÈME — comptes rendus EVA par coach ============ */
+.team-eva {
+  border-radius: 14px; border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-elev) 72%, transparent);
+  padding: 9px 10px; margin-bottom: 6px;
+}
+.team-eva summary {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 11.5px; list-style: none;
+}
+.team-eva summary::-webkit-details-marker { display: none; }
+.team-eva summary em { margin-left: auto; font-style: normal; font-size: 9.5px; color: var(--ink-3); }
+.team-eva p { font-size: 11.5px; color: var(--ink-2); margin-top: 8px; line-height: 1.45; }
+.team-eva.empty { display: flex; gap: 7px; align-items: flex-start; font-size: 10.5px; color: var(--ink-3); }
+
+/* ============ ÉCOSYSTÈME — objectifs déroulés par coach ============ */
+.coach-goals { margin-top: 14px; }
+.coach-goals-head { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; }
+.coach-goals-head .session-info { flex: 1; min-width: 0; }
+.coach-goals-head .session-info span { font-size: 10.5px; color: var(--ink-3); }
+.coach-goals .horizon-goal { margin-top: 8px; }
+.coach-goals .hg-due { text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ============ ÉCOSYSTÈME — page de demande de matériel ============ */
+.dotation-screen {
+  position: fixed; inset: 0; z-index: 130; max-width: 430px; margin: 0 auto;
+  background: var(--bg); display: flex; flex-direction: column;
+}
+.dotation-body { flex: 1; overflow-y: auto; padding: 14px 18px 30px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ============ ESPACE COACH — élèves du programme encadré ============ */
+.prog-tag {
+  display: inline-flex; align-items: center; margin-left: 6px; padding: 2px 7px;
+  border-radius: 99px; font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  font-style: normal; font-weight: 600; color: #5B2E9E; background: rgba(109, 62, 173, 0.14);
+  vertical-align: middle;
+}
+html.dark .prog-tag { color: #C9AFF5; background: rgba(109, 62, 173, 0.32); }
+.prog-client { border-left: 3px solid rgba(109, 62, 173, 0.45); }
+
+/* feuille Synergy : psychologue hors groupe */
+.pick.locked { opacity: 0.6; }
