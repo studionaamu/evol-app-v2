@@ -463,15 +463,17 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
                   <span><Icon name="location" size={12} /> {c.city} · {c.mode}</span>
                 </div>
               </div>
-              <button
-                className={'btn sm ' + (isFollowed ? 'btn-soft' : 'btn-primary')}
-                style={{ padding: '7px 12px', fontSize: 11.5 }}
-                aria-label={isFollowed ? `Retirer ${c.name}` : `Choisir ${c.name}`}
-                onClick={e => { e.stopPropagation(); toggleFollowCoach(c.id) }}
-              >
-                <Icon name={isFollowed ? 'check' : 'plus'} size={13} />
-                <span>{isFollowed ? 'Suivi' : 'Choisir'}</span>
-              </button>
+              {program && (
+                <button
+                  className={'btn sm ' + (isFollowed ? 'btn-soft' : 'btn-primary')}
+                  style={{ padding: '7px 12px', fontSize: 11.5 }}
+                  aria-label={isFollowed ? `Retirer ${c.name}` : `Choisir ${c.name}`}
+                  onClick={e => { e.stopPropagation(); toggleFollowCoach(c.id) }}
+                >
+                  <Icon name={isFollowed ? 'check' : 'plus'} size={13} />
+                  <span>{isFollowed ? 'Suivi' : 'Choisir'}</span>
+                </button>
+              )}
               {!program && <strong className="price-line-s">{c.price} €</strong>}
             </article>
           )
