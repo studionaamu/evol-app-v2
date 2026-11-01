@@ -207,24 +207,34 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
 
         {homeTab === 'community' ? (
           <>
-            <p style={{ fontSize: 12.5, marginBottom: 10 }}>Ateliers et rencontres en visio ou en présentiel, avec les autres élèves.</p>
-            <div className="sessions">
-              {EVENTS.map(ev => (
-                <button className="session event-row" key={ev.id} onClick={() => setEvent(ev)} aria-label={`Voir l'évènement ${ev.title}`}>
-                  <div className="date-box"><strong>{ev.day}</strong><span>{ev.month}</span></div>
-                  <div className="session-info">
-                    <div className="session-time">
-                      <Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={12} /> {ev.time} · {ev.mode}
+            <div className="feed-list">
+              {EVENTS.map(ev => {
+                const on = joinedEvents.includes(ev.id)
+                return (
+                  <article className={'feed-item glass-lite' + (on ? ' on' : '')} key={ev.id} onClick={() => setEvent(ev)}>
+                    <img className="feed-img" src={ev.img} alt="" loading="lazy" />
+                    <div className="feed-body">
+                      <div className="feed-meta">
+                        <span className="tag mini">{ev.tag}</span>
+                        <span className="feed-time">
+                          <Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={11} /> {ev.day} {ev.month} · {ev.time}
+                        </span>
+                      </div>
+                      <strong>{ev.title}</strong>
+                      <span className="feed-sub">{ev.host} · {ev.place} · {ev.seats} places</span>
+                      <p className="feed-note">{ev.desc}</p>
+                      <button
+                        className={'feed-join' + (on ? ' on' : '')}
+                        onClick={e => { e.stopPropagation(); setJoinedEvents(js => on ? js.filter(x => x !== ev.id) : [...js, ev.id]) }}
+                        aria-pressed={on}
+                      >
+                        <Icon name={on ? 'check' : 'plus'} size={13} />
+                        <span>{on ? 'Inscrit' : 'S’inscrire'}</span>
+                      </button>
                     </div>
-                    <strong>{ev.title}</strong>
-                    <span>{ev.host} · {ev.place} · {ev.seats} places</span>
-                  </div>
-                  <span className={'event-join' + (joinedEvents.includes(ev.id) ? ' on' : '')}>
-                    {joinedEvents.includes(ev.id) ? 'Inscrit' : 'Rejoindre'}
-                    <Icon name="chevron-right" size={13} />
-                  </span>
-                </button>
-              ))}
+                  </article>
+                )
+              })}
             </div>
           </>
         ) : (
