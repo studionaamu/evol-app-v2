@@ -2875,3 +2875,8 @@ html.dark .dotation-state.watch { color: #F0C071; }
 .dotation.watch .dotation-ico { color: #B8790F; }
 .dotation.bad .dotation-ico { color: #B2231A; }
 .dotation .btn { flex: none; }
+
+/* ÉCOSYSTÈME — les coachs comme entrée principale de la page */
+.eco-team-row { margin: 2px -2px 16px; gap: 12px; }
+.eco-team-row .team-chip { padding: 10px 12px 9px; }
+.eco-team-row .team-chip.on { box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 12%, transparent); }

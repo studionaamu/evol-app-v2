@@ -650,7 +650,6 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
   onOpenEva: (prefill?: string) => void
 }) {
   const { consent, selectedRadarAxis, setSelectedRadarAxis, followedCoachIds } = useStore()
-  const [section, setSection] = useState<'equipe' | 'objectifs' | 'ateliers' | 'dotations' | 'radar' | 'sante' | 'seances' | 'partage' | 'outils'>('equipe')
   const [teamCoach, setTeamCoach] = useState<string>(COACH_TEAM[0].coachId)
   const [joinedWorkshops, setJoinedWorkshops] = useState<string[]>(['w1'])
   const [requested, setRequested] = useState<string[]>([])
@@ -707,52 +706,29 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
         <div>
           <div className="date-line">MON ÉCOSYSTÈME</div>
           <h1>Votre évolution<br />à 360°.</h1>
-          <p>Radar de vie développé, santé, objectifs, outils et documents partagés.</p>
+          <p>Vos coachs, leurs objectifs partagés et tous vos modules au même endroit.</p>
         </div>
       </header>
 
-      <div className="chip-row">
-        {([
-          ['equipe', 'Mon équipe'],
-          ['objectifs', 'Stats & Objectifs'],
-          ['ateliers', 'Ateliers collectifs'],
-          ['dotations', 'Dotations'],
-          ['radar', 'Radar de vie'],
-          ['sante', 'Santé & IA'],
-          ['outils', 'Outils'],
-          ['seances', 'Comptes rendus'],
-          ['partage', 'Docs partagés'],
-        ] as const).map(([id, label]) => (
-          <button
-            key={id}
-            className={'chip glass-lite' + (section === id ? ' on' : '')}
-            onClick={() => setSection(id)}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="team-row eco-team-row">
+        {COACH_TEAM.map(t => {
+          const c = COACHES.find(x => x.id === t.coachId)!
+          const on = teamCoach === c.id
+          return (
+            <button key={c.id} className={'team-chip' + (on ? ' on' : '')} onClick={() => setTeamCoach(c.id)}>
+              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={42} ring={on} />
+              <span>{c.name.split(' ')[0]}</span>
+              {t.privacy === 'prive' && <Icon name="lock" size={10} />}
+            </button>
+          )
+        })}
       </div>
 
       {/* WIDGET ÉQUIPE — vue par coach, objectifs assignés & comptes rendus */}
-      {section === 'equipe' && (
         <section className="card" data-zone="team">
           <div className="card-kicker"><Icon name="users" size={13} /> MON ÉQUIPE D'ACCOMPAGNEMENT</div>
           <h2>Un référent par sujet.</h2>
-          <p>Sélectionnez un coach : ses objectifs assignés et les comptes rendus partagés avec le reste de l'équipe.</p>
-
-          <div className="team-row">
-            {COACH_TEAM.map(t => {
-              const c = COACHES.find(x => x.id === t.coachId)!
-              const on = teamCoach === c.id
-              return (
-                <button key={c.id} className={'team-chip' + (on ? ' on' : '')} onClick={() => setTeamCoach(c.id)}>
-                  <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={42} ring={on} />
-                  <span>{c.name.split(' ')[0]}</span>
-                  {t.privacy === 'prive' && <Icon name="lock" size={10} />}
-                </button>
-              )
-            })}
-          </div>
+          <p>Sélectionnez un coach : ses objectifs assignés et les comptes rendus partagés avec l'ensemble de l'équipe.</p>
 
           {(() => {
             const entry = COACH_TEAM.find(t => t.coachId === teamCoach) ?? COACH_TEAM[0]
@@ -823,200 +799,8 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
             <span>Le psychologue agréé lit les comptes rendus des autres coachs ; ses propres notes ne sont vues par personne.</span>
           </div>
         </section>
-      )}
 
-      {/* WIDGET ATELIERS COLLECTIFS */}
-      {section === 'ateliers' && (
-        <section className="card" data-zone="ateliers">
-          <div className="card-kicker"><Icon name="calendar" size={13} /> ATELIERS COLLECTIFS</div>
-          <h2>Sessions thématiques de groupe</h2>
-          <p>En petit comité, animés par votre équipe. Inscription immédiate, annulation libre jusqu’à 24 h avant.</p>
-          <div className="workshop-list">
-            {WORKSHOPS.map(w => {
-              const c = COACHES.find(x => x.id === w.coachId)!
-              const on = joinedWorkshops.includes(w.id)
-              const full = w.taken >= w.seats
-              return (
-                <article className={'workshop glass-lite' + (on ? ' on' : '')} key={w.id}>
-                  <div className="ws-top">
-                    <span className="tag mini">{w.tag}</span>
-                    <span className="ws-when">
-                      <Icon name={w.mode === 'Visio' ? 'video' : 'location'} size={11} /> {w.date} · {w.time}
-                    </span>
-                  </div>
-                  <strong className="ws-title">{w.title}</strong>
-                  <p>{w.desc}</p>
-                  <div className="ws-foot">
-                    <button className="hg-coach" onClick={() => onOpenCoach(c)}>
-                      <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={18} />
-                      <span>{c.name.split(' ')[0]}</span>
-                    </button>
-                    <span className={'ws-seats' + (full ? ' full' : '')}>{w.taken}/{w.seats} inscrits</span>
-                    <button
-                      className={'btn sm ' + (on ? 'btn-soft' : 'btn-primary')}
-                      disabled={full && !on}
-                      onClick={() => setJoinedWorkshops(js => on ? js.filter(x => x !== w.id) : [...js, w.id])}
-                    >
-                      <Icon name={on ? 'check' : 'plus'} size={12} />
-                      <span>{on ? 'Inscrit' : full ? 'Complet' : 'M’inscrire'}</span>
-                    </button>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* WIDGET DOTATIONS — matériel financé */}
-      {section === 'dotations' && (
-        <section className="card" data-zone="dotations">
-          <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
-          <h2>Votre matériel financé</h2>
-          <p>Équipement financé par l’assurance maladie : débloquez-le au fil du programme, sans avance de frais.</p>
-          <div className="dotation-list">
-            {DOTATIONS.map(d => {
-              const asked = requested.includes(d.id)
-              const state = asked ? 'En cours' : d.state
-              const tone = state === 'Débloqué' ? 'good' : state === 'En cours' ? 'watch' : 'bad'
-              return (
-                <article className={'dotation glass-lite ' + tone} key={d.id}>
-                  <span className="dotation-ico"><Icon name={d.icon} size={15} /></span>
-                  <div className="session-info">
-                    <strong>{d.name}</strong>
-                    <span>{d.category} · {d.value} · {d.condition}</span>
-                  </div>
-                  <span className={'dotation-state ' + tone}>
-                    {state === 'Débloqué' ? <Icon name="check" size={11} /> : state === 'En cours' ? <Icon name="clock" size={11} /> : <Icon name="lock" size={11} />}
-                    {state}
-                  </span>
-                  {state === 'À débloquer' && (
-                    <button className="btn btn-primary sm" onClick={() => setRequested(r => [...r, d.id])}>
-                      <span>Débloquer</span>
-                    </button>
-                  )}
-                </article>
-              )
-            })}
-          </div>
-          <div className="privacy" style={{ marginTop: 12 }}>
-            <Icon name="shield" size={12} />
-            <span>Prise en charge validée par l’assurance maladie · aucune avance de frais, aucun partage de vos données bancaires.</span>
-          </div>
-        </section>
-      )}
-
-      {/* WIDGET 0 : RADAR DE VIE DÉVELOPPÉ & INTERACTIF */}
-      {section === 'radar' && (
-        <section className="card card-balance">
-          <span className="balance-wash" aria-hidden />
-          <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE DÉVELOPPÉ</div>
-          <div className="radar-head">
-            <h2>Analyse par domaine</h2>
-            <span className="tag mini glass-lite">{activeAxis.axis} sélectionné</span>
-          </div>
-
-          <RadarChart
-            scores={RADAR}
-            selectedAxis={selectedRadarAxis}
-            onSelectAxis={axis => setSelectedRadarAxis(axis)}
-            expanded
-          />
-
-          <div className="radar-scores">
-            {RADAR.map(r => {
-              const isSel = selectedRadarAxis === r.axis
-              return (
-                <button
-                  type="button"
-                  className={'radar-score' + (isSel ? ' active' : '')}
-                  key={r.axis}
-                  onClick={() => setSelectedRadarAxis(r.axis)}
-                >
-                  <span>{r.axis}</span>
-                  <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
-            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
-              <div className="radar-axis-title">
-                <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
-                <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta} sur 30 j</span>
-              </div>
-              <button className="btn btn-soft sm" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => onOpenCoach(axisCoach)}>
-                <span>Expert : {axisCoach.name.split(' ')[0]}</span>
-              </button>
-            </div>
-            <p className="radar-axis-txt">{activeAxis.insight}</p>
-            <div className="radar-rec-line">
-              <Icon name="sparkle" size={12} />
-              <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* WIDGET 1 : MODULE SANTÉ (PAS, POULS & ANALYSE IA EVA) */}
-      {section === 'sante' && (
-        <section className="card eco-health-card">
-          <span className="balance-wash" aria-hidden />
-          <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
-            <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> MODULE SANTÉ & BIOMÉTRIE</div>
-            <span className="tag mini glass-lite"><i className="dot" /> Capteurs synchronisés</span>
-          </div>
-          <h2>Pas, pouls & analyse EVA</h2>
-
-          <div className="health-bento">
-            <div className="health-tile glass-lite">
-              <div className="ht-head">
-                <span>PAS QUOTIDIENS</span>
-                <span className="delta up">+14%</span>
-              </div>
-              <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
-              <span className="ht-sub">Objectif 10 000 pas · {(Math.min(100, Math.round((steps / 10000) * 100)))}%</span>
-              <div className="group-meter" style={{ marginTop: 8 }}>
-                <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
-              </div>
-            </div>
-
-            <div className="health-tile glass-lite">
-              <div className="ht-head">
-                <span>PRISE DE POULS</span>
-                <span className="pulse-dot" />
-              </div>
-              <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
-              <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
-              <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
-                <Icon name="heart" size={13} filled />
-                <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="eva-health-box glass-lite">
-            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
-              <div className="transcript-head" style={{ margin: 0 }}>
-                <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
-              </div>
-              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
-                {analyzingHealth ? 'Calcul…' : 'Actualiser'}
-              </button>
-            </div>
-            <p className="eva-health-txt">{evaHealthAnalysis}</p>
-            <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
-                <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* WIDGET 2 : STATISTIQUES AVANCÉES & TABLEAUX DE SUIVI DES OBJECTIFS */}
-      {section === 'objectifs' && (
+      {/* STATISTIQUES AVANCÉES & OBJECTIFS */}
         <section className="card">
           <div className="card-kicker"><Icon name="chart" size={13} /> STATISTIQUES AVANCÉES & OBJECTIFS</div>
           <h2>Tableaux de suivi ({followedCoachIds.length} coachs suivis)</h2>
@@ -1099,10 +883,190 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
             })}
           </div>
         </section>
-      )}
 
       {/* WIDGET OUTILS (DÉPLACÉ DEPUIS PROFIL) : EXERCICES, RENDEZ-VOUS, CONTENUS FAVORIS */}
-      {section === 'outils' && (
+        <section className="card" data-zone="ateliers">
+          <div className="card-kicker"><Icon name="calendar" size={13} /> ATELIERS COLLECTIFS</div>
+          <h2>Sessions thématiques de groupe</h2>
+          <p>En petit comité, animés par votre équipe. Inscription immédiate, annulation libre jusqu’à 24 h avant.</p>
+          <div className="workshop-list">
+            {WORKSHOPS.map(w => {
+              const c = COACHES.find(x => x.id === w.coachId)!
+              const on = joinedWorkshops.includes(w.id)
+              const full = w.taken >= w.seats
+              return (
+                <article className={'workshop glass-lite' + (on ? ' on' : '')} key={w.id}>
+                  <div className="ws-top">
+                    <span className="tag mini">{w.tag}</span>
+                    <span className="ws-when">
+                      <Icon name={w.mode === 'Visio' ? 'video' : 'location'} size={11} /> {w.date} · {w.time}
+                    </span>
+                  </div>
+                  <strong className="ws-title">{w.title}</strong>
+                  <p>{w.desc}</p>
+                  <div className="ws-foot">
+                    <button className="hg-coach" onClick={() => onOpenCoach(c)}>
+                      <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={18} />
+                      <span>{c.name.split(' ')[0]}</span>
+                    </button>
+                    <span className={'ws-seats' + (full ? ' full' : '')}>{w.taken}/{w.seats} inscrits</span>
+                    <button
+                      className={'btn sm ' + (on ? 'btn-soft' : 'btn-primary')}
+                      disabled={full && !on}
+                      onClick={() => setJoinedWorkshops(js => on ? js.filter(x => x !== w.id) : [...js, w.id])}
+                    >
+                      <Icon name={on ? 'check' : 'plus'} size={12} />
+                      <span>{on ? 'Inscrit' : full ? 'Complet' : 'M’inscrire'}</span>
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+
+      {/* WIDGET DOTATIONS — matériel financé */}
+        <section className="card" data-zone="dotations">
+          <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
+          <h2>Votre matériel financé</h2>
+          <p>Équipement financé par l’assurance maladie : débloquez-le au fil du programme, sans avance de frais.</p>
+          <div className="dotation-list">
+            {DOTATIONS.map(d => {
+              const asked = requested.includes(d.id)
+              const state = asked ? 'En cours' : d.state
+              const tone = state === 'Débloqué' ? 'good' : state === 'En cours' ? 'watch' : 'bad'
+              return (
+                <article className={'dotation glass-lite ' + tone} key={d.id}>
+                  <span className="dotation-ico"><Icon name={d.icon} size={15} /></span>
+                  <div className="session-info">
+                    <strong>{d.name}</strong>
+                    <span>{d.category} · {d.value} · {d.condition}</span>
+                  </div>
+                  <span className={'dotation-state ' + tone}>
+                    {state === 'Débloqué' ? <Icon name="check" size={11} /> : state === 'En cours' ? <Icon name="clock" size={11} /> : <Icon name="lock" size={11} />}
+                    {state}
+                  </span>
+                  {state === 'À débloquer' && (
+                    <button className="btn btn-primary sm" onClick={() => setRequested(r => [...r, d.id])}>
+                      <span>Débloquer</span>
+                    </button>
+                  )}
+                </article>
+              )
+            })}
+          </div>
+          <div className="privacy" style={{ marginTop: 12 }}>
+            <Icon name="shield" size={12} />
+            <span>Prise en charge validée par l’assurance maladie · aucune avance de frais, aucun partage de vos données bancaires.</span>
+          </div>
+        </section>
+
+      {/* WIDGET 0 : RADAR DE VIE DÉVELOPPÉ & INTERACTIF */}
+        <section className="card card-balance">
+          <span className="balance-wash" aria-hidden />
+          <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE DÉVELOPPÉ</div>
+          <div className="radar-head">
+            <h2>Analyse par domaine</h2>
+            <span className="tag mini glass-lite">{activeAxis.axis} sélectionné</span>
+          </div>
+
+          <RadarChart
+            scores={RADAR}
+            selectedAxis={selectedRadarAxis}
+            onSelectAxis={axis => setSelectedRadarAxis(axis)}
+            expanded
+          />
+
+          <div className="radar-scores">
+            {RADAR.map(r => {
+              const isSel = selectedRadarAxis === r.axis
+              return (
+                <button
+                  type="button"
+                  className={'radar-score' + (isSel ? ' active' : '')}
+                  key={r.axis}
+                  onClick={() => setSelectedRadarAxis(r.axis)}
+                >
+                  <span>{r.axis}</span>
+                  <strong style={r.v < 45 ? { color: '#B2231A' } : undefined}>{r.v}</strong>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
+            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+              <div className="radar-axis-title">
+                <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
+                <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta} sur 30 j</span>
+              </div>
+              <button className="btn btn-soft sm" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => onOpenCoach(axisCoach)}>
+                <span>Expert : {axisCoach.name.split(' ')[0]}</span>
+              </button>
+            </div>
+            <p className="radar-axis-txt">{activeAxis.insight}</p>
+            <div className="radar-rec-line">
+              <Icon name="sparkle" size={12} />
+              <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
+            </div>
+          </div>
+        </section>
+
+      {/* WIDGET 1 : MODULE SANTÉ (PAS, POULS & ANALYSE IA EVA) */}
+        <section className="card eco-health-card">
+          <span className="balance-wash" aria-hidden />
+          <div className="row between" style={{ marginTop: 0, marginBottom: 10 }}>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={13} /> MODULE SANTÉ & BIOMÉTRIE</div>
+            <span className="tag mini glass-lite"><i className="dot" /> Capteurs synchronisés</span>
+          </div>
+          <h2>Pas, pouls & analyse EVA</h2>
+
+          <div className="health-bento">
+            <div className="health-tile glass-lite">
+              <div className="ht-head">
+                <span>PAS QUOTIDIENS</span>
+                <span className="delta up">+14%</span>
+              </div>
+              <strong className="ht-val">{steps.toLocaleString('fr-FR')}</strong>
+              <span className="ht-sub">Objectif 10 000 pas · {(Math.min(100, Math.round((steps / 10000) * 100)))}%</span>
+              <div className="group-meter" style={{ marginTop: 8 }}>
+                <span style={{ width: `${Math.min(100, Math.round((steps / 10000) * 100))}%` }} />
+              </div>
+            </div>
+
+            <div className="health-tile glass-lite">
+              <div className="ht-head">
+                <span>PRISE DE POULS</span>
+                <span className="pulse-dot" />
+              </div>
+              <strong className="ht-val">{measuring ? '…' : `${bpm} bpm`}</strong>
+              <span className="ht-sub">Repos · VFC 68 ms (stable)</span>
+              <button className="btn btn-soft sm" style={{ marginTop: 8, width: '100%', padding: '7px 10px' }} onClick={triggerPulseMeasure}>
+                <Icon name="heart" size={13} filled />
+                <span>{measuring ? 'Mesure optique…' : 'Prendre le pouls'}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="eva-health-box glass-lite">
+            <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+              <div className="transcript-head" style={{ margin: 0 }}>
+                <EvaAvatar size={13} /> ANALYSE IA EVA · TEMPS RÉEL
+              </div>
+              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={runEvaHealthAnalysis}>
+                {analyzingHealth ? 'Calcul…' : 'Actualiser'}
+              </button>
+            </div>
+            <p className="eva-health-txt">{evaHealthAnalysis}</p>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button className="btn btn-soft sm" onClick={() => onOpenEva(`Analyse mes ${steps} pas et mon pouls de ${bpm} bpm`)}>
+                <Icon name="sparkle" size={13} /><span>Approfondir avec EVA</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      {/* WIDGET 2 : STATISTIQUES AVANCÉES & TABLEAUX DE SUIVI DES OBJECTIFS */}
         <section className="card" data-zone="outils">
           <div className="card-kicker"><Icon name="activity" size={13} /> OUTILS & PRATIQUES</div>
           <h2>Exercices, rendez-vous & favoris</h2>
@@ -1163,10 +1127,8 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
             </div>
           )}
         </section>
-      )}
 
       {/* WIDGET 3 : COMPTES RENDUS DE SÉANCES GÉNÉRÉS PAR L'IA EVA */}
-      {section === 'seances' && (
         <section className="card">
           <div className="card-kicker"><Icon name="sparkle" size={13} /> COMPTES RENDUS IA EVA</div>
           <h2>Synthèses de vos séances</h2>
@@ -1209,11 +1171,9 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
             })}
           </div>
         </section>
-      )}
 
 
       {/* WIDGET 5 : ESPACE DE PARTAGE D'ÉLÉMENTS ET DE DOCUMENTS AVEC LES COACHS */}
-      {section === 'partage' && (
         <section className="card">
           <div className="card-kicker"><Icon name="file" size={13} /> ESPACE DE PARTAGE MULTI-COACHS</div>
           <h2>Documents & éléments partagés</h2>
@@ -1261,7 +1221,6 @@ export function Ecosystem({ onOpenExercise, onOpenCoach, onOpenChat, onOpenEva }
             })}
           </div>
         </section>
-      )}
 
       <footer className="tab-footer">Mon Écosystème · synchronisé par EVA</footer>
     </div>
