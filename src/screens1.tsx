@@ -104,7 +104,7 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
 }) {
-  const { name, quizDomains, program } = useStore()
+  const { name, quizDomains } = useStore()
   const [homeTab, setHomeTab] = useState<'week' | 'community'>('week')
   const [event, setEvent] = useState<CommunityEvent | null>(null)
   const [joinedEvents, setJoinedEvents] = useState<string[]>([])
@@ -198,16 +198,14 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
       <section className="card" data-zone="home-feed">
         <div className="feed-head">
           <h2>Ce qui se passe cette semaine</h2>
-          {!program && (
-            <div className="subtabs feed-tabs">
-              {([['week', 'Ma semaine'], ['community', 'Communauté']] as const).map(([id, label]) => (
-                <button key={id} className={'subtab' + (homeTab === id ? ' on' : '')} onClick={() => setHomeTab(id)}>{label}</button>
-              ))}
-            </div>
-          )}
+          <div className="subtabs feed-tabs">
+            {([['week', 'Ma semaine'], ['community', 'Communauté']] as const).map(([id, label]) => (
+              <button key={id} className={'subtab' + (homeTab === id ? ' on' : '')} onClick={() => setHomeTab(id)}>{label}</button>
+            ))}
+          </div>
         </div>
 
-        {!program && homeTab === 'community' ? (
+        {homeTab === 'community' ? (
           <>
             <p style={{ fontSize: 12.5, marginBottom: 10 }}>Ateliers et rencontres en visio ou en présentiel, avec les autres élèves.</p>
             <div className="sessions">
@@ -375,8 +373,8 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
   const [showFilters, setShowFilters] = useState(false)
   const specialties = ['Stress', 'Nutrition', 'Mobilité', 'Anxiété']
   const cities = [...new Set(COACHES.map(c => c.city))]
-  /* accès invité / hors programme : textes seuls, sans photos */
-  const textOnly = guest || !program
+  /* accès invité : textes seuls, sans photos */
+  const textOnly = guest
   const filterCount = [specialty, maxPrice, mode, city].filter(v => v != null).length
 
   const results = useMemo(() => COACHES.filter(c => {
@@ -393,8 +391,10 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
     <div className="tab-page">
       <header className="page-head">
         <div>
-          <div className="date-line">EXPLORER</div>
-          <h1 className={textOnly ? 'explorer-slogan' : undefined}>Les bonnes personnes<br />au bon moment.</h1>
+          <div className="date-line">{program ? 'L’ÉQUIPE' : 'EXPLORER'}</div>
+          <h1 className={textOnly ? 'explorer-slogan' : undefined}>
+            {program ? <>Votre équipe<br />d’accompagnement.</> : <>Les bonnes personnes<br />au bon moment.</>}
+          </h1>
         </div>
       </header>
 
@@ -414,26 +414,23 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         </button>
       </div>
 
+      <div className="chip-row">
+        {(['Présentiel', 'À distance', 'Hybride'] as const).map(m => (
+          <button key={m} className={'chip glass-lite' + (mode === m ? ' on' : '')} onClick={() => setMode(mode === m ? null : m)}>{m}</button>
+        ))}
+        {specialties.map(sp => (
+          <button key={sp} className={'chip glass-lite' + (specialty === sp ? ' on' : '')} onClick={() => setSpecialty(specialty === sp ? null : sp)}>{sp}</button>
+        ))}
+        <button className={'chip glass-lite' + (maxPrice === 70 ? ' on' : '')} onClick={() => setMaxPrice(maxPrice === 70 ? null : 70)}>≤ 70 €</button>
+      </div>
+
       {showFilters && (
         <div className="filter-panel glass-lite">
-          <div className="filter-sub">Format</div>
-          <div className="chip-row">
-            {['Présentiel', 'À distance', 'Hybride'].map(m => (
-              <button key={m} className={'chip glass-lite' + (mode === m ? ' on' : '')} onClick={() => setMode(mode === m ? null : m)}>{m}</button>
-            ))}
-          </div>
           <div className="filter-sub">Lieu</div>
-          <div className="chip-row">
+          <div className="chip-row" style={{ marginBottom: 0 }}>
             {cities.map(ci => (
               <button key={ci} className={'chip glass-lite' + (city === ci ? ' on' : '')} onClick={() => setCity(city === ci ? null : ci)}>{ci}</button>
             ))}
-          </div>
-          <div className="filter-sub">Spécialité & budget</div>
-          <div className="chip-row" style={{ marginBottom: 0 }}>
-            {specialties.map(sp => (
-              <button key={sp} className={'chip glass-lite' + (specialty === sp ? ' on' : '')} onClick={() => setSpecialty(specialty === sp ? null : sp)}>{sp}</button>
-            ))}
-            <button className={'chip glass-lite' + (maxPrice === 70 ? ' on' : '')} onClick={() => setMaxPrice(maxPrice === 70 ? null : 70)}>≤ 70 €</button>
           </div>
         </div>
       )}
@@ -450,7 +447,7 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         </div>
       )}
 
-      <div className="count-line">{results.length} accompagnant{results.length > 1 ? 's' : ''} · {followedCoachIds.length} dans votre équipe</div>
+      <div className="count-line">{results.length} accompagnant{results.length > 1 ? 's' : ''} disponible{results.length > 1 ? 's' : ''}</div>
 
       <div className="coach-list">
         {results.map(c => {
@@ -475,7 +472,7 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
                 <Icon name={isFollowed ? 'check' : 'plus'} size={13} />
                 <span>{isFollowed ? 'Suivi' : 'Choisir'}</span>
               </button>
-              <strong className="price-line-s">{c.price} €</strong>
+              {!program && <strong className="price-line-s">{c.price} €</strong>}
             </article>
           )
         })}
@@ -1210,7 +1207,7 @@ export function EvaPanel({ role, prefill, onClose }: {
         <div className="eva-feed">
           <div className="eva-greet">
             <h2>Bonjour {firstName},<br />en quoi puis-je vous aider ?</h2>
-            <p>Photo de plat, sommeil, stress, séance : je suis là pour vous orienter.</p>
+            {role !== 'coach' && <p>Photo de plat, sommeil, stress, séance : je suis là pour vous orienter.</p>}
           </div>
           {msgs.map((m, k) => (
             m.from === 'me'

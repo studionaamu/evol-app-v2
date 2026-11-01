@@ -13,7 +13,7 @@ type Phase = 'welcome' | 'programme' | 'programLogin' | 'guestWelcome' | 'quiz' 
 function Shell() {
   const {
     role, setRole, setName, setGuest, tab, setTab,
-    hideExplorer, setHideExplorer,
+    hideExplorer, setHideExplorer, program,
     setThreads, setQuizDomains, reset,
     setProgram, setConsent,
   } = useStore()
@@ -29,20 +29,14 @@ function Shell() {
   const openEva = (prefill?: string) => setEva({ open: true, prefill })
 
   useEffect(() => {
-    /* thème : préférence choisie > système ; appliqué dès le démarrage */
+    /* thème : sombre par défaut ; le mode clair reste un choix explicite dans Profil */
     const stored = localStorage.getItem('evol-theme')
-    const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const apply = (dark: boolean) => {
       document.documentElement.classList.toggle('dark', dark)
       const meta = document.querySelector('meta[name=theme-color]')
       if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
     }
-    apply(stored ? stored === 'dark' : sysDark)
-    /* suit les changements du système tant que l'utilisateur n'a pas choisi explicitement */
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = (e: MediaQueryListEvent) => { if (!localStorage.getItem('evol-theme')) apply(e.matches) }
-    mq.addEventListener?.('change', onChange)
-    return () => mq.removeEventListener?.('change', onChange)
+    apply(stored !== 'light')
   }, [])
 
   const openChat = (coachId: string) => {
@@ -116,7 +110,7 @@ function Shell() {
       onBack={() => setPhase('programme')}
       onAccess={(n) => {
         setGuest(false)
-        setHideExplorer(true)
+        setHideExplorer(false)
         setProgram(true)
         /* programme encadré : toutes les options sont activées par défaut */
         setConsent({ account: true, health: true, journal: true, shareCoach: true })
@@ -216,7 +210,7 @@ function Shell() {
         {([
           { id: 'hub', icon: 'home', label: 'Home' },
           { id: 'ecosystem', icon: 'grid', label: 'Écosystème' },
-          ...(hideExplorer ? [] : [{ id: 'explorer' as const, icon: 'compass' as const, label: 'Explorer' }]),
+          ...(hideExplorer ? [] : [{ id: 'explorer' as const, icon: 'compass' as const, label: program ? 'L’équipe' : 'Explorer' }]),
           { id: 'synergy', icon: 'chat', label: 'Synergy' },
           { id: 'profile', icon: 'user', label: 'Profil' },
         ] as const).map(t => (

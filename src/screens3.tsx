@@ -19,7 +19,7 @@ export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'freebies' | '
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
   const { name, guest, reset, role, program } = useStore()
-  const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') === 'dark')
+  const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') !== 'light')
   const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)

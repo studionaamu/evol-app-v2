@@ -29,7 +29,7 @@ export function Welcome({ onAccount, onGuest, onCoach, onProgramme }: {
           <div className="auth-brand" aria-label="Evol">
             <img className="auth-logo-img" src={logoUrl} alt="EVOL" />
           </div>
-          <h1 className="auth-slogan">votre évolution,<br />vos succès</h1>
+          <h1 className="auth-slogan">votre évolution, vos succès</h1>
         </div>
         <div className="auth-actions">
           <button className="btn btn-glass solid" onClick={() => onAccount()}>
