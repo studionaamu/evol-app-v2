@@ -421,7 +421,7 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         {specialties.map(sp => (
           <button key={sp} className={'chip glass-lite' + (specialty === sp ? ' on' : '')} onClick={() => setSpecialty(specialty === sp ? null : sp)}>{sp}</button>
         ))}
-        <button className={'chip glass-lite' + (maxPrice === 70 ? ' on' : '')} onClick={() => setMaxPrice(maxPrice === 70 ? null : 70)}>≤ 70 €</button>
+        {!program && <button className={'chip glass-lite' + (maxPrice === 70 ? ' on' : '')} onClick={() => setMaxPrice(maxPrice === 70 ? null : 70)}>≤ 70 €</button>}
       </div>
 
       {showFilters && (
@@ -435,8 +435,8 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
         </div>
       )}
 
-      {/* accès rapide façon rangée d'avatars — masqué en accès invité */}
-      {!textOnly && (
+      {/* accès rapide façon rangée d'avatars — masqué en accès invité et dans le programme */}
+      {!textOnly && !program && (
         <div className="quick-row">
           {COACHES.map(c => (
             <button key={c.id} className="quick-av" onClick={() => onOpenCoach(c)}>
@@ -818,7 +818,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
               )) : (
                 <div className="team-eva empty">
                   <Icon name="sparkle" size={12} />
-                  <span>Aucun enregistrement sur ce cycle — EVA préparera la synthèse de votre prochaine séance.</span>
+                  <span>Aucun compte rendu pour le moment</span>
                 </div>
               )}
 
@@ -844,11 +844,6 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
                 <button className="btn btn-soft sm" onClick={() => onOpenCoach(c)}>
                   <Icon name="user" size={13} /><span>Fiche du coach</span>
                 </button>
-                {entry.coachId === 'karim' && (
-                  <button className="btn btn-ghost sm" onClick={() => onOpenEva('Prends rendez-vous avec Karim, mon coach carrière, pour notre point bimensuel')}>
-                    <Icon name="sparkle" size={13} /><span>Déléguer le RDV à EVA</span>
-                  </button>
-                )}
                 {entry.coachId === PSY_COACH_ID && (
                   <button className="btn btn-ghost sm" onClick={() => onOpenChat(c.id)}>
                     <Icon name="chat" size={13} /><span>Espace confidentiel</span>
@@ -958,9 +953,8 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
       {program && (
       <section className="card dotation-card" data-zone="dotations">
         <span className="dotation-wash" aria-hidden />
-        <div className="card-kicker"><Icon name="shield" size={13} /> DOTATIONS PRISE EN CHARGE</div>
-        <h2>Obtenir du matériel</h2>
-        <p>Le matériel financé par l’assurance maladie est accordé au cas par cas, sans avance de frais.</p>
+        <div className="card-kicker"><Icon name="shield" size={13} /> OBTENIR DU MATÉRIEL</div>
+        <p style={{ marginTop: 10 }}>Le matériel financé par l’assurance maladie est accordé au cas par cas, sans avance de frais.</p>
         <div className="dotation-chips">
           {['Baskets de marche', 'Montre connectée', 'Tenue de sport', 'Tapis de marche', 'Balance'].map(label => (
             <span className="dotation-chip" key={label}>{label}</span>

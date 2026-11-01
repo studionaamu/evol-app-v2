@@ -90,7 +90,7 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
   onBooked: () => void
   onChat: () => void
 }) {
-  const { guest, followedCoachIds, toggleFollowCoach } = useStore()
+  const { guest, program, followedCoachIds, toggleFollowCoach } = useStore()
   const isFollowed = followedCoachIds.includes(coach.id)
   const [needAccount, setNeedAccount] = useState(false)
   const [slot, setSlot] = useState<string | null>(null)
@@ -238,7 +238,8 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
             ))}
           </div>
           <div className="price-line">
-            <strong>{coach.price} €</strong><span className="dim">· 45 min · annulation gratuite 24 h avant</span>
+            {!program && <strong>{coach.price} €</strong>}
+            <span className="dim">· 45 min · annulation gratuite 24 h avant</span>
           </div>
         </div>
 

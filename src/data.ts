@@ -958,7 +958,7 @@ export type CoachTeamEntry = {
 export const COACH_TEAM: CoachTeamEntry[] = [
   {
     coachId: 'karim', cadence: 'Contact bimensuel · présentiel ou distanciel',
-    objective: 'Réinsertion professionnelle progressive, sans pression de calendrier.',
+    objective: 'Réinsertion professionnelle progressive.',
     goals: ['Retour au travail à mi-temps', 'Entretien employeur préparé', 'Rythme de sommeil compatible'],
     reports: [
       { date: '14 nov.', title: 'Bilan de reprise · étapes validées avec l’employeur', shared: true },
