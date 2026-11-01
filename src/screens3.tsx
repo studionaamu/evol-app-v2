@@ -99,7 +99,6 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         <div className="service-list">
           <button className="service-btn"><Icon name="share" size={15} /><span>Exporter mes données</span><Icon name="chevron-right" size={13} /></button>
           <button className="service-btn danger"><Icon name="close" size={15} /><span>Supprimer mon compte</span><Icon name="chevron-right" size={13} /></button>
-          <p className="service-note">Suppression définitive sous 30 jours, réversible par e-mail. Export en JSON + PDF.</p>
         </div>
       </section>
 
@@ -1120,9 +1119,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                 <div className="row">
                   <button className="btn btn-inverse sm" onClick={() => setLiveVisio({ who: 'Groupe Dos & Mobilité', isGroup: true })}>
                     <span>Ouvrir la salle</span><Icon name="video" size={15} />
-                  </button>
-                  <button className="btn btn-soft sm" onClick={() => setEvalModal({ who: 'Groupe Dos & Mobilité', isGroup: true })}>
-                    <span>Simuler fin de session</span>
                   </button>
                 </div>
               </section>

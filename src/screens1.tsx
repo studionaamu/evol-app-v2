@@ -104,7 +104,10 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
   onOpenChat: (coachId: string) => void
   onOpenEva: (prefill?: string) => void
 }) {
-  const { name, quizDomains } = useStore()
+  const { name, quizDomains, program } = useStore()
+  const [homeTab, setHomeTab] = useState<'week' | 'community'>('week')
+  const [event, setEvent] = useState<CommunityEvent | null>(null)
+  const [joinedEvents, setJoinedEvents] = useState<string[]>([])
   const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length))
   const quote = QUOTES[quoteIdx]
 
@@ -159,6 +162,17 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
     setDraft('')
   }
 
+  if (event) {
+    return (
+      <EventScreen
+        ev={event}
+        joined={joinedEvents.includes(event.id)}
+        onJoin={() => setJoinedEvents(js => js.includes(event.id) ? js.filter(x => x !== event.id) : [...js, event.id])}
+        onBack={() => setEvent(null)}
+      />
+    )
+  }
+
   return (
     <div className="tab-page" data-zone="hub">
       <header className="page-head">
@@ -182,8 +196,41 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
       </section>
 
       <section className="card" data-zone="home-feed">
-        <h2>Ce qui se passe cette semaine</h2>
+        <div className="feed-head">
+          <h2>Ce qui se passe cette semaine</h2>
+          {!program && (
+            <div className="subtabs feed-tabs">
+              {([['week', 'Ma semaine'], ['community', 'Communauté']] as const).map(([id, label]) => (
+                <button key={id} className={'subtab' + (homeTab === id ? ' on' : '')} onClick={() => setHomeTab(id)}>{label}</button>
+              ))}
+            </div>
+          )}
+        </div>
 
+        {!program && homeTab === 'community' ? (
+          <>
+            <p style={{ fontSize: 12.5, marginBottom: 10 }}>Ateliers et rencontres en visio ou en présentiel, avec les autres élèves.</p>
+            <div className="sessions">
+              {EVENTS.map(ev => (
+                <button className="session event-row" key={ev.id} onClick={() => setEvent(ev)} aria-label={`Voir l'évènement ${ev.title}`}>
+                  <div className="date-box"><strong>{ev.day}</strong><span>{ev.month}</span></div>
+                  <div className="session-info">
+                    <div className="session-time">
+                      <Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={12} /> {ev.time} · {ev.mode}
+                    </div>
+                    <strong>{ev.title}</strong>
+                    <span>{ev.host} · {ev.place} · {ev.seats} places</span>
+                  </div>
+                  <span className={'event-join' + (joinedEvents.includes(ev.id) ? ' on' : '')}>
+                    {joinedEvents.includes(ev.id) ? 'Inscrit' : 'Rejoindre'}
+                    <Icon name="chevron-right" size={13} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
         <div className="feed-list">
           {HOME_ANNOUNCEMENTS.map(a => {
             const on = joined.includes(a.id)
@@ -227,6 +274,8 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
             })}
           </div>
         </div>
+          </>
+        )}
       </section>
 
       <section className="card" data-zone="stories">
@@ -324,8 +373,6 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
   const [mode, setMode] = useState<string | null>(null)
   const [city, setCity] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  const [event, setEvent] = useState<CommunityEvent | null>(null)
-  const [joinedEvents, setJoinedEvents] = useState<string[]>([])
   const specialties = ['Stress', 'Nutrition', 'Mobilité', 'Anxiété']
   const cities = [...new Set(COACHES.map(c => c.city))]
   /* accès invité / hors programme : textes seuls, sans photos */
@@ -341,17 +388,6 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
     const matchC = !city || c.city === city
     return matchQ && matchS && matchP && matchM && matchC
   }), [q, specialty, maxPrice, mode, city])
-
-  if (event) {
-    return (
-      <EventScreen
-        ev={event}
-        joined={joinedEvents.includes(event.id)}
-        onJoin={() => setJoinedEvents(js => js.includes(event.id) ? js.filter(x => x !== event.id) : [...js, event.id])}
-        onBack={() => setEvent(null)}
-      />
-    )
-  }
 
   return (
     <div className="tab-page">
@@ -413,33 +449,6 @@ export function Explorer({ onOpenCoach }: { onOpenCoach: (c: Coach) => void }) {
           ))}
         </div>
       )}
-
-      <section className="card">
-        <div className="card-kicker"><Icon name="calendar" size={13} /> PROCHAINS ÉVÈNEMENTS</div>
-        <div className="row between" style={{ marginTop: 0, marginBottom: 4 }}>
-          <h2>Vivre Evol ensemble</h2>
-          <span className="tag mini">Communauté</span>
-        </div>
-        <p style={{ fontSize: 12.5, marginBottom: 10 }}>Ateliers et rencontres en visio ou en présentiel, avec les autres élèves.</p>
-        <div className="sessions">
-          {EVENTS.map(ev => (
-            <button className="session event-row" key={ev.id} onClick={() => setEvent(ev)} aria-label={`Voir l'évènement ${ev.title}`}>
-              <div className="date-box"><strong>{ev.day}</strong><span>{ev.month}</span></div>
-              <div className="session-info">
-                <div className="session-time">
-                  <Icon name={ev.mode === 'Visio' ? 'video' : 'location'} size={12} /> {ev.time} · {ev.mode}
-                </div>
-                <strong>{ev.title}</strong>
-                <span>{ev.host} · {ev.place} · {ev.seats} places</span>
-              </div>
-              <span className={'event-join' + (joinedEvents.includes(ev.id) ? ' on' : '')}>
-                {joinedEvents.includes(ev.id) ? 'Inscrit' : 'Rejoindre'}
-                <Icon name="chevron-right" size={13} />
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       <div className="count-line">{results.length} accompagnant{results.length > 1 ? 's' : ''} · {followedCoachIds.length} dans votre équipe</div>
 

@@ -3142,3 +3142,54 @@ html.dark .chat-screen:not(.eva-screen) .chat-note {
   color: rgba(242,241,236,0.6);
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
 }
+
+/* ============ HOME — onglets du flux (ma semaine / communauté) ============ */
+.feed-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.feed-head h2 { margin-bottom: 0; }
+.subtabs.feed-tabs { margin: 0 0 14px; width: 100%; }
+.subtabs.feed-tabs .subtab { padding: 8px 0; font-size: 12px; }
+@media (min-width: 420px) {
+  .subtabs.feed-tabs { width: auto; margin: 0; }
+  .subtabs.feed-tabs .subtab { padding: 7px 16px; }
+}
+
+/* ============ MESSAGERIE COACH — verre sombre identique à EVA ============ */
+.coach-inline-chat {
+  background: linear-gradient(180deg, #0A0C14 0%, #0C1019 55%, #080A11 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #F2F1EC !important;
+  padding: 16px 15px;
+  box-shadow: 0 24px 60px -30px rgba(4, 6, 12, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.coach-inline-chat .coach-chat-bar { border-bottom-color: rgba(255, 255, 255, 0.10); }
+.coach-inline-chat .coach-chat-bar .session-info strong { color: #F3EDE7; }
+.coach-inline-chat .coach-chat-bar .session-info span { color: rgba(243, 237, 231, 0.55); }
+.coach-inline-chat .icon-btn {
+  background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.09); color: #F3EDE7;
+}
+.coach-chat-messages .bubble-row.coach .bubble {
+  background: linear-gradient(160deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(1.5); backdrop-filter: blur(26px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 24px 24px 24px 9px; padding: 13px 15px 7px;
+  color: rgba(248,243,238,0.94) !important;
+  box-shadow: 0 14px 40px rgba(2,4,10,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+}
+.coach-chat-messages .bubble-row.me .bubble {
+  background: linear-gradient(160deg, rgba(255,255,255,0.17), rgba(255,255,255,0.08)) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 24px 24px 9px 24px; padding: 13px 15px 7px;
+  color: #F2F1EC !important;
+  box-shadow: 0 14px 40px rgba(2,4,10,0.45), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.coach-chat-messages .bubble p { color: inherit; font-weight: 300; }
+.coach-chat-messages .bubble span { color: rgba(255,255,255,0.5); }
+.coach-chat-messages .bubble-author { color: rgba(243,237,231,0.55); font-style: normal; }
+.coach-inline-chat .eco-input.glass-lite {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.10);
+  color: #F3EDE7;
+}
+.coach-inline-chat .eco-input.glass-lite::placeholder { color: rgba(243,237,231,0.38); }
+.coach-inline-chat .send-btn { background: rgba(255,255,255,0.08); color: rgba(243,237,231,0.65); }
+.coach-inline-chat .send-btn.ready { background: #F2F1EC; color: #0B0E16; box-shadow: 0 8px 22px rgba(0,0,0,0.35); }
