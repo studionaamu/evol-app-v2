@@ -421,11 +421,12 @@ export const INTENTIONS = [
 ]
 
 export const QUOTES = [
-  { text: 'La régularité crée des transformations que la motivation seule ne peut pas tenir.', src: 'Votre espace Evol' },
-  { text: 'On ne change pas de direction en forçant le volant, mais en regardant plus loin.', src: 'Proverbe' },
-  { text: 'Le calme n’est pas l’absence de tempête, c’est ce que vous cultivez en elle.', src: 'Evol · Respiration' },
-  { text: 'Chaque version de vous mérite un accompagnement d’exception.', src: 'Manifeste Evol' },
-  { text: 'Une intention claire vaut dix résolutions bruyantes.', src: 'Votre espace Evol' },
+  { text: 'La discipline est le pont entre les objectifs et les accomplissements.', src: 'Jim Rohn' },
+  { text: 'Un voyage de mille lieues commence toujours par un premier pas.', src: 'Lao Tseu' },
+  { text: 'La seule façon de faire un excellent travail est d’aimer ce que vous faites.', src: 'Steve Jobs' },
+  { text: 'Le succès, c’est tomber sept fois et se relever huit.', src: 'Proverbe japonais' },
+  { text: 'La meilleure façon de prédire l’avenir, c’est de le créer.', src: 'Peter Drucker' },
+  { text: 'Fais de ta vie un rêve, et d’un rêve une réalité.', src: 'Antoine de Saint-Exupéry' },
 ]
 
 /* --- Espace coach : clients, groupes, agenda, appels --- */

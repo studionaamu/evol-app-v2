@@ -26,8 +26,8 @@ html.dark {
   --bg-elev: #17171B;
   --bg-soft: #1F1F24;
   --ink: #F2F1EC;
-  --ink-2: #A7A7AF;
-  --ink-3: #6C6C74;
+  --ink-2: #CBC4BE;
+  --ink-3: #A9A19B;
   --line: rgba(242,241,236,0.08);
   --line-strong: rgba(242,241,236,0.16);
   --grad-soft: linear-gradient(135deg, rgba(233,43,31,0.10), rgba(109,62,173,0.10), rgba(21,37,255,0.10));
@@ -3757,14 +3757,13 @@ html.dark .eco-cap-ico { color: #C9AFF5; }
 .msg-next {
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
   border-radius: 15px; border: 1px solid var(--line); color: var(--ink); text-align: left;
-  font: inherit; cursor: pointer; margin-bottom: 10px;
+  font: inherit; margin-bottom: 10px;
   background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
 }
 .msg-next-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .msg-next-body > span { font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .msg-next-body strong { font-size: 12.5px; }
 .msg-next-body em { font-style: normal; font-size: 10.5px; color: var(--ink-2); }
-.msg-next > svg:last-child { color: var(--ink-3); flex: none; }
 .msg-people { margin: 2px 0 12px; }
 .msg-people-row { display: flex; gap: 12px; overflow-x: auto; padding: 3px 2px 5px; scrollbar-width: none; }
 .msg-people-row::-webkit-scrollbar { display: none; }
@@ -3873,10 +3872,10 @@ html:not(.dark) .tabbar {
 .tab.on { color: var(--ink); }
 
 /* micro-interactions douces */
-.session, .thread, .msg-next, .search, .chip, .tag, .btn-soft, .icon-btn, .glass-lite {
+.session, .thread, .search, .chip, .tag, .btn-soft, .icon-btn, .glass-lite {
   transition: background .3s ease, border-color .3s ease, box-shadow .3s ease, transform .25s ease;
 }
-.session:active, .thread:active, .msg-next:active { transform: scale(.995); }
+.session:active, .thread:active { transform: scale(.995); }
 
 /* lueur EVA discrète */
 .eva-fab { border-color: rgba(255, 255, 255, 0.16); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.30); }
@@ -3948,3 +3947,53 @@ html.dark .tabbar {
   background: linear-gradient(180deg, rgba(24, 24, 29, 0.72), rgba(16, 16, 19, 0.90));
   box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.55);
 }
+
+/* citation : plus d'air, une teinte fondue dans les surfaces */
+html.dark .card.card-quote {
+  padding: 26px 24px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgba(109, 62, 173, 0.24), transparent 64%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+  box-shadow: 0 22px 52px -34px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+html.dark .card.card-quote::after {
+  background: radial-gradient(55% 100% at 96% 0%, rgba(255, 255, 255, 0.08), transparent 72%);
+}
+html.dark .card.card-quote .quote-mark {
+  font-size: 30px;
+  margin-bottom: 10px;
+  color: rgba(204, 189, 255, 0.52);
+}
+html.dark .card.card-quote p {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+html.dark .card.card-quote .quote-src {
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+}
+html.dark .card.card-quote .quote-refresh {
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+  transition: transform .25s ease, background .25s ease, color .25s ease;
+}
+html.dark .card.card-quote .quote-refresh:hover {
+  background: rgba(255, 255, 255, 0.11);
+  color: var(--ink);
+}
+html.dark .thread-info p { color: var(--ink-2); }

@@ -386,15 +386,14 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         {totalUnread > 0 && <span className="tag mini">{totalUnread} non lus</span>}
       </header>
 
-      <button className="msg-next glass-lite" onClick={() => onOpenChat(next.coachId)}>
+      <div className="msg-next glass-lite">
         <Avatar hue={nextCoach.hue} initials={nextCoach.initials} photo={nextCoach.photo} size={40} />
         <span className="msg-next-body">
           <span>PROCHAIN RENDEZ-VOUS</span>
           <strong>{nextCoach.name.split(' ')[0]} · {next.day} {next.month.toLowerCase()} · {next.time}</strong>
           <em>{next.title} · {next.duration} min · {next.mode}</em>
         </span>
-        <Icon name="chevron-right" size={15} />
-      </button>
+      </div>
 
       <div className="msg-people">
         <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
