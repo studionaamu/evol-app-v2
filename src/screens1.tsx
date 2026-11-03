@@ -206,7 +206,7 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
               </div>
               <p>Souhaitez-vous être ajouté au groupe de chat de la séance ?</p>
               <div className="row">
-                <button className="btn btn-primary sm" onClick={joinSessionGroup}>
+                <button className="btn btn-ghost sm" onClick={joinSessionGroup}>
                   <Icon name="users" size={13} /><span>Rejoindre le groupe</span>
                 </button>
                 <button className="btn btn-ghost sm" onClick={() => setInvite('declined')}>
@@ -365,7 +365,7 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
 
       {/* RENDEZ-VOUS — parcours classique */}
       {!program && (
-      <section className="card" data-zone="sessions">
+      <section className="card card-sessions" data-zone="sessions">
         <h2>Vos prochains rendez-vous</h2>
         <div className="sessions" style={{ marginTop: 10 }}>
           {SESSIONS.map(s => {
@@ -644,13 +644,13 @@ export function Carnet({ onOpenChat, onOpenEva }: {
             <strong>Ce que EVA retient</strong>
             <p>Vos notes relient le sommeil à votre énergie du matin. Le rituel du soir semble faire effet : on le garde cette semaine.</p>
           </div>
-          <button className="link-btn" onClick={() => onOpenEva('Fais la synthèse de mon carnet de la semaine')}>Approfondir</button>
+          <button className="btn btn-soft sm carnet-eva-btn" onClick={() => onOpenEva('Fais la synthèse de mon carnet de la semaine')}>Approfondir</button>
         </div>
 
         <div className="carnet-next">
           <Icon name="calendar" size={13} />
           <span>Prochain point : <strong>{nextCoach.name.split(' ')[0]} · {next.day} {next.month.toLowerCase()} · {next.time}</strong></span>
-          <button className="link-btn" onClick={() => onOpenChat(next.coachId)}>Préparer</button>
+          <button className="btn btn-ghost sm carnet-next-btn" onClick={() => onOpenChat(next.coachId)}>Préparer</button>
         </div>
       </section>
 
@@ -903,6 +903,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   const { selectedRadarAxis, setSelectedRadarAxis, program, followedCoachIds, quizDomains, threads } = useStore()
   const [ecoView, setEcoView] = useState<'radar' | 'sante'>('radar')
   const [goalCoach, setGoalCoach] = useState<string | null>(null)
+  const [axisPopup, setAxisPopup] = useState<string | null>(null)
   const [docs, setDocs] = useState<SharedDocument[]>(INITIAL_SHARED_DOCS)
   const [docTitle, setDocTitle] = useState('')
   const shareDoc = (coachId: string) => {
@@ -916,7 +917,6 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
 
   /* scan de repas — accès rapide depuis le haut de l'écosystème */
   const shotInput = useRef<HTMLInputElement>(null)
-  const radarRef = useRef<HTMLElement>(null)
   const [mealShot, setMealShot] = useState<string | null>(null)
   const [mealAnalysis, setMealAnalysis] = useState<string | null>(null)
   const [analyzingMeal, setAnalyzingMeal] = useState(false)
@@ -978,15 +978,20 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   const radarScores = teamRadar.length > 0 ? teamRadar : RADAR
   const activeAxis = radarScores.find(r => r.axis === selectedRadarAxis) ?? radarScores[0]
   const axisCoach = COACHES.find(c => c.id === activeAxis.coachId) ?? COACHES[0]
+  const popupAxis = axisPopup ? radarScores.find(r => r.axis === axisPopup) ?? null : null
 
-  /* amène l'axe choisi au centre du radar, en respectant les préférences de mouvement */
-  const revealAxis = (axis: string) => {
+  useEffect(() => {
+    if (!axisPopup) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAxisPopup(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [axisPopup])
+
+  const openAxisPopup = (axis: string) => {
     setSelectedRadarAxis(axis)
-    setEcoView('radar')
-    window.setTimeout(() => {
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      radarRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' })
-    }, 140)
+    setAxisPopup(axis)
   }
 
   /* priorité du profil : quiz d'entrée, sinon les deux axes du programme EVOLIA */
@@ -1019,7 +1024,8 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   const activeMatched = activeCoach ? priorities.filter(p => (activeCoach.domains as string[]).includes(p)) : []
 
   return (
-    <div className="tab-page" data-zone="ecosystem">
+    <>
+      <div className="tab-page" data-zone="ecosystem">
       <header className="page-head">
         <div>
           <div className="date-line">MON ÉCOSYSTÈME</div>
@@ -1246,8 +1252,6 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
             <h2 style={{ margin: 0 }}>Vos coachs</h2>
             <span className="tag mini">{COACH_TEAM.length} accompagnants</span>
           </div>
-          <p className="eco-sub">Touchez un visage pour voir son objectif de vie, sa prochaine étape et l’axe du radar qu’il fait avancer.</p>
-
           <div className="goal-bubbles">
             {COACH_TEAM.map(t => {
               const c = COACHES.find(x => x.id === t.coachId)!
@@ -1293,8 +1297,9 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
                     <strong>{axis.axis} · {axis.v}/100</strong>
                   </div>
                   <div className="group-meter"><span style={{ width: `${axis.v}%` }} /></div>
-                  <button className="link-btn" onClick={() => revealAxis(axis.axis)}>
-                    Voir cet axe dans le radar
+                  <button className="btn btn-soft sm eco-axis-btn" onClick={() => openAxisPopup(axis.axis)}>
+                    <Icon name="activity" size={12} />
+                    <span>Voir cet axe dans le radar</span>
                   </button>
                 </div>
 
@@ -1397,7 +1402,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
       </div>
 
       {ecoView === 'radar' && (
-      <section className="card card-balance" data-zone="radar" ref={radarRef}>
+      <section className="card card-balance" data-zone="radar">
         <span className="balance-wash" aria-hidden />
         <div className="card-kicker"><Icon name="activity" size={13} /> RADAR DE VIE</div>
         <div className="radar-head">
@@ -1505,6 +1510,46 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
       )}
 
     </div>
+
+      {popupAxis && (
+        <div className="axis-layer" onClick={() => setAxisPopup(null)}>
+          <div
+            className="axis-pop"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${popupAxis.axis} sur votre radar de vie`}
+            onClick={e => e.stopPropagation()}
+          >
+            <button className="axis-pop-close" onClick={() => setAxisPopup(null)} aria-label="Fermer">
+              <Icon name="close" size={16} />
+            </button>
+            <div className="card-kicker" style={{ margin: 0 }}><Icon name="activity" size={12} /> VOTRE RADAR DE VIE</div>
+            <div className="axis-pop-head">
+              <div>
+                <span>AXE SÉLECTIONNÉ</span>
+                <h2>{popupAxis.axis}</h2>
+              </div>
+              <strong className="axis-pop-score">{popupAxis.v}<em>/100</em></strong>
+            </div>
+            <div className="group-meter"><span style={{ width: `${popupAxis.v}%` }} /></div>
+            <RadarChart
+              scores={radarScores}
+              selectedAxis={popupAxis.axis}
+              onSelectAxis={next => { setSelectedRadarAxis(next); setAxisPopup(next) }}
+              expanded
+            />
+            <p className="axis-pop-insight">{popupAxis.insight}</p>
+            <div className="axis-pop-rec">
+              <Icon name="sparkle" size={12} />
+              <span>{popupAxis.rec}</span>
+            </div>
+            <button className="btn btn-ghost sm axis-pop-done" onClick={() => setAxisPopup(null)}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

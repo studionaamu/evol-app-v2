@@ -3643,7 +3643,6 @@ html.dark .cal-confirm-ico { color: #FF7066; }
 .cal-confirm-head span { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
 
 /* --- écosystème classique : bulles reliées au radar --- */
-.eco-sub { font-size: 12px; color: var(--ink-2); line-height: 1.45; margin-top: 2px; }
 .eco-coach-radar { margin-top: 8px; padding: 10px 11px; border-radius: 13px; display: flex; flex-direction: column; gap: 6px; }
 .eco-coach-radar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
 .eco-coach-radar-head span { display: inline-flex; align-items: center; gap: 5px; }
@@ -3997,3 +3996,243 @@ html.dark .card.card-quote .quote-refresh:hover {
   color: var(--ink);
 }
 html.dark .thread-info p { color: var(--ink-2); }
+
+/* --- carnet : les actions deviennent de vrais boutons --- */
+.carnet-eva .carnet-eva-btn,
+.carnet-next .carnet-next-btn {
+  flex: none;
+  padding: 7px 11px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.carnet-eva .carnet-eva-btn { align-self: center; }
+.carnet-next .carnet-next-btn { margin-left: auto; }
+.carnet-eva .carnet-eva-btn:hover,
+.carnet-next .carnet-next-btn:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--bg-elev) 88%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow: none;
+}
+html.dark .carnet-eva .carnet-eva-btn,
+html.dark .carnet-next .carnet-next-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+html.dark .carnet-eva .carnet-eva-btn:hover,
+html.dark .carnet-next .carnet-next-btn:hover {
+  background: rgba(255, 255, 255, 0.085);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* --- écosystème : accès au radar en bouton verre --- */
+.eco-axis-btn {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 8px 12px;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.eco-axis-btn svg { color: #7FA6FF; }
+.eco-axis-btn:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+  box-shadow: none;
+}
+html.dark .eco-axis-btn {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.075);
+}
+html.dark .eco-axis-btn:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+/* --- rendez-vous : un encart légèrement teinté, sans rupture --- */
+.feed-sessions {
+  margin-top: 18px;
+  padding: 15px 13px 13px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  background: linear-gradient(158deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+}
+html.dark .feed-sessions {
+  border-color: rgba(255, 255, 255, 0.065);
+  background:
+    radial-gradient(85% 120% at 100% 0%, rgba(109, 62, 173, 0.12), transparent 68%),
+    linear-gradient(158deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+html.dark .card.card-sessions {
+  border-color: rgba(255, 255, 255, 0.075);
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgba(109, 62, 173, 0.12), transparent 66%),
+    linear-gradient(158deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+}
+
+/* --- citation : palette EVA, un peu plus lumineuse et aérée --- */
+html.dark .card.card-quote {
+  padding: 28px 26px 26px;
+  border: 1px solid rgba(120, 165, 255, 0.16);
+  background:
+    radial-gradient(92% 140% at 100% -8%, rgba(46, 107, 255, 0.44), transparent 61%),
+    radial-gradient(85% 120% at 0% 110%, rgba(111, 165, 255, 0.15), transparent 72%),
+    linear-gradient(155deg, #0C1730 0%, #0A101F 52%, #070A12 100%);
+  box-shadow: 0 26px 62px -36px rgba(46, 107, 255, 0.46), inset 0 1px 0 rgba(192, 216, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(1.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+}
+html.dark .card.card-quote::after {
+  background:
+    radial-gradient(55% 100% at 92% 0%, rgba(187, 212, 255, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 50%);
+}
+html.dark .card.card-quote .quote-mark {
+  font-size: 30px;
+  margin-bottom: 12px;
+  color: rgba(168, 199, 255, 0.62);
+}
+html.dark .card.card-quote p {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: #F4F8FF;
+  letter-spacing: -0.005em;
+}
+html.dark .card.card-quote .quote-src {
+  margin-top: 15px;
+  font-size: 11px;
+  color: rgba(205, 220, 255, 0.62);
+  letter-spacing: 0.05em;
+}
+html.dark .card.card-quote .quote-refresh {
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #E5EEFF;
+  background: rgba(125, 165, 255, 0.13);
+  border: 1px solid rgba(174, 203, 255, 0.20);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+html.dark .card.card-quote .quote-refresh:hover {
+  color: #FFFFFF;
+  background: rgba(125, 165, 255, 0.20);
+}
+
+/* --- pop-up radar : fondu, verre bleu et fermeture simple --- */
+.axis-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 7, 13, 0.68);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  animation: axisFadeIn .26s ease both;
+}
+.axis-pop {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: calc(100dvh - 40px);
+  padding: 24px 20px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 28px;
+  border: 1px solid rgba(130, 170, 255, 0.20);
+  background:
+    radial-gradient(100% 100% at 100% 0%, rgba(46, 107, 255, 0.28), transparent 62%),
+    linear-gradient(160deg, rgba(22, 29, 50, 0.98), rgba(8, 12, 21, 0.99));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  animation: axisPopIn .38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.axis-pop-close {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  z-index: 1;
+}
+.axis-pop-close:hover { color: var(--ink); background: rgba(255, 255, 255, 0.10); }
+.axis-pop .card-kicker { padding-right: 38px; color: rgba(196, 216, 255, 0.62); }
+.axis-pop-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0 9px;
+}
+.axis-pop-head span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(196, 216, 255, 0.52);
+}
+.axis-pop-head h2 { margin-top: 2px; font-size: 26px; }
+.axis-pop-score {
+  font-family: var(--disp);
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1;
+  color: #E8F1FF;
+}
+.axis-pop-score em { font-family: var(--sans); font-size: 11px; font-style: normal; color: var(--ink-3); }
+.axis-pop .group-meter { margin-top: 1px; }
+.axis-pop .radar-wrap { padding: 9px 0 0; }
+.axis-pop .radar-svg { width: min(100%, 285px); }
+.axis-pop .radar-label { fill: rgba(227, 237, 255, 0.70); }
+.axis-pop-insight {
+  margin-top: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.axis-pop-rec {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 11px;
+  padding: 10px 11px;
+  border-radius: 13px;
+  border: 1px solid rgba(130, 170, 255, 0.14);
+  background: rgba(111, 165, 255, 0.08);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.axis-pop-rec svg { flex: none; margin-top: 1px; color: #9CC0FF; }
+.axis-pop-done { width: 100%; margin-top: 12px; }
+@keyframes axisFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes axisPopIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (min-width: 480px) {
+  .axis-layer { top: 20px; bottom: 20px; border-radius: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .axis-layer, .axis-pop { animation: none; }
+}
