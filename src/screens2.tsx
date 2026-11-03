@@ -3,7 +3,7 @@ import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, PSY_COACH_ID,
+  COACHES,
   type Coach, type Message, type Thread,
 } from './data'
 
@@ -151,11 +151,15 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
           <button
             className={'btn sm ' + (isFollowed ? 'btn-soft' : 'btn-primary')}
             style={{ marginTop: 10 }}
-            onClick={() => toggleFollowCoach(coach.id)}
+            onClick={() => { if (!isFollowed) toggleFollowCoach(coach.id) }}
+            aria-pressed={isFollowed}
           >
             <Icon name={isFollowed ? 'check' : 'plus'} size={14} />
             <span>{isFollowed ? 'Dans votre équipe (suivi)' : 'Choisir ce coach dans mon équipe'}</span>
           </button>
+          {isFollowed && (
+            <span className="follow-hint">Pour retirer un coach : Profil → Mon équipe.</span>
+          )}
         </div>
 
         {/* vignette vidéo éditoriale */}
@@ -303,80 +307,57 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
 
 export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void }) {
   const { threads, setThreads, followedCoachIds } = useStore()
-  const [creating, setCreating] = useState(false)
-  const [picked, setPicked] = useState<string[]>([])
   const [q, setQ] = useState('')
-  const [filter, setFilter] = useState<'all' | 'unread' | 'groups'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
-  /* intervenants réunissables : le psychologue reste strictement individuel */
-  const groupable = COACHES.filter(c => c.id !== PSY_COACH_ID)
-  const psy = COACHES.find(c => c.id === PSY_COACH_ID)
-
-  /* Filtre les fils selon les coachs suivis par l'utilisateur */
-  const activeThreads = useMemo(() => {
-    return threads.filter(t => t.group || followedCoachIds.includes(t.coachId))
-  }, [threads, followedCoachIds])
-
-  const totalUnread = activeThreads.reduce((n, t) => n + t.unread, 0)
-
+  /* Fils 1:1 des coachs suivis et groupes de séance, affichés à la suite */
   const shown = useMemo(() => {
     const ql = q.trim().toLowerCase()
-    return activeThreads.filter(t => {
-      if (filter === 'unread' && t.unread === 0) return false
-      if (filter === 'groups' && !t.group) return false
-      if (!ql) return true
-      const c = COACHES.find(x => x.id === t.coachId)!
-      const title = (t.group?.name ?? c.name).toLowerCase()
-      const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
-      return title.includes(ql) || last.includes(ql)
-    })
-  }, [activeThreads, q, filter])
+    return threads
+      .filter(t => t.group || followedCoachIds.includes(t.coachId))
+      .filter(t => (filter === 'unread' ? t.unread > 0 : true))
+      .filter(t => {
+        if (!ql) return true
+        const c = COACHES.find(x => x.id === t.coachId)
+        const title = (t.group?.name ?? c?.name ?? '').toLowerCase()
+        const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
+        return title.includes(ql) || last.includes(ql)
+      })
+  }, [threads, followedCoachIds, q, filter])
 
-  const directThreads = shown.filter(t => !t.group)
-  const groupThreads = shown.filter(t => !!t.group)
-
-  /* intervenants suivis → rangée d'accès rapide */
-  const quickCoaches = useMemo(() => {
-    return followedCoachIds.map(id => COACHES.find(c => c.id === id)).filter((c): c is Coach => !!c)
-  }, [followedCoachIds])
-
-  const createGroup = () => {
-    if (picked.length < 2) return
-    const names = picked.map(id => COACHES.find(c => c.id === id)!.name.split(' ')[0])
-    const g = {
-      name: `Synergy · ${names.join(' × ')}`,
-      memberIds: picked,
-    }
-    setThreads(ts => [{
-      id: 'g' + Date.now(), coachId: picked[0], unread: 0,
-      messages: [{ from: 'coach', text: `Bonjour ! ${names.join(' et ')} sont réunis ici pour synchroniser votre suivi.`, time: 'maintenant' }],
-      group: g,
-    }, ...ts])
-    setPicked([]); setCreating(false)
-  }
-
-  const markAll = () => setThreads(ts => ts.map(t => ({ ...t, unread: 0 })))
+  const unread = shown.reduce((n, t) => n + t.unread, 0)
   const count = followedCoachIds.length
+  const markAll = () => setThreads(ts => ts.map(t => ({ ...t, unread: 0 })))
 
   const threadRow = (t: Thread) => {
     const c = COACHES.find(x => x.id === t.coachId)!
     const last = t.messages[t.messages.length - 1]
     const title = t.group?.name ?? c.name
     return (
-      <button className={'thread' + (t.unread > 0 ? ' unread' : '')} key={t.id} onClick={() => onOpenChat(t.coachId)}>
+      <button className={'thread' + (t.unread > 0 ? ' unread' : '')} key={t.id} onClick={() => onOpenChat(t.group ? t.id : t.coachId)}>
         <div className="thread-av">
           {t.group
-            ? <div className="group-av">{t.group.memberIds.slice(0, 2).map(id => {
-                const cc = COACHES.find(x => x.id === id)!
-                return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={30} />
-              })}</div>
+            ? <div className="group-av">
+                {(t.group.students?.length
+                  ? t.group.students.map(st => ({ id: st.name, hue: st.hue, initials: st.name.slice(0, 2).toUpperCase(), photo: undefined as string | undefined }))
+                  : t.group.memberIds.map(id => {
+                      const cc = COACHES.find(x => x.id === id)!
+                      return { id, hue: cc.hue, initials: cc.initials, photo: cc.photo as string | undefined }
+                    })).slice(0, 2).map(f => (
+                  <Avatar key={f.id} hue={f.hue} initials={f.initials} photo={f.photo} size={30} />
+                ))}
+              </div>
             : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={count >= 4 ? 40 : 48} />}
           {t.unread > 0 && <span className="badge">{t.unread}</span>}
         </div>
         <div className="thread-info">
           <div className="thread-top">
             <strong>{title}</strong>
-            <span className="tag mini">{t.group ? `${t.group.memberIds.length} experts` : c.domains[0]}</span>
+            <span className="tag mini">
+              {t.group
+                ? t.group.students?.length ? `${t.group.students.length + 1} élèves` : `${t.group.memberIds.length} experts`
+                : c.domains[0]}
+            </span>
             <span>{last?.time}</span>
           </div>
           <p>
@@ -392,15 +373,8 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
     <div className="tab-page synergy-page">
       <header className="page-head">
         <div>
-          <div className="date-line">SYNERGY ROOM · {count} COACH{count > 1 ? 'S' : ''} EN CONTACT</div>
-          <h1>Votre réseau de soin.</h1>
-          {count !== 2 && (
-            <p>
-              {count === 1
-                ? 'Canal privilégié 1:1 avec votre expert référent.'
-                : `${count} experts actifs : affichage condensé et canaux groupés sans surcharge.`}
-            </p>
-          )}
+          <div className="date-line">MESSAGES</div>
+          <h1>Vos conversations.</h1>
         </div>
       </header>
 
@@ -410,94 +384,27 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
       </div>
 
       <div className="msg-filters">
-        {([['all', 'Tous'], ['unread', 'Non lus'], ['groups', 'Synergy']] as const).map(([id, label]) => (
+        {([['all', 'Tous'], ['unread', 'Non lus']] as const).map(([id, label]) => (
           <button key={id} className={'msg-filter' + (filter === id ? ' on' : '')} onClick={() => setFilter(id)}>
             {label}
-            {id === 'unread' && totalUnread > 0 && <em>{totalUnread}</em>}
+            {id === 'unread' && unread > 0 && <em>{unread}</em>}
           </button>
         ))}
+        {unread > 0 && <button className="link-btn" style={{ marginLeft: 'auto' }} onClick={markAll}>Tout lire</button>}
       </div>
 
-      {count > 1 && (
-        <div className="quick-row">
-          {quickCoaches.map(c => (
-            <button key={c.id} className="quick-av" onClick={() => onOpenChat(c.id)}>
-              <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={count >= 4 ? 46 : 56} ring />
-              <span>{c.name.split(' ')[0]}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {totalUnread > 0 && (
-        <div className="count-line row between" style={{ marginBottom: 10 }}>
-          <span>{totalUnread} non lu{totalUnread > 1 ? 's' : ''}</span>
-          <button className="link-btn" onClick={markAll}>Tout lire</button>
-        </div>
-      )}
-
-      {filter !== 'groups' && (
-      <div className="block-title" style={{ marginTop: 6 }}>
-        En direct <em>{directThreads.length} conversation{directThreads.length > 1 ? 's' : ''} 1:1</em>
+      <div className={'thread-list' + (count >= 4 ? ' compact' : '')}>
+        {shown.map(threadRow)}
+        {shown.length === 0 && (
+          <div className="empty">
+            <Icon name="chat" size={26} />
+            <p>Aucune conversation ne correspond.</p>
+          </div>
+        )}
       </div>
-      )}
-      {filter !== 'groups' && (
-      <div className={'thread-list' + (count >= 4 ? ' compact' : count === 1 ? ' spacious' : '')}>
-        {directThreads.map(threadRow)}
-        {directThreads.length === 0 && <div className="empty"><Icon name="chat" size={26} /><p>Aucune conversation directe ne correspond.</p></div>}
-      </div>
-      )}
-
-      {filter !== 'unread' && (
-      <div className="block-title">
-        Espaces Synergy <em>{groupThreads.length} groupe{groupThreads.length > 1 ? 's' : ''} avec vos coachs</em>
-      </div>
-      )}
-      {filter !== 'unread' && (groupThreads.length > 0
-        ? <div className="thread-list">{groupThreads.map(threadRow)}</div>
-        : <div className="empty"><Icon name="users" size={26} /><p>Réunissez vos coachs dans un même espace<br />pour synchroniser votre suivi.</p></div>)}
-      <button className="btn btn-soft" style={{ marginTop: 10 }} onClick={() => setCreating(true)}>
-        <Icon name="users" size={15} /><span>Réunir mes coachs par groupe</span>
-      </button>
-      <p className="dim" style={{ fontSize: 11.5, marginTop: 6 }}>
-        L’espace du psychologue reste strictement individuel : il ne peut pas être réuni en groupe.
-      </p>
 
       <div className="privacy block"><Icon name="shield" size={13} /> Canal privé · vous contrôlez les participants et les données partagées.</div>
       <footer className="tab-footer">Vos échanges restent chiffrés de bout en bout</footer>
-
-      {creating && (
-        <div className="pay-layer" onClick={() => setCreating(false)}>
-          <div className="pay-sheet" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: 6 }}>Réunir mes coachs</h2>
-            <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>Choisissez au moins 2 intervenants à réunir.</p>
-            <div className="pick-list">
-              {groupable.map(c => (
-                <button key={c.id} className={'pick' + (picked.includes(c.id) ? ' on' : '')} onClick={() =>
-                  setPicked(p => p.includes(c.id) ? p.filter(x => x !== c.id) : [...p, c.id])
-                }>
-                  <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={40} />
-                  <span className="pick-name"><strong>{c.name}</strong><span>{c.role}</span></span>
-                  <span className={'cbox' + (picked.includes(c.id) ? ' on' : '')}>
-                    {picked.includes(c.id) && <Icon name="check" size={13} strokeWidth={2.4} />}
-                  </span>
-                </button>
-              ))}
-              {psy && (
-                <div className="pick locked">
-                  <Avatar hue={psy.hue} initials={psy.initials} photo={psy.photo} size={40} />
-                  <span className="pick-name"><strong>{psy.name}</strong><span>Espace confidentiel · hors groupe</span></span>
-                  <Icon name="lock" size={15} />
-                </div>
-              )}
-            </div>
-            <button className="btn btn-primary" disabled={picked.length < 2} onClick={createGroup}>
-              <span>{picked.length < 2 ? 'Choisissez 2 intervenants' : 'Créer la Synergy'}</span>
-              {picked.length >= 2 && <Icon name="arrow-right" size={16} />}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -508,13 +415,23 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
 
 export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () => void }) {
   const { threads, setThreads } = useStore()
-  const thread = threads.find(t => t.coachId === coachId)
+  /* coachId peut désigner l'id d'un fil (groupe) ou celui du coach (1:1) */
+  const thread = threads.find(t => t.id === coachId) ?? threads.find(t => t.coachId === coachId)
   const [draft, setDraft] = useState('')
   const [managing, setManaging] = useState(false)
   const [call, setCall] = useState<CallKind | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
-  const c = COACHES.find(x => x.id === coachId)!
+  const c = COACHES.find(x => x.id === coachId) ?? COACHES.find(x => x.id === thread?.coachId) ?? COACHES[0]
   const group = thread?.group
+  const students = group?.students ?? []
+  const groupFaces = group
+    ? students.length > 0
+      ? students.map(s => ({ hue: s.hue, initials: s.name.slice(0, 2).toUpperCase(), photo: undefined as string | undefined }))
+      : group.memberIds.map(id => {
+          const cc = COACHES.find(x => x.id === id)!
+          return { hue: cc.hue, initials: cc.initials, photo: cc.photo as string | undefined }
+        })
+    : []
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [thread?.messages.length])
 
@@ -579,20 +496,26 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
       <header className="chat-head">
         <button className="icon-btn" onClick={onBack} aria-label="Retour"><Icon name="chevron-left" size={19} /></button>
         {group
-          ? <div className="group-av head">{group.memberIds.slice(0, 2).map(id => {
-              const cc = COACHES.find(x => x.id === id)!
-              return <Avatar key={id} hue={cc.hue} initials={cc.initials} photo={cc.photo} size={26} />
-            })}</div>
+          ? <div className="group-av head">{groupFaces.slice(0, 2).map((f, k) => (
+              <Avatar key={k} hue={f.hue} initials={f.initials} photo={f.photo} size={26} />
+            ))}</div>
           : <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={38} />}
         <div className="chat-who">
           <strong>{group?.name ?? c.name}</strong>
-          <span><i className="dot" /> {group ? `${group.memberIds.length} intervenants` : 'En ligne'}</span>
+          <span>
+            <i className="dot" />{' '}
+            {students.length > 0
+              ? `${students.length + 1} élèves · groupe de séance`
+              : group ? `${group.memberIds.length} intervenants` : 'En ligne'}
+          </span>
         </div>
         <button className="icon-btn" onClick={() => setCall('audio')} aria-label="Appel audio"><Icon name="phone" size={17} /></button>
         <button className="icon-btn" onClick={() => setCall('video')} aria-label="Appel visio"><Icon name="video" size={17} /></button>
-        <button className="icon-btn" onClick={() => setManaging(true)} aria-label="Participants">
-          <Icon name={group ? 'users' : 'plus'} size={18} />
-        </button>
+        {students.length === 0 && (
+          <button className="icon-btn" onClick={() => setManaging(true)} aria-label="Participants">
+            <Icon name={group ? 'users' : 'plus'} size={18} />
+          </button>
+        )}
       </header>
 
       <div className="chat-body">
@@ -611,9 +534,11 @@ export function ChatScreen({ coachId, onBack }: { coachId: string; onBack: () =>
       </div>
 
       <div className="chat-input glass">
-        <button className="chat-plus" onClick={() => setManaging(true)} aria-label="Participants et options">
-          <Icon name="plus" size={18} />
-        </button>
+        {students.length === 0 && (
+          <button className="chat-plus" onClick={() => setManaging(true)} aria-label="Participants et options">
+            <Icon name="plus" size={18} />
+          </button>
+        )}
         <input
           placeholder="Écrire un message…"
           value={draft}

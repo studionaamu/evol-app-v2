@@ -141,7 +141,7 @@ export function GuestWelcome({ onEnter, onBack }: { onEnter: () => void; onBack:
   )
 }
 
-export function Programme({ onBack, onLogin, onGuest }: {
+export function Programme({ onBack, onLogin }: {
   onBack: () => void
   onLogin: () => void
   onGuest: () => void
@@ -195,12 +195,6 @@ export function Programme({ onBack, onLogin, onGuest }: {
           <button className="btn btn-glass solid" onClick={onLogin}>
             <Icon name="lock" size={16} /><span>Se connecter au programme {PROGRAM_NAME}</span>
           </button>
-          <button className="btn btn-glass ghost" onClick={onGuest}>
-            <span>Découvrir en mode invité</span><Icon name="arrow-right" size={15} />
-          </button>
-          <p className="prog-note">
-            Mode invité : explications illustrées, puis accès à l’app sans la partie Explorer.
-          </p>
           <p className="prog-legal">
             <Icon name="shield" size={11} /> Données de santé hébergées en UE · accès nominatif et tracé.
           </p>

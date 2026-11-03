@@ -3,7 +3,7 @@ import { Icon } from './Icon'
 import { EvaAvatar } from './bits'
 import { StoreProvider, useStore } from './store'
 import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding, Programme, ProgramAccess, GuestWelcome } from './entry'
-import { Hub, Explorer, Ecosystem, EvaPanel } from './screens1'
+import { Hub, Explorer, Ecosystem, Carnet, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
 import { Profile, CoachSpace, type CoachTab, type VitrineSub } from './screens3'
 import { EXERCISES, type Coach, type Domain } from './data'
@@ -29,14 +29,13 @@ function Shell() {
   const openEva = (prefill?: string) => setEva({ open: true, prefill })
 
   useEffect(() => {
-    /* thème : sombre par défaut ; le mode clair reste un choix explicite dans Profil */
-    const stored = localStorage.getItem('evol-theme')
+    /* thème sombre appliqué automatiquement, sans réglage utilisateur */
     const apply = (dark: boolean) => {
       document.documentElement.classList.toggle('dark', dark)
       const meta = document.querySelector('meta[name=theme-color]')
       if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
     }
-    apply(stored !== 'light')
+    apply(true)
   }, [])
 
   const openChat = (coachId: string) => {
@@ -163,8 +162,8 @@ function Shell() {
       {floatingEva}
       <nav className="tabbar coach-tabbar" aria-label="Navigation coach">
         {([
-          { id: 'bord', icon: 'home', label: 'Bord' },
-          { id: 'vitrine', icon: 'store', label: 'Offre' },
+          { id: 'bord', icon: 'home', label: 'Home' },
+          { id: 'vitrine', icon: 'store', label: 'Bord' },
           { id: 'clients', icon: 'chart', label: 'Suivi' },
           { id: 'messagerie', icon: 'chat', label: 'Messages' },
           { id: 'reglages', icon: 'gear', label: 'Réglages' },
@@ -198,6 +197,7 @@ function Shell() {
           />
         )}
         {tab === 'explorer' && !hideExplorer && <Explorer onOpenCoach={c => setCoachView(c)} />}
+        {tab === 'carnet' && <Carnet onOpenChat={openChat} onOpenEva={openEva} />}
         {tab === 'synergy' && <Synergy onOpenChat={openChat} />}
         {tab === 'profile' && <Profile onGoCoach={() => setRole('coach')} />}
       </main>
@@ -207,10 +207,11 @@ function Shell() {
       <nav className="tabbar" aria-label="Navigation principale">
         {([
           { id: 'hub', icon: 'home', label: 'Home' },
+          ...(program ? [{ id: 'carnet' as const, icon: 'file' as const, label: 'Carnet' }] : []),
           { id: 'ecosystem', icon: 'grid', label: 'Écosystème' },
-          ...(hideExplorer ? [] : [{ id: 'explorer' as const, icon: 'compass' as const, label: program ? 'L’équipe' : 'Explorer' }]),
-          { id: 'synergy', icon: 'chat', label: 'Synergy' },
-          { id: 'profile', icon: 'user', label: 'Profil' },
+          ...(!program && !hideExplorer ? [{ id: 'explorer' as const, icon: 'compass' as const, label: 'Explorer' }] : []),
+          { id: 'synergy', icon: 'chat', label: 'Message' },
+          { id: 'profile', icon: 'user', label: 'Réglages' },
         ] as const).map(t => (
           <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} onClick={() => setTab(t.id)} aria-label={t.label}>
             <span className="tab-icon">

@@ -3146,12 +3146,8 @@ html.dark .chat-screen:not(.eva-screen) .chat-note {
 /* ============ HOME — onglets du flux (ma semaine / communauté) ============ */
 .feed-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .feed-head h2 { margin-bottom: 0; }
-.subtabs.feed-tabs { margin: 0 0 14px; width: 100%; }
+.subtabs.feed-tabs { margin: 10px 0 14px; width: 100%; }
 .subtabs.feed-tabs .subtab { padding: 8px 0; font-size: 12px; }
-@media (min-width: 420px) {
-  .subtabs.feed-tabs { width: auto; margin: 0; }
-  .subtabs.feed-tabs .subtab { padding: 7px 16px; }
-}
 
 /* ============ MESSAGERIE COACH — verre sombre identique à EVA ============ */
 .coach-inline-chat {
@@ -3254,3 +3250,271 @@ html:not(.dark) .chat-screen:not(.eva-screen) .bubble-row.coach .bubble {
   border-radius: 18px 18px 18px 6px;
   padding: 11px 14px 6px;
 }
+
+/* ============================================================
+   ALERTES · ÉVÉNEMENTS · SHORTS · MON ÉQUIPE · AGENDA COACH
+   ============================================================ */
+
+/* ---------- alertes du Hub ---------- */
+.alert-feed { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.alert-item {
+  border-radius: 18px; padding: 13px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color .2s, background .2s;
+}
+.alert-item.on { border-color: rgba(30,142,90,.35); }
+.alert-item.muted { opacity: .72; }
+.alert-item-head { display: flex; gap: 11px; align-items: flex-start; }
+.alert-item-head > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.alert-item-head strong { font-size: 13.5px; }
+.alert-item-head span { font-size: 11.5px; color: var(--ink-2); font-weight: 300; }
+.alert-item p { font-size: 12.5px; color: var(--ink-2); font-weight: 300; }
+.alert-ico {
+  width: 32px; height: 32px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink);
+}
+.alert-ico.ok { background: rgba(30,142,90,.12); color: #1E8E5A; }
+html.dark .alert-ico.ok { color: #4CC38A; }
+
+/* ---------- événements (parcours EVOLIA) ---------- */
+.event-list { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+.event-row {
+  display: flex; flex-direction: column; gap: 8px;
+  border-radius: 16px; padding: 11px 12px;
+}
+.event-row.on { border-color: color-mix(in srgb, var(--ink) 26%, transparent); }
+.event-row-main { display: flex; align-items: center; gap: 11px; text-align: left; width: 100%; }
+.event-date {
+  flex: none; width: 44px; min-height: 44px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.event-date strong { font-family: var(--disp); font-size: 15px; line-height: 1; }
+.event-date em { font-style: normal; font-size: 8.5px; letter-spacing: .08em; color: var(--ink-3); }
+.event-row-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.event-row-txt strong { font-size: 13.5px; }
+.event-row-txt span { font-size: 11.5px; color: var(--ink-2); font-weight: 300; }
+.event-join {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 99px; font-size: 11.5px; font-weight: 500;
+  background: var(--bg-elev); border: 1px solid var(--line);
+  transition: all .2s;
+}
+.event-join.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* ---------- shorts coachs (Explorer) ---------- */
+.shorts-block { margin-bottom: 16px; }
+.shorts-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.shorts-head h2 { font-size: 17px; }
+.shorts-row {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  margin: 0 -22px; padding: 2px 22px 4px;
+}
+.shorts-row::-webkit-scrollbar { display: none; }
+.short-card {
+  position: relative; flex: none; width: 96px; height: 168px; border-radius: 16px;
+  overflow: hidden; background: var(--bg-soft); border: 1px solid var(--line);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.short-card img { width: 100%; height: 100%; object-fit: cover; }
+.short-card.on { transform: translateY(-3px); box-shadow: 0 14px 30px -16px rgba(16,16,19,.55); }
+.short-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,10,14,.04) 28%, rgba(10,10,14,.78) 100%); }
+.short-progress { position: absolute; top: 7px; left: 7px; right: 7px; height: 3px; border-radius: 99px; background: rgba(255,255,255,.28); overflow: hidden; }
+.short-progress i { display: block; height: 100%; width: 100%; background: #fff; transform-origin: left; animation: shortFill 2s linear forwards; }
+@keyframes shortFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.short-play {
+  position: absolute; right: 7px; top: 6px; width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(10,10,14,.42); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.short-meta { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; flex-direction: column; gap: 1px; color: #fff; text-align: left; }
+.short-meta strong { font-size: 11.5px; }
+.short-meta span { font-size: 9.5px; opacity: .78; }
+
+/* ---------- coachs & équipe ---------- */
+.goal-intro { font-size: 12.5px; color: var(--ink-2); font-weight: 300; margin-bottom: 10px; }
+.follow-hint { display: block; margin-top: 7px; font-size: 11px; color: var(--ink-3); }
+.team-manage { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.team-manage-row {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 11px; border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-elev) 62%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.team-manage-row .remove-btn:disabled { opacity: .35; }
+
+/* ---------- statut & synchro calendriers ---------- */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 99px;
+  font-size: 10.5px; font-weight: 500; letter-spacing: .02em;
+  background: rgba(30,142,90,.12); color: #1E8E5A;
+  border: 1px solid rgba(30,142,90,.18); white-space: nowrap;
+}
+.status-pill.sm { padding: 3px 8px; font-size: 9.5px; vertical-align: 1px; }
+.status-pill i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-pill.off { background: rgba(233,43,31,.10); color: #B2231A; border-color: rgba(233,43,31,.2); }
+html.dark .status-pill { color: #4CC38A; }
+html.dark .status-pill.off { color: #FF7066; }
+.sync-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.sync-state { font-size: 11px; color: var(--ink-3); }
+
+/* ---------- calendrier coach ---------- */
+.month-day.cal { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 5px; }
+.month-day.cal .cal-dots { display: flex; gap: 2px; height: 4px; }
+.month-day.cal .cal-dots i { width: 4px; height: 4px; border-radius: 50%; }
+.month-day.now { box-shadow: inset 0 0 0 1.2px color-mix(in srgb, var(--ink) 40%, transparent); }
+.month-day.off { color: #B2231A; background: rgba(233,43,31,.08); }
+html.dark .month-day.off { color: #FF7066; }
+.cal-week { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+.cal-week::-webkit-scrollbar { display: none; }
+.cal-week-col {
+  flex: 1 0 68px; padding: 8px 6px; border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  display: flex; flex-direction: column; gap: 5px; align-items: center;
+}
+.cal-week-col.now { border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+.cal-week-dow { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.cal-week-col strong { font-family: var(--disp); font-size: 14px; }
+.cal-week-items { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.cal-chip {
+  display: flex; align-items: center; gap: 4px; padding: 3px 5px;
+  border-radius: 7px; font-size: 9px; border-left: 2px solid transparent;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.cal-chip em { width: 4px; height: 4px; border-radius: 50%; }
+.cal-day { display: flex; flex-direction: column; gap: 7px; }
+.cal-day-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; }
+.cal-day-head strong { font-family: var(--disp); font-size: 14px; text-transform: capitalize; }
+.cal-day-head span { font-size: 10.5px; color: var(--ink-3); }
+.cal-line {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-elev) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.cal-line-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.cal-line-time { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink-2); width: 40px; flex: none; }
+.cal-line .session-info { flex: 1; min-width: 0; }
+.cal-line .session-info strong { font-size: 12px; }
+.cal-line .session-info span { font-size: 10.5px; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; }
+.cal-legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: var(--ink-2); }
+.cal-legend-item i { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ---------- agenda plein écran ---------- */
+.cal-full {
+  position: fixed; inset: 0; z-index: 95; margin: 0 auto; max-width: 430px;
+  background: var(--bg); padding: calc(16px + env(safe-area-inset-top)) 14px 24px;
+  overflow-y: auto; animation: fadeUp .3s ease both;
+}
+.cal-full-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cal-full-head > div { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.cal-full-head strong { font-family: var(--disp); font-size: 18px; text-transform: capitalize; }
+.cal-full-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.cal-full-cell {
+  min-height: 72px; border-radius: 9px; padding: 4px 3px;
+  background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+}
+.cal-full-cell.now { border-color: var(--ink); }
+.cal-full-cell > strong { font-size: 10px; color: var(--ink-2); font-weight: 500; }
+.cal-full-event {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 7.5px; line-height: 1.25; padding: 2px 3px; border-radius: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-full-event em { width: 3px; height: 3px; border-radius: 50%; flex: none; }
+.cal-more { font-size: 8px; color: var(--ink-3); }
+.cal-sync-ico {
+  width: 40px; height: 40px; border-radius: 12px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.off-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.off-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 9px; border-radius: 99px; font-size: 11px;
+  background: rgba(233,43,31,.09); color: #B2231A;
+}
+html.dark .off-chip { color: #FF7066; }
+.off-chip button { display: flex; color: inherit; opacity: .75; }
+
+/* --- bulles rondes des coachs (écosystème) --- */
+.goal-bubbles { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 6px; margin-top: 12px; scrollbar-width: none; }
+.goal-bubbles::-webkit-scrollbar { display: none; }
+.goal-bubble { flex: 0 0 auto; width: 86px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 0; color: var(--ink); font: inherit; }
+.goal-bubble-photo { display: block; border-radius: 50%; padding: 2px; background: var(--line); transition: background .2s, box-shadow .2s; }
+.goal-bubble.on .goal-bubble-photo { background: linear-gradient(135deg, #2E6BFF, #6D3EAD); box-shadow: 0 0 0 3px rgba(46,107,255,.16); }
+.goal-bubble strong { font-size: 12.5px; font-weight: 600; }
+.goal-bubble > span:last-child { font-size: 10.5px; color: var(--ink-2); text-align: center; line-height: 1.2; }
+
+/* --- agenda coach : vue en menu, prestations du jour, période d'indispo --- */
+.cal-view-pick { display: flex; align-items: center; gap: 6px; }
+.cal-view-pick .eco-select { padding: 6px 10px; font-size: 12.5px; }
+.cal-day-inline { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+.avail-date { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.avail-date input { width: 64px; }
+
+/* --- freebies : aperçu image / vidéo --- */
+.free-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; }
+
+/* --- synthèses de séances (bord coach) --- */
+.synth-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.synth-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; }
+.synth-row-head { display: flex; align-items: center; gap: 8px; }
+.synth-ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: rgba(46,107,255,.12); color: #2E6BFF; flex: 0 0 auto; }
+.synth-row p { font-size: 12px; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.synth-saved { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--ink-2); }
+
+/* --- écosystème : onglets radar / santé, rapport de séance --- */
+.eco-tabs { margin: 0 0 12px; }
+.eco-tabs .msg-filter { flex: 0 0 auto; }
+.coach-report { margin-top: 10px; padding: 11px 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 6px; }
+.coach-report p { font-size: 12.5px; color: var(--ink-2); }
+.report-meta { font-size: 11px; color: var(--ink-2); }
+
+/* --- agenda coach : sélection d'une ou deux dates --- */
+.month-day.range-start { box-shadow: inset 0 0 0 2px #2E6BFF; }
+.range-hint { margin-top: 8px; }
+
+/* --- agenda coach : navigation & indication simplifiée --- */
+.cal-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.cal-tools .goal-hint { margin: 0; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 2px 0 10px; }
+.cal-nav strong { font-family: var(--disp); font-size: 14px; text-transform: capitalize; }
+button.cal-week-col { font: inherit; color: inherit; text-align: center; cursor: pointer; }
+.cal-week-col.on { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.cal-week-col.off { background: rgba(233,43,31,.07); border-color: rgba(233,43,31,.22); }
+.cal-week-state { font-size: 9px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); }
+.cal-week-col.off .cal-week-state { color: #B2231A; }
+html.dark .cal-week-col.off .cal-week-state { color: #FF7066; }
+.day-strip { display: flex; gap: 6px; margin: 2px 0 12px; }
+.day-strip-day {
+  flex: 1; padding: 7px 0 6px; border-radius: 12px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: transparent; color: var(--ink-2);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 9.5px; text-transform: uppercase;
+}
+.day-strip-day strong { font-family: var(--disp); font-size: 14px; color: var(--ink); }
+.day-strip-day.on { background: var(--ink); border-color: var(--ink); }
+.day-strip-day.on span, .day-strip-day.on strong { color: var(--bg); }
+.day-strip-day.off:not(.on) { color: #B2231A; border-color: rgba(233,43,31,.3); }
+.cal-day-nav { align-items: center; }
+.cal-day-nav > div { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 1px; }
+.cal-day-nav > div span { font-size: 10px; color: var(--ink-3); text-transform: none; }
+.day-toggle {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(233,43,31,.25); background: rgba(233,43,31,.06);
+  color: #B2231A; font-size: 12px; font-weight: 500;
+}
+.day-toggle.off { border-color: rgba(30,142,90,.28); background: rgba(30,142,90,.08); color: #1E8E5A; }
+html.dark .day-toggle { color: #FF7066; }
+html.dark .day-toggle.off { color: #4CC38A; }
+.feed-sessions { margin-top: 16px; }
+.feed-sessions .block-title { margin-bottom: 8px; }

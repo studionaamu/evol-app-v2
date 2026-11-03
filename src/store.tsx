@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, useState } from 'react'
 import { THREADS, DEFAULT_CONSENT, COACHES, CHAT_SEED, type Consent, type Thread } from './data'
 
 type Role = 'coache' | 'coach'
-type Tab = 'hub' | 'ecosystem' | 'explorer' | 'synergy' | 'profile'
+type Tab = 'hub' | 'ecosystem' | 'explorer' | 'carnet' | 'synergy' | 'profile'
 export type CoachSync = { agenda: boolean; signaux: boolean }
 
 type Store = {

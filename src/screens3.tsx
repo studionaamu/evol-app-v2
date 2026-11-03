@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Icon } from './Icon'
 import { Avatar, EvaAvatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS, DOTATIONS,
+  COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS,
   INITIAL_VITRINE_PROGRAMS, INITIAL_FREEBIES, INITIAL_GALLERY, EVA_SESSION_REPORTS,
   type Consent, type CoachClient, type CoachGroup, type CoachCall,
   type CoachProgram, type CoachMedia,
@@ -19,23 +19,13 @@ export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'freebies' | '
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
   const { name, guest, reset, role, program } = useStore()
-  const [dark, setDark] = useState(() => localStorage.getItem('evol-theme') !== 'light')
   const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
-  const [dotationOpen, setDotationOpen] = useState(false)
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('evol-theme', dark ? 'dark' : 'light')
-    const meta = document.querySelector('meta[name=theme-color]')
-    if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
-  }, [dark])
-
-  if (dotationOpen) return <DotationRequest onBack={() => setDotationOpen(false)} />
 
   return (
     <div className="tab-page" data-zone="profile">
       <header className="page-head">
         <div>
-          <div className="date-line">PROFIL</div>
+          <div className="date-line">RÉGLAGES</div>
           <h1>{guest ? 'Mode invité' : name}</h1>
           {guest && <p>Vos données restent sur cet appareil.</p>}
         </div>
@@ -63,30 +53,6 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         </section>
       )}
 
-      {program && (
-      <section className="card dotation-card" data-zone="dotations">
-        <span className="dotation-wash" aria-hidden />
-        <div className="card-kicker"><Icon name="shield" size={13} /> OBTENIR DU MATÉRIEL</div>
-        <p style={{ marginTop: 10 }}>Le matériel financé par l’assurance maladie est accordé au cas par cas, sans avance de frais.</p>
-        <div className="dotation-chips">
-          {['Baskets de marche', 'Montre connectée', 'Tenue de sport', 'Tapis de marche', 'Balance'].map(label => (
-            <span className="dotation-chip" key={label}>{label}</span>
-          ))}
-        </div>
-        <button className="btn btn-soft" onClick={() => setDotationOpen(true)}>
-          <Icon name="plus" size={15} /><span>Lancer une demande de matériel</span>
-        </button>
-      </section>
-      )}
-
-      <section className="card">
-        <div className="card-kicker">RÉGLAGES</div>
-        <div className="setting row between" onClick={() => setDark(!dark)}>
-          <div className="setting-label"><Icon name={dark ? 'moon' : 'sun'} size={17} />{dark ? 'Thème sombre' : 'Thème clair'}</div>
-          <span className={'switch' + (dark ? ' on' : '')}><i /></span>
-        </div>
-      </section>
-
       {/* ---- RGPD : information légale ---- */}
       <section className="card">
         <div className="card-kicker"><Icon name="shield" size={13} /> CONFIDENTIALITÉ · RGPD</div>
@@ -94,8 +60,6 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
         {([
           ['journal', 'Transcription IA du journal', 'Vos notes vocales transcrites puis chiffrées.',
             'Article 9 RGPD — vos notes vocales sont transcrites par EVA puis chiffrées. Aucun accès humain sans votre accord écrit, suppression immédiate sur demande.'],
-          ['shareCoach', 'Partage avec vos coachs', 'Signaux et extraits choisis uniquement.',
-            'Partage révocable à tout instant, limité aux extraits que vous choisissez. Retirer un partage n’efface pas l’historique des séances déjà lues.'],
           ['health', 'Données de santé', 'Objectifs et signaux bien-être.',
             'Données de santé traitées sur base de votre consentement explicite (art. 9.2.a RGPD), hébergées en UE, conservées le temps du programme puis supprimées.'],
         ] as [keyof Consent, string, string, string][]).map(([k, title, desc, legal]) => {
@@ -140,6 +104,16 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
 /* =====================================================
    ESPACE COACH — Bord / Clients / Messagerie / Agenda
    ===================================================== */
+
+/* pastilles de couleurs intelligentes — agenda coach */
+const CAL_KINDS = {
+  indiv: { label: 'Cours individuel', color: '#2E6BFF' },
+  groupe: { label: 'Cours collectif', color: '#6D3EAD' },
+  service: { label: 'Prestation / programme', color: '#1E8E5A' },
+  libre: { label: 'Créneau réservable', color: '#E9A13B' },
+  off: { label: 'Indisponibilité', color: '#E92B1F' },
+} as const
+type CalKind = keyof typeof CAL_KINDS
 
 const clientById = (id: string) => COACH_CLIENTS.find(c => c.id === id)!
 
@@ -217,7 +191,7 @@ function ClientCard({ c, onMessage }: { c: CoachClient; onMessage: (id: string) 
               <Icon name="chat" size={14} /><span>Message</span>
             </button>
           </div>
-          <div className="privacy"><Icon name="shield" size={13} /> Partage autorisé par {c.name.split(' ')[0]} · révocable à tout moment.</div>
+          <div className="privacy"><Icon name="shield" size={13} /> Partage autorisé par {c.name.split(' ')[0]}.</div>
         </div>
       )}
     </section>
@@ -234,7 +208,7 @@ function GroupCard({ g, onMessage }: { g: CoachGroup; onMessage: (id: string) =>
           <Avatar key={m.id} hue={m.hue} initials={m.initials} photo={m.photo} size={30} />
         ))}</div>
         <div className="session-info">
-          <strong>{g.name}</strong>
+          <strong>{g.name}<span className="prog-tag">Programme</span></strong>
           <span>{g.mode} · {g.schedule}</span>
         </div>
         <span className={'chev drop' + (open ? ' on' : '')}><Icon name="chevron-right" size={15} /></span>
@@ -242,6 +216,7 @@ function GroupCard({ g, onMessage }: { g: CoachGroup; onMessage: (id: string) =>
       {open && (
         <div className="client-detail">
           <div className="client-lines">
+            <div className="client-line"><Icon name="shield" size={14} /><span><strong>Programme</strong> · {g.program}</span></div>
             <div className="client-line"><Icon name="users" size={14} /><span>{members.map(m => m.name.split(' ')[0]).join(' · ')}</span></div>
             <div className="client-line"><Icon name="activity" size={14} /><span>{g.objective}</span></div>
           </div>
@@ -313,6 +288,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const base = new Date()
   const viewMonth = new Date(base.getFullYear(), base.getMonth() + month, 1)
   const monthLabel = viewMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  const monthShort = monthLabel.split(' ')[0]
   const firstWd = (viewMonth.getDay() + 6) % 7 // lundi = 0
   const daysIn = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate()
 
@@ -323,6 +299,16 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const [customSlots, setCustomSlots] = useState<{ id: string; day: number; start: string; end: string; debriefEnd: string; dur: number }[]>([
     { id: 'cs1', day: base.getDate(), start: '16:00', end: '16:45', debriefEnd: '17:00', dur: 45 },
   ])
+  /* agenda : vues Google Calendar, indisponibilités, synchro calendriers, plein écran */
+  const [calView, setCalView] = useState<'jour' | 'semaine' | 'mois'>('mois')
+  const [calFull, setCalFull] = useState(false)
+  const [periodMode, setPeriodMode] = useState(false)
+  const [periodStart, setPeriodStart] = useState<number | null>(null)
+  const [weekOffset, setWeekOffset] = useState(0)
+  const [offDays, setOffDays] = useState<number[]>([base.getDate() + 3])
+  const [calSyncOpen, setCalSyncOpen] = useState(false)
+  const [calSync, setCalSync] = useState<string[]>(['apple'])
+  const [lastSync, setLastSync] = useState<string | null>(null)
   /* Visio live + Modale d'évaluation post-visio avec Compte Rendu IA EVA (-80% temps admin) */
   const [liveVisio, setLiveVisio] = useState<{ who: string; isGroup: boolean } | null>(null)
   const [evalModal, setEvalModal] = useState<{ who: string; isGroup: boolean } | null>(null)
@@ -347,7 +333,8 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const [progDesc, setProgDesc] = useState('')
   const [showProgForm, setShowProgForm] = useState(false)
 
-  const [freebies, setFreebies] = useState(INITIAL_FREEBIES)
+  const [freebies, setFreebies] = useState<{ id: string; title: string; kind: string; duration: string; downloads: number; src?: string }[]>(INITIAL_FREEBIES)
+  const [freeSrc, setFreeSrc] = useState<string | null>(null)
   const [freeTitle, setFreeTitle] = useState('')
   const [freeKind, setFreeKind] = useState('Audio')
   const [freeDur, setFreeDur] = useState('5 min')
@@ -432,7 +419,79 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
       { time: '07:30', label: 'Groupe Matin · 20 min', who: 'Groupe Matin', kind: 'group', dur: 20 },
     ],
   }
-  const todayCells = (d: number) => agendaDays[d] || customSlots.some(s => s.day === d)
+  const todayOff = offDays.includes(base.getDate())
+
+  /* semaine affichée : 7 jours consécutifs du mois, navigables semaine par semaine */
+  const weekStartDay = Math.min(1 + weekOffset * 7, daysIn)
+  const weekDays: { day: number; num: number; label: string }[] = []
+  for (let k = 0; k < 7; k++) {
+    const day = weekStartDay + k
+    if (day > daysIn) break
+    const d = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day)
+    weekDays.push({ day, num: day, label: d.toLocaleDateString('fr-FR', { weekday: 'short' }) })
+  }
+
+  /* tous les éléments d'une journée, avec leur pastille de couleur */
+  const calItemsFor = (day: number) => {
+    const out: { id: string; time: string; label: string; who: string; kind: CalKind }[] = []
+    for (const it of agendaDays[day] ?? []) {
+      out.push({ id: `ag-${day}-${it.time}`, time: it.time, label: it.label, who: it.who, kind: it.kind === 'group' ? 'groupe' : 'indiv' })
+    }
+    if (day === base.getDate() || day === base.getDate() + 2) {
+      out.push({ id: `svc-${day}`, time: '12:30', label: 'Bilan découverte · 30 min', who: 'Nouvel élève', kind: 'service' })
+    }
+    for (const cs of customSlots.filter(s => s.day === day)) {
+      out.push({ id: cs.id, time: cs.start, label: `Créneau ouvert · ${cs.dur} min`, who: 'Réservation libre', kind: 'libre' })
+    }
+    if (offDays.includes(day)) {
+      out.push({ id: `off-${day}`, time: 'Journée', label: 'Indisponibilité', who: 'Non réservable', kind: 'off' })
+    }
+    return out.sort((a, b) => a.time.localeCompare(b.time))
+  }
+
+  const toggleOffDay = (day: number) =>
+    setOffDays(ds => (ds.includes(day) ? ds.filter(x => x !== day) : [...ds, day]))
+  /* une date touchée = le jour sélectionné ; le mode période se déclenche explicitement */
+  const tapDay = (day: number) => {
+    setSelectedDay(day)
+    if (!periodMode) return
+    if (periodStart === null) { setPeriodStart(day); return }
+    const from = Math.min(periodStart, day)
+    const to = Math.max(periodStart, day)
+    const days = Array.from({ length: to - from + 1 }, (_, i) => from + i)
+      .filter(d => d >= 1 && d <= daysIn)
+    setOffDays(ds => [...new Set([...ds, ...days])].sort((a, b) => a - b))
+    setPeriodStart(null)
+    setPeriodMode(false)
+  }
+
+  /* navigation jour par jour, y compris au changement de mois */
+  const moveDay = (delta: number) => {
+    const next = selectedDay + delta
+    if (next < 1) {
+      if (month <= 0) return
+      const prevDays = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 0).getDate()
+      setMonth(m => m - 1); setSelectedDay(prevDays); setWeekOffset(0)
+      return
+    }
+    if (next > daysIn) {
+      if (month >= 0) return
+      setMonth(m => m + 1); setSelectedDay(1); setWeekOffset(0)
+      return
+    }
+    setSelectedDay(next)
+  }
+
+  /* bandeau des 7 jours de la semaine du jour sélectionné */
+  const selWeekday = (new Date(viewMonth.getFullYear(), viewMonth.getMonth(), selectedDay).getDay() + 6) % 7
+  const stripStart = Math.max(1, selectedDay - selWeekday)
+  const stripDays = Array.from({ length: 7 }, (_, k) => stripStart + k).filter(d => d <= daysIn)
+  const toggleCalendar = (id: string) =>
+    setCalSync(cs => (cs.includes(id) ? cs.filter(x => x !== id) : [...cs, id]))
+  const runCalendarSync = () => {
+    setLastSync(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
+    setCalSyncOpen(false)
+  }
 
   const addAvailabilitySlot = () => {
     const end = addMinutesToTime(newSlotTime, newSlotDur)
@@ -470,10 +529,11 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const addFreebie = () => {
     if (!freeTitle.trim()) return
     setFreebies(fs => [
-      { id: 'f' + Date.now(), title: freeTitle.trim(), kind: freeKind, duration: freeDur, downloads: 1 },
+      { id: 'f' + Date.now(), title: freeTitle.trim(), kind: freeKind, duration: freeDur, downloads: 1, src: freeSrc ?? undefined },
       ...fs,
     ])
     setFreeTitle('')
+    setFreeSrc(null)
   }
 
   const addMedia = (file?: File) => {
@@ -511,14 +571,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   }
 
   const sampleEvaReport = EVA_SESSION_REPORTS[0]
-  /* Statut de synchronisation réel (piloté depuis Réglages → Synchronisation) */
-  const syncLabel = coachSync.agenda && coachSync.signaux
-    ? 'Signaux et agendas synchronisés.'
-    : coachSync.agenda
-      ? 'Agenda synchronisé · signaux non partagés.'
-      : coachSync.signaux
-        ? 'Signaux synchronisés · agenda non connecté.'
-        : 'Aucune synchronisation active · configurez-la dans Réglages.'
 
   return (
     <div className="tab-page" data-zone={coachTab}>
@@ -528,7 +580,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             <div>
               <div className="date-line">ESPACE COACH</div>
               <h1>Bonjour {COACH_FIRST_NAME}</h1>
-              <p>{syncLabel}</p>
             </div>
             <Avatar hue="152" initials="CD" photo={COACHES.find(c => c.id === 'camille')?.photo} size={56} ring />
           </header>
@@ -575,6 +626,30 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                 <span className="tag mini">Ouvert</span>
               </div>
             ))}
+          </section>
+
+          {/* SYNTHÈSES DE SÉANCES — comptes rendus EVA */}
+          <section className="card" data-zone="syntheses">
+            <div className="feed-head">
+              <h2>Vos dernières synthèses de séance</h2>
+              <span className="tag mini">{EVA_SESSION_REPORTS.length}</span>
+            </div>
+            <div className="synth-list">
+              {EVA_SESSION_REPORTS.map(r => (
+                <article className="synth-row glass-lite" key={r.id}>
+                  <div className="synth-row-head">
+                    <span className="synth-ico"><Icon name="sparkle" size={13} /></span>
+                    <div className="session-info">
+                      <strong>{r.clientName}</strong>
+                      <span>{r.title} · {r.date}</span>
+                    </div>
+                    <span className="tag mini">{r.duration}</span>
+                  </div>
+                  <p>{r.summary}</p>
+                  <span className="synth-saved"><Icon name="clock" size={11} /> {r.timeSaved}</span>
+                </article>
+              ))}
+            </div>
           </section>
         </>
       )}
@@ -698,35 +773,237 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
           {vSub === 'creneaux' && (
             <>
               <section className="card">
-                <div className="card-kicker"><Icon name="calendar" size={13} /> DISPONIBILITÉS & CRÉNEAUX (+15 MIN AUTO)</div>
-                <h2>Ouvrir des créneaux de réservation</h2>
-                <p>Chaque disponibilité saisie intègre automatiquement 15 minutes consécutives dédiées au retour sur séance.</p>
+                <div className="row between" style={{ marginTop: 0, marginBottom: 8 }}>
+                  <div className="card-kicker" style={{ margin: 0 }}><Icon name="calendar" size={13} /> DISPONIBILITÉS</div>
+                  <span className={'status-pill' + (todayOff ? ' off' : '')}>
+                    <i />{todayOff ? 'Indisponible aujourd’hui' : 'Disponible'}
+                  </span>
+                </div>
+                <h2>Votre agenda, en un coup d’œil.</h2>
 
-                <div className="month-head" style={{ marginTop: 14 }}>
-                  <button className="round-btn sm" onClick={() => setMonth(m => m - 1)} aria-label="Mois précédent"><Icon name="chevron-left" size={16} /></button>
+                <div className="sync-row">
+                  <button className="btn btn-soft sm" onClick={() => setCalSyncOpen(true)}>
+                    <Icon name="calendar" size={13} /><span>Synchroniser mes calendriers</span>
+                  </button>
+                  <span className="sync-state">
+                    {lastSync
+                      ? `Synchronisé à ${lastSync}`
+                      : calSync.length > 0
+                        ? `${calSync.length} calendrier${calSync.length > 1 ? 's' : ''} connecté${calSync.length > 1 ? 's' : ''}`
+                        : 'Apple Calendrier · Google · Outlook'}
+                  </span>
+                </div>
+
+                <div className="row between" style={{ marginTop: 12, marginBottom: 10 }}>
+                  <label className="cal-view-pick">
+                    <Icon name="calendar" size={14} />
+                    <select
+                      className="eco-select glass-lite"
+                      value={calView}
+                      aria-label="Vue de l’agenda"
+                      onChange={e => { setCalView(e.target.value as 'jour' | 'semaine' | 'mois'); setPeriodMode(false); setPeriodStart(null) }}
+                    >
+                      <option value="mois">Vue mois</option>
+                      <option value="semaine">Vue semaine</option>
+                      <option value="jour">Vue jour</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="month-head">
+                  <button className="round-btn sm" onClick={() => { setMonth(m => m - 1); setSelectedDay(1); setWeekOffset(0); setPeriodMode(false); setPeriodStart(null) }} aria-label="Période précédente"><Icon name="chevron-left" size={16} /></button>
                   <strong>{monthLabel}</strong>
-                  <button className="round-btn sm" disabled={month >= 0} onClick={() => setMonth(m => m + 1)} aria-label="Mois suivant"><Icon name="chevron-right" size={16} /></button>
-                </div>
-                <div className="month-grid">
-                  {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <span key={'h' + i} className="month-dow">{d}</span>)}
-                  {Array.from({ length: firstWd }).map((_, i) => <span key={'p' + i} />)}
-                  {Array.from({ length: daysIn }).map((_, i) => {
-                    const d = i + 1
-                    const isToday = month === 0 && d === selectedDay
-                    const has = month === 0 && !!todayCells(d)
-                    return (
-                      <button
-                        key={d}
-                        className={'month-day' + (isToday ? ' today' : '') + (has ? ' has' : '')}
-                        onClick={() => setSelectedDay(d)}
-                      >
-                        {d}{has && <i />}
-                      </button>
-                    )
-                  })}
+                  <div className="row" style={{ marginTop: 0 }}>
+                    <button className="round-btn sm" disabled={month >= 0} onClick={() => { setMonth(m => m + 1); setSelectedDay(1); setWeekOffset(0); setPeriodMode(false); setPeriodStart(null) }} aria-label="Période suivante"><Icon name="chevron-right" size={16} /></button>
+                    <button className="round-btn sm" onClick={() => setCalFull(true)} aria-label="Ouvrir l’agenda en plein écran"><Icon name="grid" size={15} /></button>
+                  </div>
                 </div>
 
-                <div className="avail-builder glass-lite">
+                {calView === 'mois' && (
+                  <div className="month-grid">
+                    {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <span key={'h' + i} className="month-dow">{d}</span>)}
+                    {Array.from({ length: firstWd }).map((_, i) => <span key={'p' + i} />)}
+                    {Array.from({ length: daysIn }).map((_, i) => {
+                      const d = i + 1
+                      const items = month === 0 ? calItemsFor(d) : []
+                      const isToday = month === 0 && d === base.getDate()
+                      const isSelected = month === 0 && d === selectedDay
+                      const isOff = offDays.includes(d)
+                      return (
+                        <button
+                          key={d}
+                          className={'month-day cal' + (isSelected ? ' today' : '') + (isToday && !isSelected ? ' now' : '') + (isOff ? ' off' : '') + (periodStart === d ? ' range-start' : '') + (periodMode ? ' picking' : '')}
+                          onClick={() => tapDay(d)}
+                          aria-pressed={isSelected}
+                        >
+                          <span>{d}</span>
+                          <span className="cal-dots">
+                            {items.slice(0, 3).map(it => (
+                              <i key={it.id} style={{ background: CAL_KINDS[it.kind].color }} />
+                            ))}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {calView === 'mois' && (
+                  <div className="cal-tools">
+                    <button
+                      className={'btn btn-soft sm' + (periodMode ? ' on' : '')}
+                      onClick={() => { setPeriodMode(p => !p); setPeriodStart(null) }}
+                    >
+                      <Icon name={periodMode ? 'close' : 'calendar'} size={12} />
+                      <span>{periodMode ? 'Annuler la sélection' : 'Bloquer une période'}</span>
+                    </button>
+                    <span className="goal-hint">
+                      {offDays.length === 0 ? 'Tous les jours sont ouverts' : `${offDays.length} jour${offDays.length > 1 ? 's' : ''} bloqué${offDays.length > 1 ? 's' : ''}`}
+                    </span>
+                  </div>
+                )}
+
+                {calView === 'mois' && periodMode && (
+                  <p className="goal-hint range-hint">
+                    {periodStart === null
+                      ? 'Touchez le premier jour de la période.'
+                      : `Début : ${periodStart} ${monthShort} — touchez le dernier jour, ou à nouveau cette date pour un seul jour.`}
+                  </p>
+                )}
+
+                {calView === 'semaine' && (
+                  <>
+                    <div className="cal-nav">
+                      <button
+                        className="round-btn sm"
+                        disabled={weekOffset === 0}
+                        onClick={() => setWeekOffset(w => Math.max(0, w - 1))}
+                        aria-label="Semaine précédente"
+                      >
+                        <Icon name="chevron-left" size={16} />
+                      </button>
+                      <strong>
+                        {weekDays.length > 0 ? `Du ${weekDays[0].day} au ${weekDays[weekDays.length - 1].day} ${monthShort}` : monthShort}
+                      </strong>
+                      <button
+                        className="round-btn sm"
+                        disabled={1 + (weekOffset + 1) * 7 > daysIn}
+                        onClick={() => setWeekOffset(w => w + 1)}
+                        aria-label="Semaine suivante"
+                      >
+                        <Icon name="chevron-right" size={16} />
+                      </button>
+                    </div>
+                    <div className="cal-week">
+                      {weekDays.map(wd => (
+                        <button
+                          type="button"
+                          className={'cal-week-col' + (wd.day === selectedDay ? ' on' : '') + (offDays.includes(wd.day) ? ' off' : '')}
+                          key={wd.num}
+                          onClick={() => tapDay(wd.day)}
+                        >
+                          <span className="cal-week-dow">{wd.label}</span>
+                          <strong>{wd.num}</strong>
+                          <span className="cal-week-state">{offDays.includes(wd.day) ? 'Indispo' : 'Dispo'}</span>
+                          <div className="cal-week-items">
+                            {calItemsFor(wd.day).filter(it => it.kind !== 'off').slice(0, 3).map(it => (
+                              <span className="cal-chip" key={it.id} style={{ borderColor: CAL_KINDS[it.kind].color }}>
+                                <em style={{ background: CAL_KINDS[it.kind].color }} />
+                                <span>{it.time}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {calView === 'jour' && (
+                  <div className="day-strip">
+                    {stripDays.map(d => (
+                      <button
+                        type="button"
+                        key={d}
+                        className={'day-strip-day' + (d === selectedDay ? ' on' : '') + (offDays.includes(d) ? ' off' : '')}
+                        onClick={() => setSelectedDay(d)}
+                        aria-pressed={d === selectedDay}
+                      >
+                        <span>{new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d).toLocaleDateString('fr-FR', { weekday: 'narrow' })}</span>
+                        <strong>{d}</strong>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="cal-day cal-day-inline">
+                  <div className="cal-day-head cal-day-nav">
+                    <button className="round-btn sm" onClick={() => moveDay(-1)} aria-label="Jour précédent">
+                      <Icon name="chevron-left" size={15} />
+                    </button>
+                    <div>
+                      <strong>{selectedDay} {monthShort}</strong>
+                      <span>{offDays.includes(selectedDay) ? 'Indisponible' : 'Disponible'}</span>
+                    </div>
+                    <button className="round-btn sm" onClick={() => moveDay(1)} aria-label="Jour suivant">
+                      <Icon name="chevron-right" size={15} />
+                    </button>
+                  </div>
+
+                  <button
+                    className={'day-toggle' + (offDays.includes(selectedDay) ? ' off' : '')}
+                    onClick={() => toggleOffDay(selectedDay)}
+                  >
+                    <Icon name={offDays.includes(selectedDay) ? 'check' : 'close'} size={13} />
+                    <span>{offDays.includes(selectedDay) ? 'Rendre ce jour disponible' : 'Marquer ce jour indisponible'}</span>
+                  </button>
+
+                  {calItemsFor(selectedDay).filter(it => it.kind !== 'off').length === 0 && (
+                    <p className="goal-hint">Aucune prestation ce jour.</p>
+                  )}
+                  {calItemsFor(selectedDay).filter(it => it.kind !== 'off').map(it => (
+                    <div className={'cal-line ' + it.kind} key={it.id}>
+                      <span className="cal-line-dot" style={{ background: CAL_KINDS[it.kind].color }} />
+                      <span className="cal-line-time">{it.time}</span>
+                      <div className="session-info">
+                        <strong>{it.label}</strong>
+                        <span>{it.who}</span>
+                      </div>
+                      <span className="tag mini">{CAL_KINDS[it.kind].label}</span>
+                    </div>
+                  ))}
+
+                  <div className="off-list">
+                    {offDays.length === 0 && (
+                      <p className="goal-hint">Aucun jour bloqué : vous êtes disponible chaque jour.</p>
+                    )}
+                    {[...offDays].sort((x, y) => x - y).map(d => (
+                      <span className="off-chip" key={d}>
+                        {d} {monthShort}
+                        <button onClick={() => toggleOffDay(d)} aria-label={`Rendre le ${d} disponible`}>
+                          <Icon name="close" size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="privacy" style={{ marginTop: 10 }}>
+                    <Icon name="shield" size={12} /> Ces jours ne sont ni réservables ni proposés à vos élèves.
+                  </div>
+                </div>
+
+                <div className="cal-legend">
+                  {(Object.keys(CAL_KINDS) as CalKind[]).map(k => (
+                    <span className="cal-legend-item" key={k}>
+                      <i style={{ background: CAL_KINDS[k].color }} />{CAL_KINDS[k].label}
+                    </span>
+                  ))}
+                </div>
+              </section>
+
+              {/* ouvrir un créneau */}
+              <section className="card">
+                <div className="card-kicker"><Icon name="clock" size={13} /> CRÉNEAU + 15 MIN AUTO</div>
+                <div className="avail-builder glass-lite" style={{ marginTop: 10 }}>
                   <div className="avail-builder-head">
                     <strong>Ajouter une disponibilité (Jour {selectedDay})</strong>
                     <span className="tag mini">+15 min auto</span>
@@ -788,7 +1065,8 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                   ))}
                 </div>
               </section>
-            </>
+
+      </>
           )}
 
           {vSub === 'programmes' && (
@@ -855,17 +1133,37 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             <>
               <section className="card">
                 <div className="card-kicker"><Icon name="plus" size={13} /> AJOUTER UN CONTENU GRATUIT (FREEBIE)</div>
-                <h2>Aimant à prospects & ressources</h2>
+                <h2>Vos contenus gratuits & ressources</h2>
                 <div className="vitrine-form" style={{ marginTop: 10 }}>
                   <input className="eco-input glass-lite" placeholder="Titre du contenu gratuit…" value={freeTitle} onChange={e => setFreeTitle(e.target.value)} />
                   <div className="row" style={{ marginTop: 0 }}>
                     <select className="eco-select glass-lite" value={freeKind} onChange={e => setFreeKind(e.target.value)}>
                       <option value="Audio">Audio guidé</option>
                       <option value="Guide PDF">Guide PDF</option>
-                      <option value="Vidéo">Vidéo courte</option>
+                      <option value="Image">Image</option>
+                      <option value="Vidéo">Vidéo</option>
                       <option value="Article">Article</option>
                     </select>
                     <input className="eco-input glass-lite" placeholder="Durée / taille" value={freeDur} onChange={e => setFreeDur(e.target.value)} style={{ maxWidth: 110 }} />
+                  </div>
+                  <div className="row" style={{ marginTop: 0 }}>
+                    <label className="btn btn-soft sm gallery-pick">
+                      <Icon name="camera" size={13} /><span>Ajouter une image ou une vidéo</span>
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={e => {
+                          const f = e.target.files?.[0]
+                          if (f) {
+                            setFreeSrc(URL.createObjectURL(f))
+                            setFreeKind(f.type.startsWith('video') ? 'Vidéo' : 'Image')
+                            setFreeDur(`${Math.max(1, Math.round(f.size / 1024))} Ko`)
+                          }
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
+                    {freeSrc && <span className="tag mini">Média prêt</span>}
                     <button className="btn btn-primary sm" onClick={addFreebie}><Icon name="plus" size={14} /><span>Publier</span></button>
                   </div>
                 </div>
@@ -874,7 +1172,11 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               <div className="freelist">
                 {freebies.map(f => (
                   <div key={f.id} className="free-item glass-lite">
-                    <span className="free-kind">{f.kind}</span>
+                    {f.src
+                      ? f.kind === 'Vidéo'
+                        ? <video className="free-thumb" src={f.src} muted playsInline />
+                        : <img className="free-thumb" src={f.src} alt="" />
+                      : <span className="free-kind">{f.kind}</span>}
                     <div className="session-info">
                       <strong style={{ fontSize: 13.5 }}>{f.title}</strong>
                       <span style={{ fontSize: 11.5 }}>{f.duration} · {f.downloads} consultations</span>
@@ -1154,7 +1456,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
           <header className="page-head">
             <div>
               <div className="date-line">RÉGLAGES</div>
-              <h1>Votre cabinet, vos règles.</h1>
+              <h1>Vos réglages.</h1>
               <p>Profil, préférences et confidentialité du coach.</p>
             </div>
             <Avatar hue="152" initials="CD" photo={COACHES.find(c => c.id === 'camille')?.photo} size={56} ring />
@@ -1172,20 +1474,6 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             <button className="setting wide"><Icon name="user" size={17} />Modifier mon profil public<Icon name="chevron-right" size={14} /></button>
             <button className="setting wide"><Icon name="video" size={17} />Ma vidéo de présentation<Icon name="chevron-right" size={14} /></button>
             <button className="setting wide"><Icon name="star" size={17} />Mes avis clients<Icon name="chevron-right" size={14} /></button>
-          </section>
-
-          <section className="card">
-            <div className="card-kicker">CABINET</div>
-            <button
-              className="setting wide"
-              onClick={() => { onChangeVitrineSub('creneaux'); onChangeCoachTab?.('vitrine') }}
-            >
-              <Icon name="calendar" size={17} />Disponibilités & créneaux (dans Offre)<Icon name="chevron-right" size={14} />
-            </button>
-            <div className="setting row between">
-              <div className="setting-label"><Icon name="users" size={17} />Groupe par niveaux</div>
-              <span className="switch on"><i /></span>
-            </div>
           </section>
 
           <section className="card">
@@ -1226,6 +1514,83 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
 
           <button className="logout" onClick={onExit}><Icon name="chevron-left" size={15} /> Retour à l'espace coaché</button>
         </>
+      )}
+
+      {/* AGENDA DU MOIS EN PLEIN ÉCRAN — rendez-vous & prestations */}
+      {calFull && (
+        <div className="cal-full" role="dialog" aria-label="Agenda du mois en plein écran">
+          <header className="cal-full-head">
+            <button className="icon-btn" onClick={() => setCalFull(false)} aria-label="Fermer le plein écran"><Icon name="close" size={18} /></button>
+            <div>
+              <div className="date-line">AGENDA · PLEIN ÉCRAN</div>
+              <strong>{monthLabel}</strong>
+            </div>
+            <span className={'status-pill sm' + (todayOff ? ' off' : '')}><i />{todayOff ? 'Indisponible' : 'Disponible'}</span>
+          </header>
+
+          <div className="cal-full-grid">
+            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <span className="month-dow" key={'fh' + i}>{d}</span>)}
+            {Array.from({ length: firstWd }).map((_, i) => <span key={'fp' + i} />)}
+            {Array.from({ length: daysIn }).map((_, i) => {
+              const d = i + 1
+              const items = month === 0 ? calItemsFor(d) : []
+              return (
+                <div className={'cal-full-cell' + (month === 0 && d === base.getDate() ? ' now' : '')} key={d}>
+                  <strong>{d}</strong>
+                  {items.slice(0, 3).map(it => (
+                    <span
+                      className="cal-full-event"
+                      key={it.id}
+                      style={{ background: `color-mix(in srgb, ${CAL_KINDS[it.kind].color} 14%, transparent)`, color: CAL_KINDS[it.kind].color }}
+                    >
+                      <em style={{ background: CAL_KINDS[it.kind].color }} />
+                      {it.time} · {it.label.split(' · ')[0]}
+                    </span>
+                  ))}
+                  {items.length > 3 && <span className="cal-more">+{items.length - 3}</span>}
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="cal-legend">
+            {(Object.keys(CAL_KINDS) as CalKind[]).map(k => (
+              <span className="cal-legend-item" key={k}><i style={{ background: CAL_KINDS[k].color }} />{CAL_KINDS[k].label}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* SYNCHRONISATION DES CALENDRIERS DU TÉLÉPHONE */}
+      {calSyncOpen && (
+        <div className="pay-layer" onClick={() => setCalSyncOpen(false)}>
+          <div className="pay-sheet" onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginBottom: 4 }}>Synchroniser mes calendriers</h2>
+            <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>
+              Importez les calendriers de votre téléphone : vos événements personnels bloquent
+              automatiquement vos créneaux réservables.
+            </p>
+            <div className="pick-list">
+              {([
+                ['apple', 'Apple Calendrier', 'iPhone · iCloud'],
+                ['google', 'Google Agenda', 'Gmail · Android'],
+                ['outlook', 'Outlook', 'Microsoft 365'],
+              ] as const).map(([id, label, sub]) => (
+                <button key={id} className={'pick' + (calSync.includes(id) ? ' on' : '')} onClick={() => toggleCalendar(id)}>
+                  <span className="cal-sync-ico"><Icon name="calendar" size={17} /></span>
+                  <span className="pick-name"><strong>{label}</strong><span>{sub}</span></span>
+                  <span className={'cbox' + (calSync.includes(id) ? ' on' : '')}>
+                    {calSync.includes(id) && <Icon name="check" size={13} strokeWidth={2.4} />}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button className="btn btn-primary" onClick={runCalendarSync}>
+              <Icon name="refresh" size={15} /><span>Synchroniser maintenant</span>
+            </button>
+            <p className="dim" style={{ fontSize: 11 }}>Aucune donnée de calendrier n’est partagée avec vos élèves.</p>
+          </div>
+        </div>
       )}
 
       {/* MODALE D'ÉVALUATION POST-VISIO AVEC COMPTE RENDU IA EVA (-80% TEMPS ADMIN) */}
@@ -1319,77 +1684,3 @@ export const COACH_AGENDA_SEED = SESSIONS
 /* =====================================================
    DEMANDE DE MATÉRIEL — page dédiée (au cas par cas)
    ===================================================== */
-
-function DotationRequest({ onBack }: { onBack: () => void }) {
-  const [item, setItem] = useState(DOTATIONS[2].name)
-  const [reason, setReason] = useState('')
-  const [sent, setSent] = useState(false)
-
-  return (
-    <div className="dotation-screen">
-      <header className="chat-head">
-        <button className="icon-btn" onClick={onBack} aria-label="Retour à mon profil">
-          <Icon name="chevron-left" size={19} />
-        </button>
-        <strong style={{ fontSize: 15 }}>Demande de matériel</strong>
-        <span style={{ width: 40 }} />
-      </header>
-
-      <div className="dotation-body">
-        {sent ? (
-          <section className="card">
-            <div className="card-kicker"><Icon name="check" size={13} /> DEMANDE ENREGISTRÉE</div>
-            <h2>Votre demande est partie.</h2>
-            <p>
-              Votre référent programme et l’organisme de prise en charge étudient le matériel demandé
-              au cas par cas. Vous serez informé·e ici et par e-mail.
-            </p>
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onBack}>
-              <span>Retour à mon profil</span>
-            </button>
-          </section>
-        ) : (
-          <section className="card">
-            <div className="card-kicker"><Icon name="shield" size={13} /> OBTENIR DU MATÉRIEL</div>
-            <h2>Quel matériel vous aiderait ?</h2>
-            <p>Une demande à la fois, avec votre besoin réel : c’est ce qui permet d’y répondre.</p>
-
-            <label className="prog-field" style={{ marginTop: 14 }}>
-              <span>Matériel souhaité</span>
-              <select className="eco-select glass-lite" value={item} onChange={e => setItem(e.target.value)}>
-                {DOTATIONS.map(d => (
-                  <option key={d.id} value={d.name}>{d.name} · {d.value}</option>
-                ))}
-                <option value="Autre matériel">Autre matériel</option>
-              </select>
-            </label>
-
-            <label className="prog-field" style={{ marginTop: 12 }}>
-              <span>Votre besoin</span>
-              <textarea
-                className="journal"
-                rows={4}
-                placeholder="Ce que ça changerait dans votre quotidien, ce que votre coach a suggéré…"
-                value={reason}
-                onChange={e => setReason(e.target.value)}
-              />
-            </label>
-
-            <button
-              className="btn btn-primary"
-              style={{ marginTop: 16 }}
-              disabled={!reason.trim()}
-              onClick={() => setSent(true)}
-            >
-              <Icon name="send" size={15} /><span>Envoyer la demande</span>
-            </button>
-
-            <p className="prog-legal" style={{ marginTop: 10 }}>
-              <Icon name="shield" size={11} /> Transmise à votre référent et à l’organisme de prise en charge.
-            </p>
-          </section>
-        )}
-      </div>
-    </div>
-  )
-}

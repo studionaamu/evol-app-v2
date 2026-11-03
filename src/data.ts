@@ -316,7 +316,7 @@ export type Thread = {
   coachId: string
   unread: number
   messages: Message[]
-  group?: { name: string; memberIds: string[] }
+  group?: { name: string; memberIds: string[]; students?: { name: string; hue: string }[] }
 }
 
 export const THREADS: Thread[] = [
@@ -506,6 +506,7 @@ export type CoachGroup = {
   mode: 'Distanciel' | 'Présentiel'
   schedule: string
   progress: number
+  program: string
 }
 
 export const COACH_GROUPS: CoachGroup[] = [
@@ -513,11 +514,13 @@ export const COACH_GROUPS: CoachGroup[] = [
     id: 'g1', name: 'Groupe Matin · Respiration', memberIds: ['alex', 'leila'],
     objective: '10 min de cohérence cardiaque, 5 jours/semaine',
     mode: 'Distanciel', schedule: 'Lun–Ven · 07:30', progress: 78,
+    program: 'Programme EVOLIA · Respiration & sommeil',
   },
   {
     id: 'g2', name: 'Groupe Dos & Mobilité', memberIds: ['david', 'sofia'],
     objective: 'Protocole 12 min · 3×/semaine',
     mode: 'Présentiel', schedule: 'Mar & Jeu · 18:00', progress: 46,
+    program: 'Programme EVOLIA · Force & mobilité',
   },
 ]
 
