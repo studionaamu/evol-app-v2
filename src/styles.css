@@ -4380,3 +4380,33 @@ html.dark .eva-screen .eva-shot { background: rgba(126, 163, 255, 0.12); border-
 @media (prefers-reduced-motion: reduce) {
   .bubble, .eva-screen .eva-cardmsg { animation: none; }
 }
+
+/* ============================================================
+   LANCEUR EVA — la même aura bleu/violet que la console
+   ============================================================ */
+.eva-avatar {
+  box-shadow:
+    0 0 0 1px rgba(190, 212, 255, 0.22),
+    0 8px 22px rgba(3, 7, 18, 0.38),
+    0 0 24px rgba(46, 107, 255, 0.32),
+    0 0 44px rgba(109, 62, 173, 0.18);
+}
+.eva-fab {
+  border-color: rgba(176, 202, 255, 0.24);
+  box-shadow:
+    0 12px 28px rgba(3, 7, 18, 0.46),
+    0 0 22px rgba(46, 107, 255, 0.32),
+    0 0 42px rgba(109, 62, 173, 0.18);
+}
+.eva-fab:hover {
+  box-shadow:
+    0 14px 32px rgba(3, 7, 18, 0.52),
+    0 0 28px rgba(46, 107, 255, 0.44),
+    0 0 52px rgba(109, 62, 173, 0.22);
+}
+.eva-fab .eva-avatar {
+  box-shadow:
+    0 0 0 1px rgba(197, 216, 255, 0.24),
+    0 6px 16px rgba(3, 7, 18, 0.36),
+    0 0 20px rgba(46, 107, 255, 0.34);
+}
