@@ -328,7 +328,7 @@ export const THREADS: Thread[] = [
       { from: 'coach', text: 'Bonjour Alex, comment s’est passée votre respiration hier ?', time: '09:12' },
       { from: 'me', text: 'J’ai senti une vraie différence au réveil. Le journal m’a aidé à poser les choses.', time: '09:17' },
       { from: 'coach', text: 'C’est super. On peut transmettre ce signal à Nora pour ajuster votre routine.', time: '09:18' },
-      { from: 'me', text: 'Oui, je lui ouvre l’accès à cette conversation.', time: '09:20' },
+      { from: 'me', text: 'Oui, avec plaisir. On ajuste la routine ensemble.', time: '09:20' },
     ],
   },
   {

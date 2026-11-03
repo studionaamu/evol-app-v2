@@ -10,6 +10,8 @@ type Store = {
   setRole: (r: Role) => void
   name: string
   setName: (n: string) => void
+  avatar: string | null
+  setAvatar: (a: string | null) => void
   guest: boolean
   setGuest: (g: boolean) => void
   hideExplorer: boolean
@@ -41,6 +43,7 @@ const Ctx = createContext<Store | null>(null)
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>('coache')
   const [name, setName] = useState('Alex')
+  const [avatar, setAvatar] = useState<string | null>(null)
   const [guest, setGuest] = useState(false)
   const [hideExplorer, setHideExplorer] = useState(false)
   const [program, setProgram] = useState(false)
@@ -77,19 +80,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo<Store>(() => ({
-    role, setRole, name, setName, guest, setGuest, tab, setTab,
+    role, setRole, name, setName, avatar, setAvatar, guest, setGuest, tab, setTab,
     hideExplorer, setHideExplorer, coachSync, setCoachSync, program, setProgram,
     threads, setThreads, followedCoachIds, setFollowedCoachIds, toggleFollowCoach,
     selectedRadarAxis, setSelectedRadarAxis,
     consent, setConsent, quizDomains, setQuizDomains,
     coachClient, setCoachClient,
     reset: () => {
-      setRole('coache'); setTab('hub'); setGuest(false); setName('Alex')
+      setRole('coache'); setTab('hub'); setGuest(false); setName('Alex'); setAvatar(null)
       setHideExplorer(false); setProgram(false); setCoachSync({ agenda: true, signaux: true })
       setThreads(THREADS); setFollowedCoachIds(['camille', 'nora'])
       setConsent(DEFAULT_CONSENT); setQuizDomains([])
     },
-  }), [role, name, guest, tab, hideExplorer, coachSync, threads, followedCoachIds, selectedRadarAxis, consent, quizDomains, coachClient, program])
+  }), [role, name, avatar, guest, tab, hideExplorer, coachSync, threads, followedCoachIds, selectedRadarAxis, consent, quizDomains, coachClient, program])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

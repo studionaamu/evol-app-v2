@@ -6,7 +6,7 @@ import { Welcome, Quiz, QuizResults, ConsentScreen, Onboarding, Programme, Progr
 import { Hub, Explorer, Ecosystem, Carnet, EvaPanel } from './screens1'
 import { CoachScreen, Synergy, ChatScreen } from './screens2'
 import { Profile, CoachSpace, type CoachTab, type VitrineSub } from './screens3'
-import { EXERCISES, type Coach, type Domain } from './data'
+import { COACHES, EXERCISES, type Coach, type Domain } from './data'
 
 type Phase = 'welcome' | 'programme' | 'programLogin' | 'guestWelcome' | 'quiz' | 'results' | 'consent' | 'onboarding' | 'app'
 
@@ -39,7 +39,21 @@ function Shell() {
   }, [])
 
   const openChat = (coachId: string) => {
-    setThreads(ts => ts.map(t => t.coachId === coachId ? { ...t, unread: 0 } : t))
+    setThreads(ts => {
+      const cleared = ts.map(t => t.coachId === coachId ? { ...t, unread: 0 } : t)
+      if (ts.some(t => !t.group && t.coachId === coachId)) return cleared
+      const c = COACHES.find(x => x.id === coachId)
+      return [{
+        id: 't-' + coachId,
+        coachId,
+        unread: 0,
+        messages: [{
+          from: 'coach' as const,
+          text: `Bonjour, je suis ${c?.name ?? 'votre coach'}. Comment puis-je vous aider ?`,
+          time: 'maintenant',
+        }],
+      }, ...cleared]
+    })
     setCoachView(null)
     setChatId(coachId)
   }

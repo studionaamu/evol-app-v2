@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Icon } from './Icon'
 import { Avatar, EvaAvatar } from './bits'
 import { useStore } from './store'
@@ -18,8 +18,15 @@ export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'freebies' | '
    ===================================================== */
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
-  const { name, guest, reset, role, program } = useStore()
+  const { name, avatar, setAvatar, guest, reset, role, program } = useStore()
   const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
+  const avatarInput = useRef<HTMLInputElement>(null)
+  const changeAvatar = (file?: File) => {
+    if (!file || !file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = () => { if (typeof reader.result === 'string') setAvatar(reader.result) }
+    reader.readAsDataURL(file)
+  }
 
   return (
     <div className="tab-page" data-zone="profile">
@@ -29,7 +36,18 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
           <h1>{guest ? 'Mode invité' : name}</h1>
           {guest && <p>Vos données restent sur cet appareil.</p>}
         </div>
-        <Avatar hue="158" initials={guest ? '?' : name.slice(0, 1).toUpperCase()} photo={IMAGES.userPhoto} size={56} ring />
+        <button className="profile-avatar-btn" type="button" onClick={() => avatarInput.current?.click()} aria-label="Changer la photo de profil">
+          <Avatar hue="158" initials={guest ? '?' : name.slice(0, 1).toUpperCase()} photo={avatar ?? IMAGES.userPhoto} size={56} ring />
+          <span className="profile-avatar-edit"><Icon name="camera" size={12} /></span>
+        </button>
+        <input
+          ref={avatarInput}
+          className="profile-avatar-input"
+          type="file"
+          accept="image/*"
+          aria-label="Choisir une photo de profil"
+          onChange={e => { changeAvatar(e.target.files?.[0]); e.target.value = '' }}
+        />
       </header>
 
       {program && (
@@ -296,14 +314,17 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const [selectedDay, setSelectedDay] = useState<number>(base.getDate())
   const [newSlotTime, setNewSlotTime] = useState('11:00')
   const [newSlotDur, setNewSlotDur] = useState(45)
+  const [slotOpen, setSlotOpen] = useState(false)
   const [customSlots, setCustomSlots] = useState<{ id: string; day: number; start: string; end: string; debriefEnd: string; dur: number }[]>([
     { id: 'cs1', day: base.getDate(), start: '16:00', end: '16:45', debriefEnd: '17:00', dur: 45 },
   ])
   /* agenda : vues Google Calendar, indisponibilités, synchro calendriers, plein écran */
   const [calView, setCalView] = useState<'jour' | 'semaine' | 'mois'>('mois')
   const [calFull, setCalFull] = useState(false)
-  const [periodMode, setPeriodMode] = useState(false)
-  const [periodStart, setPeriodStart] = useState<number | null>(null)
+  const [blockMode, setBlockMode] = useState(false)
+  const [blockStart, setBlockStart] = useState<number | null>(null)
+  const [rangeUndo, setRangeUndo] = useState<{ days: number[]; count: number } | null>(null)
+  const [offConfirm, setOffConfirm] = useState<{ from: number; to: number } | null>(null)
   const [weekOffset, setWeekOffset] = useState(0)
   const [offDays, setOffDays] = useState<number[]>([base.getDate() + 3])
   const [calSyncOpen, setCalSyncOpen] = useState(false)
@@ -449,21 +470,67 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
     return out.sort((a, b) => a.time.localeCompare(b.time))
   }
 
-  const toggleOffDay = (day: number) =>
+  const toggleOffDay = (day: number) => {
+    if (month < 0) return
     setOffDays(ds => (ds.includes(day) ? ds.filter(x => x !== day) : [...ds, day]))
-  /* une date touchée = le jour sélectionné ; le mode période se déclenche explicitement */
-  const tapDay = (day: number) => {
-    setSelectedDay(day)
-    if (!periodMode) return
-    if (periodStart === null) { setPeriodStart(day); return }
-    const from = Math.min(periodStart, day)
-    const to = Math.max(periodStart, day)
-    const days = Array.from({ length: to - from + 1 }, (_, i) => from + i)
-      .filter(d => d >= 1 && d <= daysIn)
-    setOffDays(ds => [...new Set([...ds, ...days])].sort((a, b) => a - b))
-    setPeriodStart(null)
-    setPeriodMode(false)
   }
+  const isOffDay = (day: number) => month === 0 && offDays.includes(day)
+  const cancelBlock = () => { setBlockMode(false); setBlockStart(null) }
+  const changeMonth = (delta: number) => {
+    if (delta > 0 && month >= 0) return
+    if (delta < 0 && month <= -1) return
+    setMonth(m => m + delta); setSelectedDay(1); setWeekOffset(0); cancelBlock()
+  }
+
+  /* séances déjà prévues sur une plage : on prévient avant de fermer les créneaux */
+  const sessionsInRange = (from: number, to: number) => {
+    const out: { id: string; time: string; label: string; who: string; kind: CalKind; day: number }[] = []
+    for (let d = from; d <= to; d++) {
+      for (const it of calItemsFor(d)) {
+        if (it.kind !== 'off') out.push({ ...it, day: d })
+      }
+    }
+    return out
+  }
+  const applyOff = (from: number, to: number) => {
+    if (from !== to) setRangeUndo({ days: [...offDays], count: to - from + 1 })
+    setOffDays(ds => [...new Set([...ds, ...Array.from({ length: to - from + 1 }, (_, k) => from + k)])].sort((a, b) => a - b))
+    cancelBlock()
+  }
+  const requestOff = (from: number, to: number) => {
+    if (sessionsInRange(from, to).length > 0) { setOffConfirm({ from, to }); return }
+    applyOff(from, to)
+  }
+
+  /* toucher un jour le bascule directement ; en mode période, deux dates font une plage */
+  const onMonthDay = (day: number) => {
+    if (month < 0) return
+    setSelectedDay(day)
+    if (!blockMode) {
+      if (isOffDay(day)) { toggleOffDay(day); setRangeUndo(null) }
+      else requestOff(day, day)
+      return
+    }
+    if (blockStart === null) { setBlockStart(day); return }
+    const from = Math.min(blockStart, day)
+    const to = Math.max(blockStart, day)
+    requestOff(from, to)
+  }
+  const undoRange = () => { if (rangeUndo) setOffDays(rangeUndo.days); setRangeUndo(null) }
+  const removeRun = (run: { from: number; to: number }) => {
+    setOffDays(ds => ds.filter(d => d < run.from || d > run.to)); setRangeUndo(null)
+  }
+
+  /* jours bloqués regroupés en périodes consécutives, listés sous le calendrier */
+  const offRuns: { from: number; to: number }[] = []
+  ;[...offDays].sort((a, b) => a - b).forEach(d => {
+    const last = offRuns[offRuns.length - 1]
+    if (last && d === last.to + 1) last.to = d
+    else offRuns.push({ from: d, to: d })
+  })
+  const offRunLabel = (run: { from: number; to: number }) =>
+    run.from === run.to ? `${run.from} ${monthShort}` : `Du ${run.from} au ${run.to} ${monthShort}`
+  const selectedWeekday = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), selectedDay).toLocaleDateString('fr-FR', { weekday: 'long' })
 
   /* navigation jour par jour, y compris au changement de mois */
   const moveDay = (delta: number) => {
@@ -486,6 +553,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const selWeekday = (new Date(viewMonth.getFullYear(), viewMonth.getMonth(), selectedDay).getDay() + 6) % 7
   const stripStart = Math.max(1, selectedDay - selWeekday)
   const stripDays = Array.from({ length: 7 }, (_, k) => stripStart + k).filter(d => d <= daysIn)
+  const daySlots = customSlots.filter(cs => cs.day === selectedDay)
   const toggleCalendar = (id: string) =>
     setCalSync(cs => (cs.includes(id) ? cs.filter(x => x !== id) : [...cs, id]))
   const runCalendarSync = () => {
@@ -794,27 +862,25 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                   </span>
                 </div>
 
-                <div className="row between" style={{ marginTop: 12, marginBottom: 10 }}>
-                  <label className="cal-view-pick">
-                    <Icon name="calendar" size={14} />
-                    <select
-                      className="eco-select glass-lite"
-                      value={calView}
-                      aria-label="Vue de l’agenda"
-                      onChange={e => { setCalView(e.target.value as 'jour' | 'semaine' | 'mois'); setPeriodMode(false); setPeriodStart(null) }}
+                <div className="cal-views" role="tablist" aria-label="Vue de l’agenda">
+                  {([['mois', 'Mois'], ['semaine', 'Semaine'], ['jour', 'Jour']] as const).map(([id, label]) => (
+                    <button
+                      key={id}
+                      role="tab"
+                      aria-selected={calView === id}
+                      className={'cal-view-tab' + (calView === id ? ' on' : '')}
+                      onClick={() => { setCalView(id); cancelBlock(); setRangeUndo(null) }}
                     >
-                      <option value="mois">Vue mois</option>
-                      <option value="semaine">Vue semaine</option>
-                      <option value="jour">Vue jour</option>
-                    </select>
-                  </label>
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
                 <div className="month-head">
-                  <button className="round-btn sm" onClick={() => { setMonth(m => m - 1); setSelectedDay(1); setWeekOffset(0); setPeriodMode(false); setPeriodStart(null) }} aria-label="Période précédente"><Icon name="chevron-left" size={16} /></button>
+                  <button className="round-btn sm" onClick={() => changeMonth(-1)} aria-label="Mois précédent"><Icon name="chevron-left" size={16} /></button>
                   <strong>{monthLabel}</strong>
                   <div className="row" style={{ marginTop: 0 }}>
-                    <button className="round-btn sm" disabled={month >= 0} onClick={() => { setMonth(m => m + 1); setSelectedDay(1); setWeekOffset(0); setPeriodMode(false); setPeriodStart(null) }} aria-label="Période suivante"><Icon name="chevron-right" size={16} /></button>
+                    <button className="round-btn sm" disabled={month >= 0} onClick={() => changeMonth(1)} aria-label="Mois suivant"><Icon name="chevron-right" size={16} /></button>
                     <button className="round-btn sm" onClick={() => setCalFull(true)} aria-label="Ouvrir l’agenda en plein écran"><Icon name="grid" size={15} /></button>
                   </div>
                 </div>
@@ -827,14 +893,16 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                       const d = i + 1
                       const items = month === 0 ? calItemsFor(d) : []
                       const isToday = month === 0 && d === base.getDate()
-                      const isSelected = month === 0 && d === selectedDay
-                      const isOff = offDays.includes(d)
+                      const isOff = isOffDay(d)
+                      const run = month === 0 ? offRuns.find(r => d >= r.from && d <= r.to) : undefined
+                      const inRun = !!run && run.to > run.from
                       return (
                         <button
                           key={d}
-                          className={'month-day cal' + (isSelected ? ' today' : '') + (isToday && !isSelected ? ' now' : '') + (isOff ? ' off' : '') + (periodStart === d ? ' range-start' : '') + (periodMode ? ' picking' : '')}
-                          onClick={() => tapDay(d)}
-                          aria-pressed={isSelected}
+                          className={'month-day cal' + (isToday ? ' now' : '') + (isOff ? ' off' : '') + (inRun ? ' in-run' : '') + (inRun && run!.from === d ? ' run-start' : '') + (inRun && run!.to === d ? ' run-end' : '')}
+                          onClick={() => onMonthDay(d)}
+                          aria-pressed={isOff}
+                          aria-label={`${d} ${monthShort} — ${isOff ? 'indisponible' : 'disponible'}`}
                         >
                           <span>{d}</span>
                           <span className="cal-dots">
@@ -848,27 +916,32 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                   </div>
                 )}
 
-                {calView === 'mois' && (
-                  <div className="cal-tools">
-                    <button
-                      className={'btn btn-soft sm' + (periodMode ? ' on' : '')}
-                      onClick={() => { setPeriodMode(p => !p); setPeriodStart(null) }}
-                    >
-                      <Icon name={periodMode ? 'close' : 'calendar'} size={12} />
-                      <span>{periodMode ? 'Annuler la sélection' : 'Bloquer une période'}</span>
-                    </button>
-                    <span className="goal-hint">
-                      {offDays.length === 0 ? 'Tous les jours sont ouverts' : `${offDays.length} jour${offDays.length > 1 ? 's' : ''} bloqué${offDays.length > 1 ? 's' : ''}`}
+                {calView === 'mois' && (month < 0 ? (
+                  <p className="goal-hint">Les indisponibilités se gèrent sur le mois en cours.</p>
+                ) : blockMode ? (
+                  <div className="cal-blockbar">
+                    <span>
+                      {blockStart === null
+                        ? 'Touchez le premier jour de la période'
+                        : `${blockStart} ${monthShort} → touchez le dernier jour`}
                     </span>
+                    <button onClick={cancelBlock}>Annuler</button>
                   </div>
-                )}
+                ) : (
+                  <div className="cal-toolbar">
+                    <button className="btn btn-soft sm" onClick={() => { setBlockMode(true); setBlockStart(null); setRangeUndo(null) }}>
+                      <Icon name="calendar" size={12} /><span>Bloquer une période</span>
+                    </button>
+                    <span className="cal-help">Touchez un jour pour le rendre indisponible.</span>
+                  </div>
+                ))}
 
-                {calView === 'mois' && periodMode && (
-                  <p className="goal-hint range-hint">
-                    {periodStart === null
-                      ? 'Touchez le premier jour de la période.'
-                      : `Début : ${periodStart} ${monthShort} — touchez le dernier jour, ou à nouveau cette date pour un seul jour.`}
-                  </p>
+                {calView === 'mois' && month === 0 && rangeUndo && (
+                  <div className="cal-undobar">
+                    <Icon name="check" size={12} />
+                    <span>{rangeUndo.count} jour{rangeUndo.count > 1 ? 's' : ''} bloqué{rangeUndo.count > 1 ? 's' : ''}</span>
+                    <button onClick={undoRange}>Annuler</button>
+                  </div>
                 )}
 
                 {calView === 'semaine' && (
@@ -894,102 +967,105 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                         <Icon name="chevron-right" size={16} />
                       </button>
                     </div>
-                    <div className="cal-week">
-                      {weekDays.map(wd => (
-                        <button
-                          type="button"
-                          className={'cal-week-col' + (wd.day === selectedDay ? ' on' : '') + (offDays.includes(wd.day) ? ' off' : '')}
-                          key={wd.num}
-                          onClick={() => tapDay(wd.day)}
-                        >
-                          <span className="cal-week-dow">{wd.label}</span>
-                          <strong>{wd.num}</strong>
-                          <span className="cal-week-state">{offDays.includes(wd.day) ? 'Indispo' : 'Dispo'}</span>
-                          <div className="cal-week-items">
-                            {calItemsFor(wd.day).filter(it => it.kind !== 'off').slice(0, 3).map(it => (
-                              <span className="cal-chip" key={it.id} style={{ borderColor: CAL_KINDS[it.kind].color }}>
-                                <em style={{ background: CAL_KINDS[it.kind].color }} />
-                                <span>{it.time}</span>
-                              </span>
-                            ))}
-                          </div>
-                        </button>
-                      ))}
+                    <div className="week-list">
+                      {weekDays.map(wd => {
+                        const off = isOffDay(wd.day)
+                        const count = calItemsFor(wd.day).filter(it => it.kind !== 'off').length
+                        return (
+                          <button
+                            key={wd.num}
+                            type="button"
+                            className={'week-row' + (off ? ' off' : '')}
+                            onClick={() => (off ? toggleOffDay(wd.day) : requestOff(wd.day, wd.day))}
+                            aria-pressed={off}
+                          >
+                            <span className="week-row-dow">{wd.label}</span>
+                            <strong>{wd.num}</strong>
+                            <span className="week-row-info">{count === 0 ? 'Aucune prestation' : `${count} prestation${count > 1 ? 's' : ''}`}</span>
+                            <span className="week-row-state">{off ? 'Indispo' : 'Dispo'}</span>
+                            <span className={'cal-switch' + (off ? ' on' : '')} aria-hidden="true"><i /></span>
+                          </button>
+                        )
+                      })}
                     </div>
                   </>
                 )}
 
                 {calView === 'jour' && (
-                  <div className="day-strip">
-                    {stripDays.map(d => (
-                      <button
-                        type="button"
-                        key={d}
-                        className={'day-strip-day' + (d === selectedDay ? ' on' : '') + (offDays.includes(d) ? ' off' : '')}
-                        onClick={() => setSelectedDay(d)}
-                        aria-pressed={d === selectedDay}
-                      >
-                        <span>{new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d).toLocaleDateString('fr-FR', { weekday: 'narrow' })}</span>
-                        <strong>{d}</strong>
+                  <>
+                    <div className="day-strip">
+                      {stripDays.map(d => (
+                        <button
+                          type="button"
+                          key={d}
+                          className={'day-strip-day' + (d === selectedDay ? ' on' : '') + (isOffDay(d) ? ' off' : '')}
+                          onClick={() => setSelectedDay(d)}
+                          aria-pressed={d === selectedDay}
+                        >
+                          <span>{new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d).toLocaleDateString('fr-FR', { weekday: 'narrow' })}</span>
+                          <strong>{d}</strong>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="cal-day-head cal-day-nav">
+                      <button className="round-btn sm" onClick={() => moveDay(-1)} aria-label="Jour précédent">
+                        <Icon name="chevron-left" size={15} />
                       </button>
+                      <div>
+                        <strong>{selectedWeekday} {selectedDay} {monthShort}</strong>
+                        <span>{isOffDay(selectedDay) ? 'Indisponible' : 'Disponible'}</span>
+                      </div>
+                      <button className="round-btn sm" onClick={() => moveDay(1)} aria-label="Jour suivant">
+                        <Icon name="chevron-right" size={15} />
+                      </button>
+                    </div>
+
+                    <button
+                      className={'day-toggle' + (isOffDay(selectedDay) ? ' off' : '')}
+                      onClick={() => (isOffDay(selectedDay) ? toggleOffDay(selectedDay) : requestOff(selectedDay, selectedDay))}
+                    >
+                      <Icon name={isOffDay(selectedDay) ? 'check' : 'close'} size={13} />
+                      <span>{isOffDay(selectedDay) ? 'Rendre ce jour disponible' : 'Marquer ce jour indisponible'}</span>
+                    </button>
+
+                    {calItemsFor(selectedDay).filter(it => it.kind !== 'off').length === 0 && (
+                      <p className="goal-hint">Aucune prestation ce jour.</p>
+                    )}
+                    {calItemsFor(selectedDay).filter(it => it.kind !== 'off').map(it => (
+                      <div className={'cal-line ' + it.kind} key={it.id}>
+                        <span className="cal-line-dot" style={{ background: CAL_KINDS[it.kind].color }} />
+                        <span className="cal-line-time">{it.time}</span>
+                        <div className="session-info">
+                          <strong>{it.label}</strong>
+                          <span>{it.who}</span>
+                        </div>
+                        <span className="tag mini">{CAL_KINDS[it.kind].label}</span>
+                      </div>
                     ))}
-                  </div>
+                  </>
                 )}
 
-                <div className="cal-day cal-day-inline">
-                  <div className="cal-day-head cal-day-nav">
-                    <button className="round-btn sm" onClick={() => moveDay(-1)} aria-label="Jour précédent">
-                      <Icon name="chevron-left" size={15} />
-                    </button>
-                    <div>
-                      <strong>{selectedDay} {monthShort}</strong>
-                      <span>{offDays.includes(selectedDay) ? 'Indisponible' : 'Disponible'}</span>
+                {month === 0 && (
+                  <div className="off-summary">
+                    <div className="off-summary-head">
+                      <strong>Jours indisponibles</strong>
+                      <span>{offDays.length === 0 ? 'Aucun' : `${offDays.length} jour${offDays.length > 1 ? 's' : ''}`}</span>
                     </div>
-                    <button className="round-btn sm" onClick={() => moveDay(1)} aria-label="Jour suivant">
-                      <Icon name="chevron-right" size={15} />
-                    </button>
-                  </div>
-
-                  <button
-                    className={'day-toggle' + (offDays.includes(selectedDay) ? ' off' : '')}
-                    onClick={() => toggleOffDay(selectedDay)}
-                  >
-                    <Icon name={offDays.includes(selectedDay) ? 'check' : 'close'} size={13} />
-                    <span>{offDays.includes(selectedDay) ? 'Rendre ce jour disponible' : 'Marquer ce jour indisponible'}</span>
-                  </button>
-
-                  {calItemsFor(selectedDay).filter(it => it.kind !== 'off').length === 0 && (
-                    <p className="goal-hint">Aucune prestation ce jour.</p>
-                  )}
-                  {calItemsFor(selectedDay).filter(it => it.kind !== 'off').map(it => (
-                    <div className={'cal-line ' + it.kind} key={it.id}>
-                      <span className="cal-line-dot" style={{ background: CAL_KINDS[it.kind].color }} />
-                      <span className="cal-line-time">{it.time}</span>
-                      <div className="session-info">
-                        <strong>{it.label}</strong>
-                        <span>{it.who}</span>
+                    {offRuns.length === 0 ? (
+                      <p className="goal-hint">Votre agenda est ouvert tous les jours.</p>
+                    ) : offRuns.map(run => (
+                      <div className="off-run" key={run.from}>
+                        <span className="off-run-date">{offRunLabel(run)}</span>
+                        {run.to > run.from && <span className="off-run-count">{run.to - run.from + 1} j</span>}
+                        <button onClick={() => removeRun(run)}>Rendre dispo</button>
                       </div>
-                      <span className="tag mini">{CAL_KINDS[it.kind].label}</span>
-                    </div>
-                  ))}
-
-                  <div className="off-list">
-                    {offDays.length === 0 && (
-                      <p className="goal-hint">Aucun jour bloqué : vous êtes disponible chaque jour.</p>
-                    )}
-                    {[...offDays].sort((x, y) => x - y).map(d => (
-                      <span className="off-chip" key={d}>
-                        {d} {monthShort}
-                        <button onClick={() => toggleOffDay(d)} aria-label={`Rendre le ${d} disponible`}>
-                          <Icon name="close" size={11} />
-                        </button>
-                      </span>
                     ))}
+                    <div className="privacy" style={{ marginTop: 10 }}>
+                      <Icon name="shield" size={12} /> Ces jours ne sont ni réservables ni proposés à vos élèves.
+                    </div>
                   </div>
-                  <div className="privacy" style={{ marginTop: 10 }}>
-                    <Icon name="shield" size={12} /> Ces jours ne sont ni réservables ni proposés à vos élèves.
-                  </div>
-                </div>
+                )}
 
                 <div className="cal-legend">
                   {(Object.keys(CAL_KINDS) as CalKind[]).map(k => (
@@ -1000,70 +1076,69 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                 </div>
               </section>
 
-              {/* ouvrir un créneau */}
-              <section className="card">
-                <div className="card-kicker"><Icon name="clock" size={13} /> CRÉNEAU + 15 MIN AUTO</div>
-                <div className="avail-builder glass-lite" style={{ marginTop: 10 }}>
-                  <div className="avail-builder-head">
-                    <strong>Ajouter une disponibilité (Jour {selectedDay})</strong>
-                    <span className="tag mini">+15 min auto</span>
-                  </div>
-                  <div className="row" style={{ marginTop: 10 }}>
-                    <input
-                      type="time"
-                      className="eco-input glass-lite"
-                      value={newSlotTime}
-                      onChange={e => setNewSlotTime(e.target.value)}
-                      style={{ maxWidth: 115 }}
-                    />
-                    <input
-                      type="number"
-                      min={10}
-                      max={240}
-                      step={5}
-                      className="eco-input glass-lite"
-                      aria-label="Durée libre de la séance en minutes"
-                      value={newSlotDur}
-                      onChange={e => setNewSlotDur(Math.max(10, Math.min(240, Number(e.target.value) || 45)))}
-                      style={{ maxWidth: 110 }}
-                    />
-                    <button className="btn btn-primary sm" onClick={addAvailabilitySlot}>
-                      <Icon name="plus" size={14} /><span>Ouvrir</span>
-                    </button>
-                  </div>
-                  <div className="avail-preview">
-                    <Icon name="sparkle" size={12} />
-                    <span>
-                      Plage bloquée : <strong>{newSlotTime} → {addMinutesToTime(newSlotTime, newSlotDur)}</strong> (séance) + <strong>{addMinutesToTime(newSlotTime, newSlotDur)} → {addMinutesToTime(newSlotTime, newSlotDur + 15)}</strong> (15 min retour sur séance).
-                    </span>
-                  </div>
-                </div>
+              {/* créneaux réservables — une ligne, le formulaire ne s'ouvre qu'au besoin */}
+              <section className="card eco-slot" data-zone="creneaux">
+                <button className="eco-slot-head" onClick={() => setSlotOpen(o => !o)} aria-expanded={slotOpen}>
+                  <span className="eco-slot-ico"><Icon name="clock" size={15} /></span>
+                  <span className="eco-slot-title">
+                    <strong>Créneaux réservables</strong>
+                    <em>
+                      {daySlots.length === 0
+                        ? `Aucun créneau ouvert le ${selectedDay} ${monthShort}`
+                        : `${daySlots.length} créneau${daySlots.length > 1 ? 'x' : ''} ouvert${daySlots.length > 1 ? 's' : ''} le ${selectedDay} ${monthShort}`}
+                    </em>
+                  </span>
+                  <span className="chev"><Icon name="chevron-right" size={14} /></span>
+                </button>
 
-                <div style={{ marginTop: 14 }}>
-                  <div className="card-kicker">CRÉNEAUX OUVERTS · JOUR {selectedDay}</div>
-                  {customSlots.filter(cs => cs.day === selectedDay).map(cs => (
-                    <div className="agenda-slot-block" key={cs.id}>
-                      <div className="session">
-                        <div className="date-box"><strong style={{ fontSize: 13 }}>{cs.start}</strong></div>
-                        <div className="session-info">
-                          <strong>Créneau ouvert ({cs.dur} min)</strong>
-                          <span>Disponible sur votre profil public · Jour {cs.day}</span>
-                        </div>
-                        <button
-                          className="remove-btn"
-                          onClick={() => setCustomSlots(list => list.filter(x => x.id !== cs.id))}
-                          aria-label="Retirer ce créneau"
-                        >
-                          <Icon name="close" size={13} />
-                        </button>
-                      </div>
-                      <div className="debrief-buffer glass-lite">
-                        <Icon name="clock" size={12} />
-                        <span><strong>{cs.end} – {cs.debriefEnd}</strong> · +15 min réservés automatiquement (retour sur séance)</span>
-                      </div>
+                {slotOpen && (
+                  <div className="eco-slot-body">
+                    <div className="row" style={{ marginTop: 0 }}>
+                      <input
+                        type="time"
+                        className="eco-input glass-lite"
+                        aria-label="Heure de début du créneau"
+                        value={newSlotTime}
+                        onChange={e => setNewSlotTime(e.target.value)}
+                        style={{ maxWidth: 115 }}
+                      />
+                      <select
+                        className="eco-select glass-lite"
+                        aria-label="Durée de la séance"
+                        value={newSlotDur}
+                        onChange={e => setNewSlotDur(Number(e.target.value))}
+                        style={{ maxWidth: 120 }}
+                      >
+                        {[30, 45, 60, 90].map(m => <option key={m} value={m}>{m} min</option>)}
+                      </select>
+                      <button className="btn btn-primary sm" onClick={addAvailabilitySlot}>
+                        <Icon name="plus" size={14} /><span>Ouvrir</span>
+                      </button>
                     </div>
-                  ))}
-                </div>
+                    <p className="goal-hint" style={{ marginTop: 0 }}>
+                      {newSlotTime} → {addMinutesToTime(newSlotTime, newSlotDur)} · 15 min de retour sur séance incluses automatiquement.
+                    </p>
+
+                    {daySlots.map(cs => (
+                      <div className="agenda-slot-block" key={cs.id}>
+                        <div className="session">
+                          <div className="date-box"><strong style={{ fontSize: 13 }}>{cs.start}</strong></div>
+                          <div className="session-info">
+                            <strong>Créneau ouvert ({cs.dur} min)</strong>
+                            <span>Visible sur votre profil public · {cs.end} – {cs.debriefEnd} avec le retour</span>
+                          </div>
+                          <button
+                            className="remove-btn"
+                            onClick={() => setCustomSlots(list => list.filter(x => x.id !== cs.id))}
+                            aria-label="Retirer ce créneau"
+                          >
+                            <Icon name="close" size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
       </>
@@ -1560,6 +1635,56 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
           </div>
         </div>
       )}
+
+      {/* CONFIRMATION AVANT DE BLOQUER UN JOUR DÉJÀ RÉSERVÉ — en haut, près du geste */}
+      {offConfirm && (() => {
+        const { from, to } = offConfirm
+        const items = sessionsInRange(from, to)
+        const label = from === to ? `${from} ${monthShort}` : `du ${from} au ${to} ${monthShort}`
+        const bookings = items.filter(it => it.kind !== 'libre').length
+        const slots = items.length - bookings
+        const what = [
+          bookings > 0 ? `${bookings} séance${bookings > 1 ? 's' : ''}` : '',
+          slots > 0 ? `${slots} créneau${slots > 1 ? 'x' : ''} ouvert${slots > 1 ? 's' : ''}` : '',
+        ].filter(Boolean).join(' et ')
+        const title = from === to ? 'Bloquer ce jour ?' : `Bloquer ${to - from + 1} jours ?`
+        return (
+          <div className="cal-confirm-layer" onClick={() => setOffConfirm(null)}>
+            <div className="cal-confirm-top" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
+              <div className="cal-confirm-head">
+                <span className="cal-confirm-ico"><Icon name="calendar" size={15} /></span>
+                <div>
+                  <strong>{title}</strong>
+                  <span>{what} déjà au planning {from === to ? `le ${label}` : label}.</span>
+                </div>
+              </div>
+
+              <div className="cal-confirm-list">
+                {items.slice(0, 3).map(it => (
+                  <div className={'cal-line ' + it.kind} key={it.id}>
+                    <span className="cal-line-dot" style={{ background: CAL_KINDS[it.kind].color }} />
+                    <span className="cal-line-time">{it.time}</span>
+                    <div className="session-info">
+                      <strong>{it.label}</strong>
+                      <span>{it.who}{from !== to ? ` · ${it.day} ${monthShort}` : ''}</span>
+                    </div>
+                  </div>
+                ))}
+                {items.length > 3 && <p className="dim" style={{ fontSize: 11 }}>+ {items.length - 3} autre{items.length - 3 > 1 ? 's' : ''} élément{items.length - 3 > 1 ? 's' : ''}</p>}
+              </div>
+
+              <p className="goal-hint" style={{ margin: 0 }}>
+                Les séances restent dans votre agenda ; seuls les créneaux réservables se ferment.
+              </p>
+
+              <div className="row" style={{ marginTop: 4 }}>
+                <button className="btn btn-soft" onClick={() => setOffConfirm(null)}>Annuler</button>
+                <button className="btn btn-primary" onClick={() => { applyOff(from, to); setOffConfirm(null) }}>Bloquer quand même</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* SYNCHRONISATION DES CALENDRIERS DU TÉLÉPHONE */}
       {calSyncOpen && (

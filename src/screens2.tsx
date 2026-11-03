@@ -3,7 +3,7 @@ import { Icon } from './Icon'
 import { Avatar } from './bits'
 import { useStore } from './store'
 import {
-  COACHES,
+  COACHES, SESSIONS,
   type Coach, type Message, type Thread,
 } from './data'
 
@@ -306,15 +306,14 @@ export function CoachScreen({ coach, onBack, onBooked, onChat }: {
    ===================================================== */
 
 export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void }) {
-  const { threads, setThreads, followedCoachIds } = useStore()
+  const { threads, setThreads } = useStore()
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
-  /* Fils 1:1 des coachs suivis et groupes de séance, affichés à la suite */
+  /* Tous les fils existants : 1:1 coachs et groupes de séance */
   const shown = useMemo(() => {
     const ql = q.trim().toLowerCase()
     return threads
-      .filter(t => t.group || followedCoachIds.includes(t.coachId))
       .filter(t => (filter === 'unread' ? t.unread > 0 : true))
       .filter(t => {
         if (!ql) return true
@@ -323,11 +322,19 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
         const last = (t.messages[t.messages.length - 1]?.text ?? '').toLowerCase()
         return title.includes(ql) || last.includes(ql)
       })
-  }, [threads, followedCoachIds, q, filter])
+  }, [threads, q, filter])
 
   const unread = shown.reduce((n, t) => n + t.unread, 0)
-  const count = followedCoachIds.length
+  const totalUnread = threads.reduce((n, t) => n + t.unread, 0)
+  const count = threads.filter(t => !t.group).length
   const markAll = () => setThreads(ts => ts.map(t => ({ ...t, unread: 0 })))
+
+  const next = SESSIONS[0]
+  const nextCoach = COACHES.find(c => c.id === next.coachId)!
+  const quick = useMemo(() => {
+    const ids = [...new Set(threads.filter(t => !t.group).map(t => t.coachId))]
+    return ids.map(id => COACHES.find(c => c.id === id)).filter((c): c is Coach => !!c)
+  }, [threads])
 
   const threadRow = (t: Thread) => {
     const c = COACHES.find(x => x.id === t.coachId)!
@@ -376,7 +383,40 @@ export function Synergy({ onOpenChat }: { onOpenChat: (coachId: string) => void 
           <div className="date-line">MESSAGES</div>
           <h1>Vos conversations.</h1>
         </div>
+        {totalUnread > 0 && <span className="tag mini">{totalUnread} non lus</span>}
       </header>
+
+      <button className="msg-next glass-lite" onClick={() => onOpenChat(next.coachId)}>
+        <Avatar hue={nextCoach.hue} initials={nextCoach.initials} photo={nextCoach.photo} size={40} />
+        <span className="msg-next-body">
+          <span>PROCHAIN RENDEZ-VOUS</span>
+          <strong>{nextCoach.name.split(' ')[0]} · {next.day} {next.month.toLowerCase()} · {next.time}</strong>
+          <em>{next.title} · {next.duration} min · {next.mode}</em>
+        </span>
+        <Icon name="chevron-right" size={15} />
+      </button>
+
+      <div className="msg-people">
+        <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+          <h2 style={{ margin: 0 }}>Écrire à</h2>
+          <span className="dim" style={{ fontSize: 11 }}>Accès direct</span>
+        </div>
+        <div className="msg-people-row">
+          {quick.map(c => {
+            const u = threads.find(t => !t.group && t.coachId === c.id)?.unread ?? 0
+            return (
+              <button className="msg-person" key={c.id} onClick={() => onOpenChat(c.id)}>
+                <span className="msg-person-photo">
+                  <Avatar hue={c.hue} initials={c.initials} photo={c.photo} size={46} />
+                  {u > 0 && <span className="badge">{u}</span>}
+                </span>
+                <strong>{c.name.split(' ')[0]}</strong>
+                <span>{c.domains[0]}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       <div className="search glass-lite">
         <Icon name="search" size={17} />
