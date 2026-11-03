@@ -6,7 +6,7 @@ import {
   COACHES, SESSIONS, QUOTES, IMAGES, EVENTS, HOME_ANNOUNCEMENTS,
   EVA_SESSION_REPORTS, STORIES, HORIZON_GOALS,
   COACH_TEAM, INITIAL_SHARED_DOCS,
-  type Coach, type CommunityEvent, type SharedDocument, type Story,
+  type Coach, type CommunityEvent, type SharedDocument,
 } from './data'
 
 function todayLabel() {
@@ -144,7 +144,6 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
 
   /* flux vidéo horizontal, filtré sur les objectifs du parcours */
   const [storyFilter, setStoryFilter] = useState<'objectifs' | 'tous'>('objectifs')
-  const [openStory, setOpenStory] = useState<Story | null>(null)
   const stories = useMemo(() => {
     const mine = quizDomains ?? []
     if (storyFilter === 'tous' || mine.length === 0) return STORIES
@@ -399,20 +398,7 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
         </div>
         <div className="story-feed">
           {stories.map(s => (
-            <article
-              className="story-slide"
-              key={s.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`Ouvrir ${s.kind} : ${s.title}`}
-              onClick={() => setOpenStory(s)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setOpenStory(s)
-                }
-              }}
-            >
+            <article className="story-slide" key={s.id}>
               <img className="story-img" src={s.poster} alt="" loading="lazy" />
               <span className="story-wash" aria-hidden />
               <div className="story-body">
@@ -432,38 +418,6 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
       </section>
       )}
       {!program && <EvolutionJournal onOpenChat={onOpenChat} onOpenEva={onOpenEva} />}
-
-      {openStory && (
-        <div className="story-sheet-layer" onClick={() => setOpenStory(null)}>
-          <div
-            className="story-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`${openStory.kind} — ${openStory.title}`}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="story-sheet-art">
-              <img src={openStory.poster} alt="" />
-              <span className="story-wash" aria-hidden />
-              <button className="icon-btn on-art story-sheet-close" onClick={() => setOpenStory(null)} aria-label="Fermer">
-                <Icon name="close" size={17} />
-              </button>
-            </div>
-            <div className="story-sheet-body">
-              <div className="story-top">
-                <span className="story-kind">
-                  <Icon name={openStory.kind === 'Podcast' ? 'mic' : 'video'} size={11} /> {openStory.kind}
-                </span>
-                <span className="story-dur">{openStory.duration} · {openStory.views} vues</span>
-              </div>
-              <h3>{openStory.title}</h3>
-              <p className="story-quote">{openStory.quote}</p>
-              <span className="story-by">{openStory.author}</span>
-              <p className="story-caption">{openStory.caption}</p>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   )

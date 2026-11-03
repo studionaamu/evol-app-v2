@@ -3797,34 +3797,154 @@ html.dark .eco-cap-ico { color: #C9AFF5; }
 }
 .journal-share-coach:hover { border-color: color-mix(in srgb, var(--ink) 22%, transparent); transform: translateY(-1px); }
 
-/* --- récits : éléments cliquables + fiche --- */
-.story-slide[role='button'] { cursor: pointer; }
-.story-slide[role='button']:focus-visible { outline: 2px solid #2E6BFF; outline-offset: 3px; }
-.story-slide[role='button']:active { transform: scale(.995); }
-.story-sheet-layer {
-  position: fixed; inset: 0; z-index: 120; max-width: 430px; margin: 0 auto;
-  display: flex; align-items: flex-end; justify-content: center;
-  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
-  background: rgba(10,10,12,.48); backdrop-filter: blur(3px);
-  animation: fadeIn .2s ease both;
+/* ============================================================
+   FINITION — fond commun, contours adoucis, matière plus fluide
+   ============================================================ */
+
+/* l'onglet Message reprend exactement l'aura des autres onglets */
+html.dark .synergy-page::before {
+  background:
+    radial-gradient(58% 42% at 28% 16%, rgba(21, 37, 255, 0.26), transparent 70%),
+    radial-gradient(50% 40% at 78% 20%, rgba(109, 62, 173, 0.22), transparent 72%);
 }
-.story-sheet {
-  width: 100%; max-height: 86dvh; overflow-y: auto; border-radius: 24px;
-  background: var(--bg-elev); box-shadow: 0 24px 60px rgba(10,10,14,.32);
-  animation: storySheetIn .32s cubic-bezier(.22,1,.36,1) both;
+html:not(.dark) .synergy-page::before { background: none; }
+
+/* plus d'air, moins de cadre */
+.tab-page { padding: 32px 24px 42px; }
+.page-head { margin-bottom: 26px; }
+.card:not(.card-quote):not(.card-grad):not(.alert-crit) {
+  border-color: transparent;
+  box-shadow: 0 20px 48px -30px rgba(0, 0, 0, 0.45);
 }
-.story-sheet-art { position: relative; height: 210px; overflow: hidden; border-radius: 24px 24px 0 0; background: #16141C; }
-.story-sheet-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.story-sheet-close { position: absolute; top: 12px; right: 12px; }
-.story-sheet-body { padding: 15px 17px 18px; display: flex; flex-direction: column; gap: 7px; }
-.story-sheet-body .story-top { position: static; color: var(--ink-3); }
-.story-sheet-body .story-kind { background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink-2); }
-.story-sheet-body .story-dur { color: var(--ink-3); }
-.story-sheet-body h3 { font-family: var(--disp); font-size: 21px; line-height: 1.15; letter-spacing: -.02em; font-weight: 500; }
-.story-sheet-body .story-quote { color: var(--ink-2); font-size: 13.5px; }
-.story-sheet-body .story-by { font-size: 12px; }
-.story-sheet-body .story-caption { color: var(--ink-3); font-size: 11px; }
-@keyframes storySheetIn {
-  from { opacity: 0; transform: translateY(16px) scale(.985); }
-  to { opacity: 1; transform: none; }
+html:not(.dark) .card:not(.card-quote):not(.card-grad):not(.alert-crit) {
+  border-color: transparent;
+  box-shadow: 0 20px 48px -30px rgba(78, 62, 108, 0.16);
+}
+.card-quote { border-color: transparent; box-shadow: 0 24px 54px -28px rgba(29, 44, 143, 0.45); }
+
+/* les surfaces se fondent : le contour extérieur disparaît */
+.glass-lite,
+.thread-list,
+.msg-next,
+.search,
+.session,
+.date-box,
+.mood,
+.mood-chip,
+.chat-input.glass {
+  border-color: transparent;
+  box-shadow: none;
+}
+.glass-lite, .thread-list, .msg-next, .search {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+}
+.session, .date-box, .mood {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018));
+}
+.chip, .tag, .msg-filter, .btn-soft, .icon-btn {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: none;
+}
+.chip.on, .msg-filter.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn-soft { background: rgba(255, 255, 255, 0.055); }
+.btn-soft:hover { background: rgba(255, 255, 255, 0.09); }
+.icon-btn { background: rgba(255, 255, 255, 0.035); }
+.chat-input.glass { background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)); }
+.thread { border-bottom-color: color-mix(in srgb, var(--ink) 5%, transparent); }
+.thread-list { border-radius: 24px; padding: 3px 7px; }
+
+/* la barre devient une surface, pas un cadre */
+.tabbar {
+  border-color: transparent;
+  background: linear-gradient(180deg, rgba(24, 24, 29, 0.72), rgba(16, 16, 19, 0.90));
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+}
+html:not(.dark) .tabbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.60), rgba(255, 255, 255, 0.40));
+  box-shadow: 0 14px 34px -18px rgba(78, 62, 108, 0.20);
+}
+.tab { transition: color .25s ease, opacity .25s ease; }
+.tab.on { color: var(--ink); }
+
+/* micro-interactions douces */
+.session, .thread, .msg-next, .search, .chip, .tag, .btn-soft, .icon-btn, .glass-lite {
+  transition: background .3s ease, border-color .3s ease, box-shadow .3s ease, transform .25s ease;
+}
+.session:active, .thread:active, .msg-next:active { transform: scale(.995); }
+
+/* lueur EVA discrète */
+.eva-fab { border-color: rgba(255, 255, 255, 0.16); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.30); }
+.eva-fab .eva-avatar { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12); }
+
+/* en clair, les surfaces restent claires et sans liseré */
+html:not(.dark) .glass-lite,
+html:not(.dark) .thread-list,
+html:not(.dark) .msg-next,
+html:not(.dark) .search {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.34));
+}
+html:not(.dark) .session,
+html:not(.dark) .date-box,
+html:not(.dark) .mood {
+  background: rgba(255, 255, 255, 0.42);
+}
+html:not(.dark) .chip,
+html:not(.dark) .tag,
+html:not(.dark) .btn-soft,
+html:not(.dark) .icon-btn {
+  background: rgba(255, 255, 255, 0.42);
+}
+html:not(.dark) .chip.on, html:not(.dark) .msg-filter.on { background: var(--ink); color: var(--bg); }
+
+/* Message : les règles sombres d'origine étaient plus spécifiques —
+   on neutralise leurs cadres sans toucher à leur mise en page. */
+html.dark .synergy-page .thread-list {
+  border-color: transparent;
+  box-shadow: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
+}
+html.dark .synergy-page .msg-next,
+html.dark .synergy-page .search,
+html.dark .synergy-page .search.glass {
+  border-color: transparent;
+  box-shadow: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+}
+html.dark .synergy-page .msg-filter {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.055);
+}
+html.dark .synergy-page .msg-filter.on {
+  background: #F3EDE7;
+  color: #1B1617;
+}
+html.dark .subtabs {
+  border-color: transparent;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.035);
+}
+html.dark .tab-page .glass-lite,
+html.dark .synergy-page .glass-lite {
+  border-color: transparent;
+  box-shadow: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+}
+html.dark .tab-page .session,
+html.dark .synergy-page .session,
+html.dark .tab-page .date-box,
+html.dark .synergy-page .date-box {
+  border-color: transparent;
+  box-shadow: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018));
+}
+html.dark .tabbar {
+  border-color: transparent;
+  background: linear-gradient(180deg, rgba(24, 24, 29, 0.72), rgba(16, 16, 19, 0.90));
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.55);
 }
