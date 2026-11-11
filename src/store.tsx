@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { THREADS, DEFAULT_CONSENT, COACHES, CHAT_SEED, type Consent, type Thread } from './data'
 
 type Role = 'coache' | 'coach'
 type Tab = 'hub' | 'ecosystem' | 'explorer' | 'carnet' | 'synergy' | 'profile'
+export type Theme = 'dark' | 'light'
 export type CoachSync = { agenda: boolean; signaux: boolean }
 
 type Store = {
@@ -20,6 +21,9 @@ type Store = {
   setProgram: (p: boolean) => void
   coachSync: CoachSync
   setCoachSync: React.Dispatch<React.SetStateAction<CoachSync>>
+  theme: Theme
+  setTheme: (theme: Theme) => void
+  toggleTheme: () => void
   tab: Tab
   setTab: (t: Tab) => void
   threads: Thread[]
@@ -40,6 +44,16 @@ type Store = {
 
 const Ctx = createContext<Store | null>(null)
 
+function initialTheme(): Theme {
+  if (typeof window === 'undefined') return 'dark'
+  try {
+    const saved = window.localStorage.getItem('evol-theme')
+    return saved === 'light' || saved === 'dark' ? saved : 'dark'
+  } catch {
+    return 'dark'
+  }
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>('coache')
   const [name, setName] = useState('Alex')
@@ -48,6 +62,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [hideExplorer, setHideExplorer] = useState(false)
   const [program, setProgram] = useState(false)
   const [coachSync, setCoachSync] = useState<CoachSync>({ agenda: true, signaux: true })
+  const [theme, setTheme] = useState<Theme>(initialTheme)
   const [tab, setTab] = useState<Tab>('hub')
   const [threads, setThreads] = useState<Thread[]>(THREADS)
   const [followedCoachIds, setFollowedCoachIds] = useState<string[]>(['camille', 'nora'])
@@ -55,6 +70,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [consent, setConsent] = useState<Consent>(DEFAULT_CONSENT)
   const [quizDomains, setQuizDomains] = useState<string[]>([])
   const [coachClient, setCoachClient] = useState('camille')
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.toggle('dark', theme === 'dark')
+    root.dataset.theme = theme
+    root.style.colorScheme = theme
+    const meta = document.querySelector('meta[name=theme-color]')
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#101013' : '#F6F4F8')
+    try { window.localStorage.setItem('evol-theme', theme) } catch { /* stockage indisponible */ }
+  }, [theme])
 
   const toggleFollowCoach = (id: string) => {
     setFollowedCoachIds(prev => {
@@ -82,6 +107,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<Store>(() => ({
     role, setRole, name, setName, avatar, setAvatar, guest, setGuest, tab, setTab,
     hideExplorer, setHideExplorer, coachSync, setCoachSync, program, setProgram,
+    theme, setTheme, toggleTheme: () => setTheme(t => (t === 'dark' ? 'light' : 'dark')),
     threads, setThreads, followedCoachIds, setFollowedCoachIds, toggleFollowCoach,
     selectedRadarAxis, setSelectedRadarAxis,
     consent, setConsent, quizDomains, setQuizDomains,
@@ -92,7 +118,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setThreads(THREADS); setFollowedCoachIds(['camille', 'nora'])
       setConsent(DEFAULT_CONSENT); setQuizDomains([])
     },
-  }), [role, name, avatar, guest, tab, hideExplorer, coachSync, threads, followedCoachIds, selectedRadarAxis, consent, quizDomains, coachClient, program])
+  }), [role, name, avatar, guest, tab, hideExplorer, coachSync, theme, threads, followedCoachIds, selectedRadarAxis, consent, quizDomains, coachClient, program])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

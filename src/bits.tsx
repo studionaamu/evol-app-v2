@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { Icon } from './Icon'
 
 export function Avatar({ hue, initials, photo, size = 44, ring = false }: {
   hue: string
@@ -60,6 +61,29 @@ export function EvaAvatar({ size = 46 }: { size?: number }) {
         <rect x="25.8" y="19" width="3.8" height="10" rx="1.9" fill="#FFFFFF" />
       </svg>
     </span>
+  )
+}
+
+/* Bascule de thème — piste, curseur et libellé restent lisibles dans les deux palettes */
+export function ThemeToggle({ theme, onChange }: {
+  theme: 'dark' | 'light'
+  onChange: (theme: 'dark' | 'light') => void
+}) {
+  const light = theme === 'light'
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={light}
+      aria-label={light ? 'Passer au thème sombre' : 'Passer au thème clair'}
+      title={light ? 'Passer au thème sombre' : 'Passer au thème clair'}
+      className={'theme-toggle' + (light ? ' on' : '')}
+      onClick={() => onChange(light ? 'dark' : 'light')}
+    >
+      <span className="theme-toggle-knob" aria-hidden>
+        <Icon name={light ? 'sun' : 'moon'} size={13} strokeWidth={1.8} />
+      </span>
+    </button>
   )
 }
 

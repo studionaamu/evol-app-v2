@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Icon, AppleIcon, GoogleIcon } from './Icon'
 import logoUrl from './assets/evol-logo.png'
-import { Avatar } from './bits'
+import { Avatar, ThemeToggle } from './bits'
+import { useStore } from './store'
 import { COACHES, QUIZ, IMAGES, PROGRAM_NAME, recommendedCoachIds, type Coach, type Domain } from './data'
 
 /* =====================================================
@@ -17,11 +18,16 @@ export function Welcome({ onAccount, onCoach, onProgramme }: {
 }) {
   const [mailOpen, setMailOpen] = useState(false)
   const [email, setEmail] = useState('')
+  const { theme, setTheme } = useStore()
 
   return (
     <div className="screen auth">
       <div className="auth-art" aria-hidden>
         <div className="aurora" />
+      </div>
+      <div className="auth-theme">
+        <span>Thème</span>
+        <ThemeToggle theme={theme} onChange={setTheme} />
       </div>
       <div className="auth-body">
         <div className="auth-head">

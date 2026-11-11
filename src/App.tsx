@@ -28,16 +28,6 @@ function Shell() {
   const [eva, setEva] = useState<{ open: boolean; prefill?: string }>({ open: false })
   const openEva = (prefill?: string) => setEva({ open: true, prefill })
 
-  useEffect(() => {
-    /* thème sombre appliqué automatiquement, sans réglage utilisateur */
-    const apply = (dark: boolean) => {
-      document.documentElement.classList.toggle('dark', dark)
-      const meta = document.querySelector('meta[name=theme-color]')
-      if (meta) meta.setAttribute('content', dark ? '#101013' : '#F1EFF7')
-    }
-    apply(true)
-  }, [])
-
   const openChat = (coachId: string) => {
     setThreads(ts => {
       const cleared = ts.map(t => t.coachId === coachId ? { ...t, unread: 0 } : t)
@@ -71,9 +61,10 @@ function Shell() {
       <EvaAvatar size={42} />
     </button>
   ) : null
+  const coachChatOpen = phase === 'app' && role === 'coach' && coachTab === 'messagerie' && !!coachThreadId
 
   if (exerciseId) return <><PlayerScreen id={exerciseId} onExit={() => setExerciseId(null)} />{floatingEva}</>
-  if (chatId) return <><ChatScreen coachId={chatId} onBack={() => setChatId(null)} />{floatingEva}</>
+  if (chatId) return <ChatScreen coachId={chatId} onBack={() => setChatId(null)} />
   if (coachView) return (
     <>
       <CoachScreen
@@ -160,12 +151,12 @@ function Shell() {
 
   /* ---- APP ---- */
   if (role === 'coach') return (
-    <div className="phone">
+    <div className={'phone' + (coachChatOpen ? ' chat-fullscreen' : '')}>
       <main className="tab-content" key={coachTab}>
         <CoachSpace
           coachTab={coachTab}
           onChangeCoachTab={setCoachTab}
-          onExit={() => { setRole('coache'); reset() }}
+          onExit={() => { setCoachThreadId(null); setRole('coache'); reset() }}
           onOpenEva={openEva}
           activeThreadId={coachThreadId}
           onChangeThread={setCoachThreadId}
@@ -173,23 +164,33 @@ function Shell() {
           onChangeVitrineSub={setCoachVSub}
         />
       </main>
-      {floatingEva}
-      <nav className="tabbar coach-tabbar" aria-label="Navigation coach">
-        {([
-          { id: 'bord', icon: 'home', label: 'Home' },
-          { id: 'vitrine', icon: 'store', label: 'Bord' },
-          { id: 'clients', icon: 'chart', label: 'Suivi' },
-          { id: 'messagerie', icon: 'chat', label: 'Messages' },
-          { id: 'reglages', icon: 'gear', label: 'Réglages' },
-        ] as const).map(t => (
-          <button key={t.id} className={'tab' + (coachTab === t.id ? ' on' : '')} onClick={() => setCoachTab(t.id)} aria-label={t.label}>
-            <span className="tab-icon">
-              <Icon name={t.icon} size={20} filled={coachTab === t.id} />
-            </span>
-            <span className="tab-label">{t.label}</span>
-          </button>
-        ))}
-      </nav>
+      {!coachChatOpen && floatingEva}
+      {!coachChatOpen && (
+        <nav className="tabbar coach-tabbar" aria-label="Navigation coach">
+          {([
+            { id: 'bord', icon: 'home', label: 'Home' },
+            { id: 'vitrine', icon: 'store', label: 'Vitrine' },
+            { id: 'clients', icon: 'chart', label: 'Suivi' },
+            { id: 'messagerie', icon: 'chat', label: 'Messages' },
+            { id: 'reglages', icon: 'gear', label: 'Réglages' },
+          ] as const).map(t => (
+            <button
+              key={t.id}
+              className={'tab' + (coachTab === t.id ? ' on' : '')}
+              onClick={() => {
+                setCoachTab(t.id)
+                if (t.id === 'messagerie') setCoachThreadId(null)
+              }}
+              aria-label={t.label}
+            >
+              <span className="tab-icon">
+                <Icon name={t.icon} size={20} filled={coachTab === t.id} />
+              </span>
+              <span className="tab-label">{t.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
     </div>
   )
 

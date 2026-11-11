@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Icon } from './Icon'
-import { Avatar, EvaAvatar } from './bits'
+import { Avatar, EvaAvatar, ThemeToggle } from './bits'
 import { useStore } from './store'
 import {
   COACHES, IMAGES, COACH_CLIENTS, COACH_GROUPS, COACH_CALLS, SESSIONS,
@@ -11,14 +11,14 @@ import {
 import { CallScreen } from './screens2'
 
 export type CoachTab = 'bord' | 'vitrine' | 'clients' | 'messagerie' | 'reglages'
-export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'freebies' | 'galerie'
+export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'galerie'
 
 /* =====================================================
    PROFIL — réglages, confidentialité RGPD, déconnexion
    ===================================================== */
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
-  const { name, avatar, setAvatar, guest, reset, role, program } = useStore()
+  const { name, avatar, setAvatar, guest, reset, role, program, theme, setTheme } = useStore()
   const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
   const changeAvatar = (file?: File) => {
@@ -49,6 +49,20 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
           onChange={e => { changeAvatar(e.target.files?.[0]); e.target.value = '' }}
         />
       </header>
+
+      <section className="card appearance-card">
+        <div className="card-kicker"><Icon name="sun" size={13} /> APPARENCE</div>
+        <div className="appearance-row">
+          <div className="appearance-copy">
+            <span className="appearance-aa" aria-hidden>Aa</span>
+            <div className="setting-txt">
+              <strong>Thème {theme === 'light' ? 'clair' : 'sombre'}</strong>
+              <span>Une interface claire, aérée et fidèle à la charte Evol.</span>
+            </div>
+          </div>
+          <ThemeToggle theme={theme} onChange={setTheme} />
+        </div>
+      </section>
 
       {program && (
         <section className="card prog-profile-card">
@@ -132,6 +146,13 @@ const CAL_KINDS = {
   off: { label: 'Indisponibilité', color: '#E92B1F' },
 } as const
 type CalKind = keyof typeof CAL_KINDS
+
+const OFFER_CATEGORIES = ['Sommeil', 'Stress', 'Mental', 'Mouvement', 'Nutrition', 'Bien-être'] as const
+const STUDIO_MEDIA_IMAGES: Record<string, string> = {
+  m1: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=900&q=80&auto=format&fit=crop',
+  m2: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=900&q=80&auto=format&fit=crop',
+  m3: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop',
+}
 
 const clientById = (id: string) => COACH_CLIENTS.find(c => c.id === id)!
 
@@ -300,7 +321,7 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   vitrineSub: VitrineSub
   onChangeVitrineSub: (s: VitrineSub) => void
 }) {
-  const { coachSync, setCoachSync } = useStore()
+  const { coachSync, setCoachSync, theme, setTheme } = useStore()
   const [mTab, setMTab] = useState<'messages' | 'appels' | 'visio'>('messages')
   const [month, setMonth] = useState(0) // 0 = mois courant
   const base = new Date()
@@ -364,6 +385,29 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   const [gallery, setGallery] = useState<CoachMedia[]>(INITIAL_GALLERY)
   const [mediaTitle, setMediaTitle] = useState('')
   const [mediaKind, setMediaKind] = useState<'Photo' | 'Vidéo'>('Photo')
+
+  /* Vitrine publique — l'aperçu est la surface d'édition */
+  const publicCoach = COACHES.find(c => c.id === 'camille') ?? COACHES[0]
+  const coverInput = useRef<HTMLInputElement>(null)
+  const [studioPreview, setStudioPreview] = useState(false)
+  const [cover, setCover] = useState(publicCoach.video?.thumb ?? publicCoach.photo)
+  const [headline, setHeadline] = useState(publicCoach.role)
+  const [headlineDraft, setHeadlineDraft] = useState(publicCoach.role)
+  const [headlineEditing, setHeadlineEditing] = useState(false)
+  const [publicBio, setPublicBio] = useState(publicCoach.bio)
+  const [bioDraft, setBioDraft] = useState(publicCoach.bio)
+  const [bioEditing, setBioEditing] = useState(false)
+  const [offerCats, setOfferCats] = useState<Record<string, string>>({ p1: 'Sommeil', p2: 'Mental' })
+  const [freebiePublished, setFreebiePublished] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(freebies.map(f => [f.id, true])),
+  )
+  const [mediaPublished, setMediaPublished] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(gallery.map(m => [m.id, true])),
+  )
+  const [mediaCats, setMediaCats] = useState<Record<string, string>>({ m1: 'Studio', m2: 'Démo', m3: 'Atelier' })
+  const [mediaDraft, setMediaDraft] = useState<{ src: string; fileName: string; size: string } | null>(null)
+  const [composer, setComposer] = useState<'program' | 'freebie' | 'media' | null>(null)
+  const [editingOffer, setEditingOffer] = useState<string | null>(null)
 
 
   /* Messagerie Coach interactive : fil porté par App pour survivre au changement d'onglet */
@@ -577,10 +621,11 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
         ? { ...p, title: progTitle.trim(), duration: progDur, price: Number(progPrice) || p.price, desc: progDesc || p.desc }
         : p))
     } else {
+      const id = 'p' + Date.now()
       setPrograms(ps => [
         ...ps,
         {
-          id: 'p' + Date.now(),
+          id,
           title: progTitle.trim(),
           duration: progDur,
           sessionsCount: 8,
@@ -590,34 +635,82 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
           active: true,
         },
       ])
+      setOfferCats(cats => ({ ...cats, [id]: 'Bien-être' }))
     }
-    setEditingProg(null); setShowProgForm(false); setProgTitle(''); setProgDesc('')
+    setEditingProg(null); setShowProgForm(false); setEditingOffer(null); setComposer(null)
+    setProgTitle(''); setProgDesc('')
+  }
+
+  const startProgramComposer = () => {
+    setEditingProg(null); setEditingOffer(null)
+    setProgTitle(''); setProgDur('8 semaines'); setProgPrice('420'); setProgDesc('')
+    setComposer('program')
+  }
+
+  const beginOfferEdit = (p: CoachProgram) => {
+    setEditingProg(p); setEditingOffer(p.id); setComposer(null)
+    setProgTitle(p.title); setProgDur(p.duration); setProgPrice(String(p.price)); setProgDesc(p.desc)
+  }
+
+  const saveHeadline = () => {
+    setHeadline(headlineDraft.trim() || headline)
+    setHeadlineEditing(false)
+  }
+
+  const savePublicBio = () => {
+    setPublicBio(bioDraft.trim() || publicBio)
+    setBioEditing(false)
   }
 
   const addFreebie = () => {
     if (!freeTitle.trim()) return
+    const id = 'f' + Date.now()
     setFreebies(fs => [
-      { id: 'f' + Date.now(), title: freeTitle.trim(), kind: freeKind, duration: freeDur, downloads: 1, src: freeSrc ?? undefined },
+      { id, title: freeTitle.trim(), kind: freeKind, duration: freeDur, downloads: 1, src: freeSrc ?? undefined },
       ...fs,
     ])
+    setFreebiePublished(pub => ({ ...pub, [id]: true }))
     setFreeTitle('')
     setFreeSrc(null)
+    setComposer(null)
   }
 
-  const addMedia = (file?: File) => {
-    const title = mediaTitle.trim() || file?.name
+  const removeFreebie = (id: string) => {
+    setFreebies(fs => fs.filter(f => f.id !== id))
+    setFreebiePublished(pub => {
+      const next = { ...pub }
+      delete next[id]
+      return next
+    })
+  }
+
+  const addMedia = () => {
+    const title = mediaTitle.trim() || mediaDraft?.fileName
     if (!title) return
+    const id = 'm' + Date.now()
     setGallery(gs => [
       {
-        id: 'm' + Date.now(),
+        id,
         title,
         kind: mediaKind,
-        meta: file ? `${Math.max(1, Math.round(file.size / 1024))} Ko` : 'Ajouté à la galerie',
-        src: file ? URL.createObjectURL(file) : undefined,
+        meta: mediaDraft?.size ?? 'Ajouté à la galerie',
+        src: mediaDraft?.src,
       },
       ...gs,
     ])
+    setMediaPublished(pub => ({ ...pub, [id]: true }))
+    setMediaCats(cats => ({ ...cats, [id]: 'Studio' }))
     setMediaTitle('')
+    setMediaDraft(null)
+    setComposer(null)
+  }
+
+  const toggleFreebiePublished = (id: string) => {
+    setFreebiePublished(pub => ({ ...pub, [id]: pub[id] === false }))
+  }
+
+  const toggleMediaPublished = (id: string) => {
+    setMediaPublished(pub => ({ ...pub, [id]: pub[id] === false }))
   }
 
   if (liveVisio) {
@@ -639,9 +732,21 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
   }
 
   const sampleEvaReport = EVA_SESSION_REPORTS[0]
+  const visiblePrograms = studioPreview ? programs.filter(p => p.active) : programs
+  const visibleFreebies = studioPreview ? freebies.filter(f => freebiePublished[f.id] !== false) : freebies
+  const visibleMedia = studioPreview ? gallery.filter(m => mediaPublished[m.id] !== false) : gallery
+  const liveProgramCount = programs.filter(p => p.active).length
+  const liveFreebieCount = freebies.filter(f => freebiePublished[f.id] !== false).length
+  const liveMediaCount = gallery.filter(m => mediaPublished[m.id] !== false).length
+  const hiddenContent = programs.filter(p => !p.active).length
+    + freebies.filter(f => freebiePublished[f.id] === false).length
+    + gallery.filter(m => mediaPublished[m.id] === false).length
+  const todayAgenda = agendaDays[base.getDate()] ?? []
+  const todayCustomSlots = customSlots.filter(cs => cs.day === base.getDate())
+  const todayTotal = todayAgenda.length + todayCustomSlots.length
 
   return (
-    <div className="tab-page" data-zone={coachTab}>
+    <div className={'tab-page' + (coachTab === 'messagerie' && activeCoachThreadId && mTab === 'messages' ? ' chat-page' : '')} data-zone={coachTab}>
       {coachTab === 'bord' && (
         <>
           <header className="page-head">
@@ -667,33 +772,43 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             </div>
           </section>
 
-          <section className="card">
-            <div className="row between" style={{ marginTop: 0, marginBottom: 8 }}>
-              <div className="card-kicker" style={{ margin: 0 }}><Icon name="calendar" size={13} /> AUJOURD'HUI</div>
-              <button className="link-btn" style={{ fontSize: 11.5 }} onClick={() => onChangeCoachTab?.('vitrine')}>
-                Gérer mes créneaux
+          <section className="card today-card">
+            <div className="today-head">
+              <div className="today-head-copy">
+                <div className="card-kicker" style={{ margin: 0 }}><Icon name="calendar" size={13} /> AUJOURD'HUI</div>
+                <span className="today-count">{todayTotal} rendez-vous</span>
+              </div>
+              <button className="link-btn today-manage" onClick={() => { setVSub('creneaux'); onChangeCoachTab?.('vitrine') }}>
+                Gérer mes créneaux <Icon name="chevron-right" size={12} />
               </button>
             </div>
-            {(agendaDays[base.getDate()] ?? []).map(s => (
-              <button className="session" key={s.time} onClick={() => setLiveVisio({ who: s.who, isGroup: s.kind === 'group' })}>
-                <div className="date-box"><strong style={{ fontSize: 13 }}>{s.time}</strong></div>
-                <div className="session-info">
-                  <strong>{s.who}</strong>
-                  <span>{s.label} · cliquez pour lancer ou clôturer</span>
+            <div className="today-timeline">
+              {todayAgenda.map(s => (
+                <button className={'today-slot' + (s.kind === 'group' ? ' group' : '')} key={s.time} onClick={() => setLiveVisio({ who: s.who, isGroup: s.kind === 'group' })}>
+                  <span className="today-time"><strong>{s.time}</strong><span>{s.dur} min</span></span>
+                  <span className={'today-dot ' + s.kind} />
+                  <span className="today-body">
+                    <span className="today-kind">{s.kind === 'group' ? 'Collectif' : 'Individuel'}</span>
+                    <strong>{s.who}</strong>
+                    <span>{s.label}</span>
+                  </span>
+                  <span className="today-launch"><Icon name="video" size={15} /></span>
+                </button>
+              ))}
+              {todayCustomSlots.map(cs => (
+                <div className="today-slot is-open" key={cs.id}>
+                  <span className="today-time"><strong>{cs.start}</strong><span>{cs.dur} min</span></span>
+                  <span className="today-dot open" />
+                  <span className="today-body">
+                    <span className="today-kind">Réservable</span>
+                    <strong>Créneau ouvert</strong>
+                    <span>Disponible à la réservation</span>
+                  </span>
+                  <span className="today-open-tag">Ouvert</span>
                 </div>
-                <span className="chev"><Icon name="video" size={16} /></span>
-              </button>
-            ))}
-            {customSlots.filter(cs => cs.day === selectedDay).map(cs => (
-              <div className="session" key={cs.id}>
-                <div className="date-box"><strong style={{ fontSize: 13 }}>{cs.start}</strong></div>
-                <div className="session-info">
-                  <strong>Créneau ouvert ({cs.dur} min)</strong>
-                  <span>Disponible à la réservation · Jour {cs.day}</span>
-                </div>
-                <span className="tag mini">Ouvert</span>
-              </div>
-            ))}
+              ))}
+              {todayTotal === 0 && <div className="today-empty">Aucun rendez-vous aujourd'hui.</div>}
+            </div>
           </section>
 
           {/* SYNTHÈSES DE SÉANCES — comptes rendus EVA */}
@@ -725,21 +840,22 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
       {/* ONGLET OFFRE & PLANNING (EX-VITRINE OPTIMISÉ) */}
       {coachTab === 'vitrine' && (
         <>
-          <header className="page-head">
+          <header className={'page-head' + (vSub === 'galerie' ? ' vitrine-public-head' : '')}>
             <div>
-              <div className="date-line">OFFRE & PLANNING</div>
-              <h1>Vos programmes,<br />créneaux & tarifs.</h1>
-              <p>Vos programmes portent leur tarif : créez, éditez et publiez vos offres, vos créneaux (+15 min auto) et vos contenus gratuits.</p>
+              <div className="date-line">{vSub === 'galerie' ? 'VITRINE · APERÇU ÉDITABLE' : 'OFFRE & PLANNING'}</div>
+              <h1>{vSub === 'galerie' ? 'Votre vitrine' : <>Vos programmes,<br />créneaux & tarifs.</>}</h1>
+              <p>{vSub === 'galerie'
+                ? 'La page que vos élèves découvrent, éditable directement.'
+                : 'Vos programmes portent leur tarif : créez, éditez et publiez vos offres, vos créneaux (+15 min auto) et vos contenus gratuits.'}</p>
             </div>
           </header>
 
           <div className="subtabs">
             {([
               ['business', 'Business'],
-              ['programmes', 'Mes programmes'],
-              ['creneaux', 'Disponibilités'],
-              ['freebies', 'Freebies'],
-              ['galerie', 'Galerie'],
+              ['programmes', 'Programmes'],
+              ['creneaux', 'Créneaux'],
+              ['galerie', 'Public'],
             ] as const).map(([id, label]) => (
               <button key={id} className={'subtab' + (vSub === id ? ' on' : '')} onClick={() => setVSub(id)}>
                 {label}
@@ -1204,119 +1320,473 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             </>
           )}
 
-          {vSub === 'freebies' && (
+          {vSub === 'galerie' && (
             <>
-              <section className="card">
-                <div className="card-kicker"><Icon name="plus" size={13} /> AJOUTER UN CONTENU GRATUIT (FREEBIE)</div>
-                <h2>Vos contenus gratuits & ressources</h2>
-                <div className="vitrine-form" style={{ marginTop: 10 }}>
-                  <input className="eco-input glass-lite" placeholder="Titre du contenu gratuit…" value={freeTitle} onChange={e => setFreeTitle(e.target.value)} />
-                  <div className="row" style={{ marginTop: 0 }}>
-                    <select className="eco-select glass-lite" value={freeKind} onChange={e => setFreeKind(e.target.value)}>
-                      <option value="Audio">Audio guidé</option>
-                      <option value="Guide PDF">Guide PDF</option>
-                      <option value="Image">Image</option>
-                      <option value="Vidéo">Vidéo</option>
-                      <option value="Article">Article</option>
-                    </select>
-                    <input className="eco-input glass-lite" placeholder="Durée / taille" value={freeDur} onChange={e => setFreeDur(e.target.value)} style={{ maxWidth: 110 }} />
+              <div className={'studio-toolbar' + (studioPreview ? ' is-preview' : '')}>
+                <div className="studio-toolbar-main">
+                  <span className="studio-toolbar-icon">
+                    <Icon name={studioPreview ? 'eye' : 'edit'} size={15} />
+                  </span>
+                  <div>
+                    <strong>{studioPreview ? 'Aperçu élève' : 'Édition directe'}</strong>
+                    <span>{studioPreview ? 'Votre page telle qu’elle est publiée aujourd’hui.' : 'Le profil public est la surface d’édition.'}</span>
                   </div>
-                  <div className="row" style={{ marginTop: 0 }}>
-                    <label className="btn btn-soft sm gallery-pick">
-                      <Icon name="camera" size={13} /><span>Ajouter une image ou une vidéo</span>
+                </div>
+                <button
+                  className={'studio-preview-btn' + (studioPreview ? ' active' : '')}
+                  onClick={() => setStudioPreview(v => !v)}
+                  aria-pressed={studioPreview}
+                >
+                  <Icon name={studioPreview ? 'edit' : 'eye'} size={14} />
+                  <span>{studioPreview ? 'Modifier' : 'Aperçu élève'}</span>
+                </button>
+              </div>
+
+              {!studioPreview && (
+                <div className="studio-guidance">
+                  <Icon name="sparkle" size={13} />
+                  <span>Touchez un texte, une catégorie ou une visibilité. Tout se règle ici, sans quitter votre page.</span>
+                </div>
+              )}
+
+              <div className="studio-overview" aria-label="Contenus de la vitrine">
+                <button onClick={() => document.getElementById('studio-offres')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                  <i className="blue" /><strong>{liveProgramCount}</strong><span>{liveProgramCount > 1 ? 'offres' : 'offre'}</span>
+                </button>
+                <button onClick={() => document.getElementById('studio-freebies')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                  <i className="red" /><strong>{liveFreebieCount}</strong><span>{liveFreebieCount > 1 ? 'ressources' : 'ressource'}</span>
+                </button>
+                <button onClick={() => document.getElementById('studio-galerie')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                  <i className="purple" /><strong>{liveMediaCount}</strong><span>{liveMediaCount > 1 ? 'médias' : 'média'}</span>
+                </button>
+                {!studioPreview && hiddenContent > 0 && <span className="studio-overview-hidden">{hiddenContent} masqué{hiddenContent > 1 ? 's' : ''}</span>}
+              </div>
+
+              <article className="public-profile" aria-label="Aperçu de votre vitrine publique">
+                <header className="public-cover">
+                  <img className="public-cover-img" src={cover} alt="" />
+                  <div className="public-cover-shade" />
+                  {!studioPreview && (
+                    <div className="public-cover-tools">
+                      <button className="public-cover-btn" onClick={() => coverInput.current?.click()}>
+                        <Icon name="camera" size={13} /><span>Couverture</span>
+                      </button>
+                      <span className="public-state on"><i /> Publié</span>
                       <input
+                        ref={coverInput}
                         type="file"
-                        accept="image/*,video/*"
+                        accept="image/*"
+                        aria-label="Changer l’image de couverture"
                         onChange={e => {
                           const f = e.target.files?.[0]
-                          if (f) {
-                            setFreeSrc(URL.createObjectURL(f))
-                            setFreeKind(f.type.startsWith('video') ? 'Vidéo' : 'Image')
-                            setFreeDur(`${Math.max(1, Math.round(f.size / 1024))} Ko`)
-                          }
+                          if (f?.type.startsWith('image/')) setCover(URL.createObjectURL(f))
                           e.target.value = ''
                         }}
                       />
-                    </label>
-                    {freeSrc && <span className="tag mini">Média prêt</span>}
-                    <button className="btn btn-primary sm" onClick={addFreebie}><Icon name="plus" size={14} /><span>Publier</span></button>
-                  </div>
-                </div>
-              </section>
-
-              <div className="freelist">
-                {freebies.map(f => (
-                  <div key={f.id} className="free-item glass-lite">
-                    {f.src
-                      ? f.kind === 'Vidéo'
-                        ? <video className="free-thumb" src={f.src} muted playsInline />
-                        : <img className="free-thumb" src={f.src} alt="" />
-                      : <span className="free-kind">{f.kind}</span>}
-                    <div className="session-info">
-                      <strong style={{ fontSize: 13.5 }}>{f.title}</strong>
-                      <span style={{ fontSize: 11.5 }}>{f.duration} · {f.downloads} consultations</span>
                     </div>
-                    <button className="remove-btn" onClick={() => setFreebies(fs => fs.filter(x => x.id !== f.id))} aria-label="Supprimer">
-                      <Icon name="close" size={13} />
-                    </button>
+                  )}
+                  <div className="public-identity">
+                    <Avatar hue={publicCoach.hue} initials={publicCoach.initials} photo={publicCoach.photo} size={72} ring />
+                    <div className="public-identity-copy">
+                      <div className="public-name-line">
+                        <strong>{publicCoach.name}</strong>
+                        <span className="public-verified" title="Profil vérifié"><Icon name="check" size={10} strokeWidth={2.4} /></span>
+                      </div>
+                      {headlineEditing && !studioPreview ? (
+                        <div className="public-inline-fields">
+                          <input
+                            className="public-inline-input"
+                            value={headlineDraft}
+                            autoFocus
+                            aria-label="Accroche du profil"
+                            onChange={e => setHeadlineDraft(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') saveHeadline()
+                              if (e.key === 'Escape') setHeadlineEditing(false)
+                            }}
+                          />
+                          <div className="public-inline-actions">
+                            <button className="inline-icon ok" onClick={saveHeadline} aria-label="Enregistrer l’accroche"><Icon name="check" size={12} /></button>
+                            <button className="inline-icon" onClick={() => setHeadlineEditing(false)} aria-label="Annuler"><Icon name="close" size={12} /></button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="public-role-line">
+                          <span>{headline}</span>
+                          {!studioPreview && (
+                            <button
+                              className="inline-edit"
+                              onClick={() => { setHeadlineDraft(headline); setHeadlineEditing(true) }}
+                              aria-label="Modifier l’accroche du profil"
+                            >
+                              <Icon name="edit" size={11} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      <div className="public-meta">
+                        <span><Icon name="star" size={12} /> {publicCoach.rating} · {publicCoach.reviews} avis</span>
+                        <span><Icon name="location" size={12} /> {publicCoach.city} · {publicCoach.mode}</span>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                </header>
 
-          {vSub === 'galerie' && (
-            <>
-              <section className="card">
-                <div className="card-kicker"><Icon name="video" size={13} /> GALERIE · PHOTOS & VIDÉOS</div>
-                <h2>Montrez votre univers</h2>
-                <p>Studio, démonstrations, ateliers : les médias publiés sur votre vitrine publique.</p>
-                <div className="vitrine-form" style={{ marginTop: 10 }}>
-                  <input
-                    className="eco-input glass-lite"
-                    placeholder="Légende du média…"
-                    value={mediaTitle}
-                    onChange={e => setMediaTitle(e.target.value)}
-                  />
-                  <div className="row" style={{ marginTop: 0 }}>
-                    <select className="eco-select glass-lite" value={mediaKind} onChange={e => setMediaKind(e.target.value as 'Photo' | 'Vidéo')}>
-                      <option value="Photo">Photo</option>
-                      <option value="Vidéo">Vidéo</option>
-                    </select>
-                    <label className="btn btn-soft sm gallery-pick">
-                      <Icon name="plus" size={13} /><span>Choisir un fichier</span>
-                      <input
-                        type="file"
-                        accept="image/*,video/*"
-                        onChange={e => { const f = e.target.files?.[0]; if (f) addMedia(f); e.target.value = '' }}
-                      />
-                    </label>
-                    <button className="btn btn-primary sm" onClick={() => addMedia()}>
-                      <Icon name="check" size={13} /><span>Publier</span>
-                    </button>
+                <div className="public-profile-body">
+                  <div className="public-proof">
+                    <div><strong>{publicCoach.students}+</strong><span>élèves accompagnés</span></div>
+                    <div><strong>{publicCoach.successRate}%</strong><span>objectifs atteints</span></div>
+                    <div><strong>24 h</strong><span>réponse moyenne</span></div>
+                  </div>
+
+                  <section className="public-section">
+                    <div className="public-section-head">
+                      <div>
+                        <h2>À propos</h2>
+                        <span className="public-section-kicker">Votre approche, en quelques mots</span>
+                      </div>
+                      {!studioPreview && !bioEditing && (
+                        <button className="public-edit-link" onClick={() => { setBioDraft(publicBio); setBioEditing(true) }}>
+                          <Icon name="edit" size={12} /><span>Modifier</span>
+                        </button>
+                      )}
+                    </div>
+                    {bioEditing && !studioPreview ? (
+                      <div className="public-bio-edit">
+                        <textarea
+                          className="journal"
+                          rows={4}
+                          value={bioDraft}
+                          autoFocus
+                          aria-label="Biographie publique"
+                          onChange={e => setBioDraft(e.target.value)}
+                        />
+                        <div className="public-bio-actions">
+                          <button className="btn btn-ghost sm" onClick={() => setBioEditing(false)}>Annuler</button>
+                          <button className="btn btn-primary sm" onClick={savePublicBio}><Icon name="check" size={13} /><span>Enregistrer</span></button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="public-bio">{publicBio}</p>
+                    )}
+                    <div className="public-tags">
+                      {publicCoach.tags.map(t => <span key={t}>{t}</span>)}
+                      {publicCoach.domains.filter(d => !publicCoach.tags.includes(d)).map(d => <span key={d}>{d}</span>)}
+                    </div>
+                  </section>
+
+                  <section className="public-section" id="studio-offres">
+                    <div className="public-section-head">
+                      <div>
+                        <h2>Programmes & accompagnements</h2>
+                        <span className="public-section-kicker">{programs.filter(p => p.active).length} offre{programs.filter(p => p.active).length > 1 ? 's' : ''} publiée{programs.filter(p => p.active).length > 1 ? 's' : ''} · {programs.filter(p => p.active).reduce((sum, p) => sum + p.price, 0)} € au catalogue</span>
+                      </div>
+                      {!studioPreview && (
+                        <button className="public-add-btn" onClick={startProgramComposer}><Icon name="plus" size={13} /><span>Ajouter</span></button>
+                      )}
+                    </div>
+
+                    <div className="public-offer-list">
+                      {visiblePrograms.map(p => {
+                        const category = offerCats[p.id] ?? 'Bien-être'
+                        return (
+                          <article className={'public-offer' + (p.active ? '' : ' is-hidden')} key={p.id}>
+                            <div className="public-offer-top">
+                              <span className="public-category">{category}</span>
+                              {!studioPreview && (
+                                <span className={'public-state' + (p.active ? ' on' : '')}><i />{p.active ? 'Publié' : 'Masqué'}</span>
+                              )}
+                            </div>
+                            <div className="public-offer-main">
+                              <div>
+                                <h3>{p.title}</h3>
+                                <span>{p.duration} · {p.sessionsCount} séances</span>
+                              </div>
+                              <strong>{p.price} €</strong>
+                            </div>
+                            <p>{p.desc}</p>
+                            <span className="public-offer-format">{p.format}</span>
+
+                            {!studioPreview && editingOffer === p.id && (
+                              <div className="studio-inline-editor">
+                                <input className="eco-input glass-lite" value={progTitle} onChange={e => setProgTitle(e.target.value)} aria-label="Titre du programme" />
+                                <div className="studio-form-grid">
+                                  <input className="eco-input glass-lite" value={progDur} onChange={e => setProgDur(e.target.value)} aria-label="Durée" />
+                                  <input className="eco-input glass-lite" value={progPrice} onChange={e => setProgPrice(e.target.value)} aria-label="Tarif" inputMode="numeric" />
+                                </div>
+                                <textarea className="journal" rows={2} value={progDesc} onChange={e => setProgDesc(e.target.value)} aria-label="Description du programme" />
+                                <div className="studio-editor-actions">
+                                  <button className="btn btn-ghost sm" onClick={() => { setEditingOffer(null); setEditingProg(null) }}>Annuler</button>
+                                  <button className="btn btn-primary sm" onClick={saveProgram}><Icon name="check" size={13} /><span>Enregistrer</span></button>
+                                </div>
+                              </div>
+                            )}
+
+                            {!studioPreview && editingOffer !== p.id && (
+                              <div className="public-offer-actions">
+                                <label className="public-cat-select">
+                                  <span>Catégorie</span>
+                                  <select
+                                    value={category}
+                                    aria-label={`Catégorie de ${p.title}`}
+                                    onChange={e => setOfferCats(cats => ({ ...cats, [p.id]: e.target.value }))}
+                                  >
+                                    {OFFER_CATEGORIES.map(c => <option value={c} key={c}>{c}</option>)}
+                                  </select>
+                                </label>
+                                <button className="public-mini-action" onClick={() => beginOfferEdit(p)}><Icon name="edit" size={12} /><span>Modifier</span></button>
+                                <button
+                                  className={'public-visibility' + (p.active ? ' on' : '')}
+                                  aria-pressed={p.active}
+                                  onClick={() => setPrograms(ps => ps.map(x => x.id === p.id ? { ...x, active: !x.active } : x))}
+                                >
+                                  <Icon name={p.active ? 'eye' : 'close'} size={12} />
+                                  <span>{p.active ? 'Visible' : 'Masqué'}</span>
+                                </button>
+                              </div>
+                            )}
+                          </article>
+                        )
+                      })}
+                    </div>
+                    {visiblePrograms.length === 0 && (
+                      <div className="public-empty"><Icon name="store" size={17} /><span>Aucun programme visible. Activez une offre ci-dessus.</span></div>
+                    )}
+
+                    {!studioPreview && composer === 'program' && (
+                      <div className="studio-composer">
+                        <div className="studio-composer-head">
+                          <div><span className="public-section-kicker">Nouvelle offre</span><strong>Créer un programme</strong></div>
+                          <button className="icon-btn" onClick={() => setComposer(null)} aria-label="Fermer"><Icon name="close" size={14} /></button>
+                        </div>
+                        <input className="eco-input glass-lite" placeholder="Titre du programme (ex. Reset Sommeil)" value={progTitle} onChange={e => setProgTitle(e.target.value)} />
+                        <div className="studio-form-grid">
+                          <input className="eco-input glass-lite" placeholder="Durée (ex. 6 semaines)" value={progDur} onChange={e => setProgDur(e.target.value)} />
+                          <input className="eco-input glass-lite" placeholder="Tarif €" value={progPrice} onChange={e => setProgPrice(e.target.value)} inputMode="numeric" />
+                        </div>
+                        <textarea className="journal" rows={2} placeholder="Description et bénéfices clés…" value={progDesc} onChange={e => setProgDesc(e.target.value)} />
+                        <div className="studio-editor-actions">
+                          <button className="btn btn-ghost sm" onClick={() => setComposer(null)}>Annuler</button>
+                          <button className="btn btn-primary sm" onClick={saveProgram}><Icon name="check" size={13} /><span>Publier</span></button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="public-section" id="studio-freebies">
+                    <div className="public-section-head">
+                      <div>
+                        <h2>Ressources offertes</h2>
+                        <span className="public-section-kicker">Ce que vos élèves reçoivent gratuitement</span>
+                      </div>
+                      {!studioPreview && (
+                        <button className="public-add-btn" onClick={() => { setComposer(composer === 'freebie' ? null : 'freebie'); setEditingOffer(null) }}><Icon name="plus" size={13} /><span>Ajouter</span></button>
+                      )}
+                    </div>
+                    <div className="public-freebies">
+                      {visibleFreebies.map(f => {
+                        const published = freebiePublished[f.id] !== false
+                        return (
+                          <article className={'public-freebie' + (published ? '' : ' is-hidden')} key={f.id}>
+                            <span className="public-freebie-kind">{f.kind}</span>
+                            <div className="public-freebie-copy">
+                              <strong>{f.title}</strong>
+                              <span>{f.duration} · {f.downloads} téléchargements</span>
+                            </div>
+                            {!studioPreview && (
+                              <div className="public-freebie-actions">
+                                <button
+                                  className={'public-visibility compact' + (published ? ' on' : '')}
+                                  aria-pressed={published}
+                                  aria-label={published ? 'Masquer cette ressource' : 'Publier cette ressource'}
+                                  onClick={() => toggleFreebiePublished(f.id)}
+                                >
+                                  <Icon name={published ? 'eye' : 'close'} size={12} />
+                                </button>
+                                <button
+                                  className="public-visibility compact danger"
+                                  aria-label="Supprimer cette ressource"
+                                  onClick={() => removeFreebie(f.id)}
+                                >
+                                  <Icon name="trash" size={12} />
+                                </button>
+                              </div>
+                            )}
+                          </article>
+                        )
+                      })}
+                    </div>
+                    {visibleFreebies.length === 0 && (
+                      <div className="public-empty"><Icon name="play" size={17} /><span>Aucune ressource visible. Publiez une ressource pour la montrer.</span></div>
+                    )}
+
+                    {!studioPreview && composer === 'freebie' && (
+                      <div className="studio-composer">
+                        <div className="studio-composer-head">
+                          <div><span className="public-section-kicker">Nouvelle ressource</span><strong>Offrir un contenu</strong></div>
+                          <button className="icon-btn" onClick={() => setComposer(null)} aria-label="Fermer"><Icon name="close" size={14} /></button>
+                        </div>
+                        <input className="eco-input glass-lite" placeholder="Titre du contenu gratuit…" value={freeTitle} onChange={e => setFreeTitle(e.target.value)} />
+                        <div className="studio-form-grid">
+                          <select className="eco-select glass-lite" value={freeKind} onChange={e => setFreeKind(e.target.value)}>
+                            <option value="Audio">Audio guidé</option>
+                            <option value="Guide PDF">Guide PDF</option>
+                            <option value="Image">Image</option>
+                            <option value="Vidéo">Vidéo</option>
+                            <option value="Article">Article</option>
+                          </select>
+                          <input className="eco-input glass-lite" placeholder="Durée / taille" value={freeDur} onChange={e => setFreeDur(e.target.value)} />
+                        </div>
+                        <div className="studio-upload-row">
+                          <label className="btn btn-soft sm gallery-pick">
+                            <Icon name="camera" size={13} /><span>Ajouter un média</span>
+                            <input
+                              type="file"
+                              accept="image/*,video/*"
+                              onChange={e => {
+                                const f = e.target.files?.[0]
+                                if (f) {
+                                  setFreeSrc(URL.createObjectURL(f))
+                                  setFreeKind(f.type.startsWith('video') ? 'Vidéo' : 'Image')
+                                  setFreeDur(`${Math.max(1, Math.round(f.size / 1024))} Ko`)
+                                }
+                                e.target.value = ''
+                              }}
+                            />
+                          </label>
+                          {freeSrc && <span className="public-state on"><i />Média prêt</span>}
+                        </div>
+                        <div className="studio-editor-actions">
+                          <button className="btn btn-ghost sm" onClick={() => setComposer(null)}>Annuler</button>
+                          <button className="btn btn-primary sm" onClick={addFreebie}><Icon name="check" size={13} /><span>Publier</span></button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="public-section" id="studio-galerie">
+                    <div className="public-section-head">
+                      <div>
+                        <h2>Galerie</h2>
+                        <span className="public-section-kicker">Studio, démonstrations, ateliers</span>
+                      </div>
+                      {!studioPreview && (
+                        <button className="public-add-btn" onClick={() => { setComposer(composer === 'media' ? null : 'media'); setEditingOffer(null) }}><Icon name="plus" size={13} /><span>Ajouter</span></button>
+                      )}
+                    </div>
+                    <div className="public-gallery">
+                      {visibleMedia.map(m => {
+                        const published = mediaPublished[m.id] !== false
+                        const mediaSrc = m.src ?? STUDIO_MEDIA_IMAGES[m.id]
+                        const category = mediaCats[m.id] ?? 'Studio'
+                        return (
+                          <figure className={'public-media' + (published ? '' : ' is-hidden')} key={m.id}>
+                            {mediaSrc
+                              ? m.kind === 'Vidéo'
+                                ? <video src={mediaSrc} muted playsInline />
+                                : <img src={mediaSrc} alt={m.title} />
+                              : <div className="public-media-ph"><Icon name={m.kind === 'Vidéo' ? 'play' : 'activity'} size={19} /></div>}
+                            <div className="public-media-overlay">
+                              <span className="public-media-cat">{category}</span>
+                              {!studioPreview && (
+                                <button
+                                  className={'public-visibility compact' + (published ? ' on' : '')}
+                                  aria-pressed={published}
+                                  aria-label={published ? 'Masquer ce média' : 'Publier ce média'}
+                                  onClick={() => toggleMediaPublished(m.id)}
+                                >
+                                  <Icon name={published ? 'eye' : 'close'} size={12} />
+                                </button>
+                              )}
+                            </div>
+                            <figcaption>
+                              <strong>{m.title}</strong>
+                              <span>{m.kind} · {m.meta}</span>
+                              {!studioPreview && (
+                                <select
+                                  className="public-media-select"
+                                  value={category}
+                                  aria-label={`Catégorie de ${m.title}`}
+                                  onChange={e => setMediaCats(cats => ({ ...cats, [m.id]: e.target.value }))}
+                                >
+                                  {['Studio', 'Démo', 'Atelier', 'Résultat', 'Coulisses'].map(c => <option value={c} key={c}>{c}</option>)}
+                                </select>
+                              )}
+                            </figcaption>
+                          </figure>
+                        )
+                      })}
+                    </div>
+                    {visibleMedia.length === 0 && (
+                      <div className="public-empty"><Icon name="video" size={17} /><span>Aucun média visible. Ajoutez une photo ou une vidéo.</span></div>
+                    )}
+
+                    {!studioPreview && composer === 'media' && (
+                      <div className="studio-composer">
+                        <div className="studio-composer-head">
+                          <div><span className="public-section-kicker">Nouveau média</span><strong>Enrichir la galerie</strong></div>
+                          <button className="icon-btn" onClick={() => setComposer(null)} aria-label="Fermer"><Icon name="close" size={14} /></button>
+                        </div>
+                        <input className="eco-input glass-lite" placeholder="Légende du média…" value={mediaTitle} onChange={e => setMediaTitle(e.target.value)} />
+                        <div className="studio-form-grid">
+                          <select className="eco-select glass-lite" value={mediaKind} onChange={e => setMediaKind(e.target.value as 'Photo' | 'Vidéo')}>
+                            <option value="Photo">Photo</option>
+                            <option value="Vidéo">Vidéo</option>
+                          </select>
+                          <label className="btn btn-soft sm gallery-pick">
+                            <Icon name="plus" size={13} /><span>Choisir un fichier</span>
+                            <input
+                              type="file"
+                              accept="image/*,video/*"
+                              onChange={e => {
+                                const f = e.target.files?.[0]
+                                if (f) {
+                                  setMediaDraft({
+                                    src: URL.createObjectURL(f),
+                                    fileName: f.name,
+                                    size: `${Math.max(1, Math.round(f.size / 1024))} Ko`,
+                                  })
+                                }
+                                e.target.value = ''
+                              }}
+                            />
+                          </label>
+                          {mediaDraft && <span className="public-state on"><i />Média prêt</span>}
+                        </div>
+                        <div className="studio-editor-actions">
+                          <button className="btn btn-ghost sm" onClick={() => { setComposer(null); setMediaDraft(null) }}>Annuler</button>
+                          <button className="btn btn-primary sm" onClick={() => addMedia()} disabled={!mediaTitle.trim() && !mediaDraft}><Icon name="check" size={13} /><span>Publier</span></button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="public-testimonials">
+                    <div className="public-section-head">
+                      <div><h2>Témoignages</h2><span className="public-section-kicker">{publicCoach.reviews} avis vérifiés</span></div>
+                    </div>
+                    {publicCoach.testimonial.map(t => (
+                      <blockquote key={t.author}>
+                        <span className="public-stars">★★★★★</span>
+                        <p>“{t.text}”</p>
+                        <cite>{t.author}</cite>
+                      </blockquote>
+                    ))}
+                  </section>
+
+                  <div className="public-cta">
+                    <div><strong>Prêt à commencer ?</strong><span>Réservez un premier échange avec {publicCoach.name.split(' ')[0]}.</span></div>
+                    <button className="btn btn-primary sm"><span>Choisir ce coach</span><Icon name="arrow-right" size={14} /></button>
                   </div>
                 </div>
-              </section>
+              </article>
 
-              <div className="gallery-grid">
-                {gallery.map(m => (
-                  <figure className="gallery-item glass-lite" key={m.id}>
-                    {m.src
-                      ? m.kind === 'Vidéo'
-                        ? <video src={m.src} muted playsInline />
-                        : <img src={m.src} alt={m.title} />
-                      : <div className="gallery-ph"><Icon name={m.kind === 'Vidéo' ? 'play' : 'activity'} size={18} /></div>}
-                    <figcaption>
-                      <strong>{m.title}</strong>
-                      <span>{m.kind} · {m.meta}</span>
-                    </figcaption>
-                    <button className="remove-btn" onClick={() => setGallery(gs => gs.filter(x => x.id !== m.id))} aria-label="Retirer ce média">
-                      <Icon name="close" size={12} />
-                    </button>
-                  </figure>
-                ))}
-              </div>
-              <div className="privacy"><Icon name="shield" size={13} /> Visibilité maîtrisée · retirez un média à tout moment de votre vitrine.</div>
+              {!studioPreview && (
+                <div className="studio-footnote">
+                  <Icon name="shield" size={13} />
+                  <span>{hiddenContent > 0 ? `${hiddenContent} contenu${hiddenContent > 1 ? 's' : ''} masqué${hiddenContent > 1 ? 's' : ''} · ` : ''}Vos modifications sont visibles immédiatement sur votre page publique.</span>
+                </div>
+              )}
             </>
           )}
 
@@ -1405,20 +1875,31 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
 
       {coachTab === 'messagerie' && (
         <>
-          <header className="page-head">
-            <div>
-              <div className="date-line">MESSAGERIE</div>
-              <h1>Messages, appels, visio.</h1>
-              <p>Individuel ou groupe, tout au même endroit.</p>
-            </div>
-          </header>
-          <div className="subtabs">
-            {(['messages', 'appels', 'visio'] as const).map(t => (
-              <button key={t} className={'subtab' + (mTab === t ? ' on' : '')} onClick={() => setMTab(t)}>
-                {t === 'messages' ? 'Messages' : t === 'appels' ? 'Appels' : 'Visio'}
-              </button>
-            ))}
-          </div>
+          {!(activeCoachThreadId && mTab === 'messages') && (
+            <>
+              <header className="page-head">
+                <div>
+                  <div className="date-line">MESSAGERIE</div>
+                  <h1>Messages, appels, visio.</h1>
+                  <p>Individuel ou groupe, tout au même endroit.</p>
+                </div>
+              </header>
+              <div className="subtabs">
+                {(['messages', 'appels', 'visio'] as const).map(t => (
+                  <button
+                    key={t}
+                    className={'subtab' + (mTab === t ? ' on' : '')}
+                    onClick={() => {
+                      setMTab(t)
+                      if (t !== 'messages') setActiveCoachThreadId(null)
+                    }}
+                  >
+                    {t === 'messages' ? 'Messages' : t === 'appels' ? 'Appels' : 'Visio'}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {mTab === 'messages' && (
             activeCoachThreadId ? (() => {
@@ -1428,23 +1909,35 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
               const title = isGroup ? (grp?.name ?? 'Groupe') : (cli?.name ?? 'Élève')
               const subtitle = isGroup ? `${grp?.schedule} · ${grp?.memberIds.length} élèves` : `${cli?.program}`
               const msgs = coachThreads[activeCoachThreadId] ?? []
+              const groupFaces = isGroup && grp
+                ? grp.memberIds.slice(0, 2).map(id => clientById(id))
+                : []
               return (
-                <section className="card coach-inline-chat">
-                  <div className="coach-chat-bar">
-                    <button className="icon-btn" style={{ width: 34, height: 34 }} onClick={() => setActiveCoachThreadId(null)} aria-label="Retour aux discussions">
-                      <Icon name="chevron-left" size={17} />
+                <section className="coach-chat-full" aria-label={`Conversation avec ${title}`}>
+                  <header className="coach-chat-full-head">
+                    <button className="icon-btn coach-chat-back" onClick={() => setActiveCoachThreadId(null)} aria-label="Retour aux discussions">
+                      <Icon name="chevron-left" size={18} />
                     </button>
-                    {cli && <Avatar hue={cli.hue} initials={cli.initials} photo={cli.photo} size={36} ring />}
-                    <div className="session-info">
+                    {cli && <Avatar hue={cli.hue} initials={cli.initials} photo={cli.photo} size={38} ring />}
+                    {isGroup && (
+                      <div className="group-av coach-chat-group-av">
+                        {groupFaces.map(face => (
+                          <Avatar key={face.id} hue={face.hue} initials={face.initials} photo={face.photo} size={28} />
+                        ))}
+                      </div>
+                    )}
+                    <div className="coach-chat-full-who">
                       <strong>{title}</strong>
-                      <span>{subtitle}</span>
+                      <span><i className="dot" /> {subtitle}</span>
                     </div>
-                    <button className="icon-btn" style={{ width: 34, height: 34 }} onClick={() => setLiveVisio({ who: title, isGroup })} aria-label="Lancer la visio">
-                      <Icon name="video" size={15} />
+                    <button className="icon-btn" onClick={() => setLiveVisio({ who: title, isGroup })} aria-label="Lancer la visio">
+                      <Icon name="video" size={16} />
                     </button>
-                  </div>
+                  </header>
 
-                  <div className="coach-chat-messages">
+                  <div className="coach-chat-feed">
+                    <span className="coach-chat-day">Aujourd'hui</span>
+                    <div className="coach-chat-note"><Icon name="shield" size={12} /> Échange privé · données chiffrées</div>
                     {msgs.map((m, i) => (
                       <div key={i} className={'bubble-row ' + (m.from === 'coach' ? 'me' : 'coach')}>
                         <div className="bubble">
@@ -1456,15 +1949,15 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
                     ))}
                   </div>
 
-                  <div className="row" style={{ marginTop: 10 }}>
+                  <div className="coach-chat-compose">
                     <input
-                      className="eco-input glass-lite"
+                      aria-label={`Répondre à ${title}`}
                       placeholder={`Répondre à ${title.split(' ')[0]}…`}
                       value={coachDraft}
                       onChange={e => setCoachDraft(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && sendCoachMsg()}
                     />
-                    <button className={'send-btn' + (coachDraft.trim() ? ' ready' : '')} style={{ width: 40, height: 40 }} onClick={sendCoachMsg} aria-label="Envoyer">
+                    <button className={'send-btn' + (coachDraft.trim() ? ' ready' : '')} onClick={sendCoachMsg} aria-label="Envoyer">
                       <Icon name="send" size={16} />
                     </button>
                   </div>
@@ -1549,6 +2042,20 @@ export function CoachSpace({ coachTab, onChangeCoachTab, onExit, onOpenEva, acti
             <button className="setting wide"><Icon name="user" size={17} />Modifier mon profil public<Icon name="chevron-right" size={14} /></button>
             <button className="setting wide"><Icon name="video" size={17} />Ma vidéo de présentation<Icon name="chevron-right" size={14} /></button>
             <button className="setting wide"><Icon name="star" size={17} />Mes avis clients<Icon name="chevron-right" size={14} /></button>
+          </section>
+
+          <section className="card appearance-card">
+            <div className="card-kicker"><Icon name="sun" size={13} /> APPARENCE</div>
+            <div className="appearance-row">
+              <div className="appearance-copy">
+                <span className="appearance-aa" aria-hidden>Aa</span>
+                <div className="setting-txt">
+                  <strong>Thème {theme === 'light' ? 'clair' : 'sombre'}</strong>
+                  <span>La palette s’applique à toute l’application coach et élève.</span>
+                </div>
+              </div>
+              <ThemeToggle theme={theme} onChange={setTheme} />
+            </div>
           </section>
 
           <section className="card">

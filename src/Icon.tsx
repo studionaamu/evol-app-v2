@@ -317,6 +317,19 @@ export function Icon({ name, size = 22, strokeWidth = 1.6, filled = false }: {
           <path d="M15.5 4.5 19.5 8.5 8 20H4v-4L15.5 4.5Z" />
         </svg>
       )
+    case 'eye':
+      return (
+        <svg {...common}>
+          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      )
+    case 'trash':
+      return (
+        <svg {...common}>
+          <path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5" />
+        </svg>
+      )
     default:
       return null
   }
