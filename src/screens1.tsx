@@ -156,7 +156,23 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
     const rest = STORIES.filter(s => !match.includes(s))
     return [...match, ...rest]
   }, [quizDomains, storyFilter])
-  const myWeek = HOME_ANNOUNCEMENTS.filter(a => joined.includes(a.id))
+  const eventWeekIds = new Set(EVENTS.map(ev => ev.id))
+  const myWeek = [
+    ...HOME_ANNOUNCEMENTS.filter(a => joined.includes(a.id)),
+    ...EVENTS.filter(ev => joinedEvents.includes(ev.id)).map(ev => ({
+      id: ev.id,
+      title: ev.title,
+      host: ev.host,
+      when: `${ev.day} ${ev.month.toLowerCase()}`,
+      time: ev.time,
+      mode: ev.mode,
+      tag: ev.tag,
+      seats: `${ev.seats} places`,
+      place: ev.place,
+      note: ev.desc.split('. ')[0],
+      img: ev.img,
+    })),
+  ]
 
   if (event) {
     return (
@@ -284,7 +300,15 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
 
           <div className="feed-list">
             {homeTab === 'week' && myWeek.map(a => {
-              const on = joined.includes(a.id)
+              const isEvent = eventWeekIds.has(a.id)
+              const on = isEvent ? joinedEvents.includes(a.id) : joined.includes(a.id)
+              const toggleWeek = () => {
+                if (isEvent) {
+                  setJoinedEvents(js => on ? js.filter(x => x !== a.id) : [...js, a.id])
+                } else {
+                  setJoined(js => on ? js.filter(x => x !== a.id) : [...js, a.id])
+                }
+              }
               return (
                 <article className={'feed-item glass-lite' + (on ? ' on' : '')} key={a.id}>
                   <img className="feed-img" src={a.img} alt="" loading="lazy" />
@@ -300,7 +324,7 @@ export function Hub({ onOpenCoach, onOpenChat, onOpenEva }: {
                     <p className="feed-note">{a.note}</p>
                     <button
                       className={'feed-join' + (on ? ' on' : '')}
-                      onClick={() => setJoined(js => on ? js.filter(x => x !== a.id) : [...js, a.id])}
+                      onClick={toggleWeek}
                       aria-pressed={on}
                     >
                       <Icon name={on ? 'check' : 'plus'} size={13} />
