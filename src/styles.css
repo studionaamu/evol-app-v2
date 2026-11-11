@@ -7182,3 +7182,143 @@ html:not(.dark) .group-meter:not(.good):not(.bad) span {
 html:not(.dark) .metric-top > span:first-child::before {
   background: linear-gradient(90deg, #FF5B4D 0%, #C98AF2 46%, #5B6BFF 100%);
 }
+
+/* ============================================================
+   LIGHT V7 — RADAR, BADGES & PHOTO
+   ============================================================ */
+
+/* Radar de vie : base dark inchangée, light = gradient des titres. */
+.radar-fill-start { stop-color: #E92B1F; }
+.radar-fill-mid { stop-color: #6D3EAD; }
+.radar-fill-end { stop-color: #1525FF; }
+.radar-stroke-start { stop-color: #E92B1F; }
+.radar-stroke-mid { stop-color: #6D3EAD; }
+.radar-stroke-end { stop-color: #1525FF; }
+html:not(.dark) .radar-fill-start,
+html:not(.dark) .radar-stroke-start { stop-color: #FF5B4D; }
+html:not(.dark) .radar-fill-mid,
+html:not(.dark) .radar-stroke-mid { stop-color: #C98AF2; }
+html:not(.dark) .radar-fill-end,
+html:not(.dark) .radar-stroke-end { stop-color: #5B6BFF; }
+
+/* Badges de notification : prune profond vers saphir, liseré net, chiffres alignés. */
+html:not(.dark) .badge,
+html:not(.dark) .tab-badge,
+html:not(.dark) .bubble-badge,
+html:not(.dark) .msg-filter em {
+  background: linear-gradient(145deg, #4B2E91 0%, #2B45D6 100%);
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+  box-shadow: 0 3px 9px -3px rgba(43, 69, 214, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+html:not(.dark) .tab-badge { border: 1.5px solid #FFFFFF; }
+html:not(.dark) .badge,
+html:not(.dark) .bubble-badge { border-width: 2px; }
+html:not(.dark) .msg-filter em { border: 1px solid rgba(255, 255, 255, 0.72); }
+html:not(.dark) .msg-filter.on em {
+  background: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.30);
+  box-shadow: none;
+}
+html:not(.dark) .feed-head > .tag.mini,
+html:not(.dark) .page-head > .tag.mini {
+  color: #4B2E91;
+  background: rgba(109, 62, 173, 0.08);
+  border-color: rgba(109, 62, 173, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.80);
+  font-weight: 600;
+}
+
+/* Direction photo : un grade unique, plus editorial, sur les visuels de contenu. */
+html:not(.dark) .story-img,
+html:not(.dark) .feed-img,
+html:not(.dark) .event-hero img,
+html:not(.dark) .short-card img,
+html:not(.dark) .coach-video img {
+  filter: saturate(0.80) contrast(1.04) sepia(0.05) brightness(0.98);
+}
+html:not(.dark) .story-wash {
+  background:
+    linear-gradient(180deg, rgba(17, 13, 26, 0.40) 0%, rgba(17, 13, 26, 0.04) 34%, rgba(17, 13, 26, 0.86) 100%),
+    linear-gradient(118deg, rgba(109, 62, 173, 0.18), rgba(21, 37, 255, 0.06));
+}
+
+/* ---------- AUTH — même composition verticale que le dark ---------- */
+html:not(.dark) .auth-head {
+  margin-top: auto;
+  margin-bottom: 26px;
+}
+html:not(.dark) .auth-actions {
+  gap: 11px;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 42px;
+}
+
+/* ============================================================
+   LIGHT V7.1 — SCORE RADAR EN GRADIENT & PROPOSITIONS EVA
+   ============================================================ */
+
+/* Le score du domaine actif reprend le gradient des grands titres. */
+html:not(.dark) .radar-score.active strong,
+html:not(.dark) .radar-axis-value,
+html:not(.dark) .axis-pop-score {
+  background-image: linear-gradient(100deg, #FF5B4D 0%, #C98AF2 46%, #5B6BFF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+html:not(.dark) .axis-pop-score em {
+  color: var(--ink-3);
+  -webkit-text-fill-color: var(--ink-3);
+}
+
+/* EVA propose une action concrète pour le domaine sélectionné. */
+.radar-eva-offer {
+  margin-top: 12px;
+  padding: 12px 13px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--bg-elev) 55%, transparent);
+}
+.radar-eva-offer-head { display: flex; align-items: center; gap: 9px; }
+.radar-eva-offer-head > div { min-width: 0; }
+.radar-eva-offer-head em {
+  display: block;
+  font-style: normal;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-bottom: 2px;
+}
+.radar-eva-offer-head strong {
+  display: block;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.radar-eva-offer p {
+  margin: 8px 0 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.radar-eva-offer .btn {
+  width: fit-content;
+  padding: 8px 11px;
+  font-size: 11.5px;
+}
+html:not(.dark) .radar-eva-offer {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.82), rgba(248, 244, 253, 0.68));
+  border-color: rgba(109, 62, 173, 0.12);
+  box-shadow: 0 12px 26px -24px rgba(43, 69, 214, 0.32), inset 0 1px 0 #FFFFFF;
+}
+html:not(.dark) .radar-eva-offer-head em { color: #6D3EAD; }

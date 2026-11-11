@@ -168,7 +168,7 @@ function Shell() {
       {!coachChatOpen && (
         <nav className="tabbar coach-tabbar" aria-label="Navigation coach">
           {([
-            { id: 'bord', icon: 'home', label: 'Home' },
+            { id: 'bord', icon: 'home', label: 'Accueil' },
             { id: 'vitrine', icon: 'store', label: 'Vitrine' },
             { id: 'clients', icon: 'chart', label: 'Suivi' },
             { id: 'messagerie', icon: 'chat', label: 'Messages' },
@@ -221,7 +221,7 @@ function Shell() {
 
       <nav className="tabbar" aria-label="Navigation principale">
         {([
-          { id: 'hub', icon: 'home', label: 'Home' },
+          { id: 'hub', icon: 'home', label: 'Accueil' },
           ...(program ? [{ id: 'carnet' as const, icon: 'file' as const, label: 'Carnet' }] : []),
           { id: 'ecosystem', icon: 'grid', label: 'Écosystème' },
           ...(!program && !hideExplorer ? [{ id: 'explorer' as const, icon: 'compass' as const, label: 'Explorer' }] : []),

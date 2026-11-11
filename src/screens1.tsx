@@ -60,14 +60,14 @@ export function RadarChart({
       <svg viewBox="0 0 300 280" className="radar-svg" role="group" aria-label="Radar de vie interactif">
         <defs>
           <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#E92B1F" stopOpacity="0.20" />
-            <stop offset="46%" stopColor="#6D3EAD" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="#1525FF" stopOpacity="0.10" />
+            <stop offset="0%" className="radar-fill-start" stopOpacity="0.20" />
+            <stop offset="46%" className="radar-fill-mid" stopOpacity="0.16" />
+            <stop offset="100%" className="radar-fill-end" stopOpacity="0.10" />
           </linearGradient>
           <linearGradient id="radarStroke" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#E92B1F" />
-            <stop offset="52%" stopColor="#6D3EAD" />
-            <stop offset="100%" stopColor="#1525FF" />
+            <stop offset="0%" className="radar-stroke-start" />
+            <stop offset="52%" className="radar-stroke-mid" />
+            <stop offset="100%" className="radar-stroke-end" />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75, 1].map(f => <polygon key={f} points={ring(R * f)} className="radar-ring" />)}
@@ -912,6 +912,57 @@ const DOMAIN_CAPS: Record<string, { cap: string; why: string }> = {
   Confiance: { cap: 'Reprendre confiance dans vos décisions.', why: 'La confiance se reconstruit par des preuves concrètes, pas par la motivation.' },
 }
 
+const EVA_DOMAIN_OFFERS: Record<string, {
+  label: string
+  title: string
+  body: string
+  cta: string
+  prompt: string
+}> = {
+  Nutrition: {
+    label: 'RECETTE ADAPTÉE',
+    title: 'Un petit-déjeuner à 28 g de protéines',
+    body: 'Yaourt grec, flocons d’avoine, fruits rouges, amandes et un œuf mollet. Cinq minutes, sans sucre ajouté, pour tenir jusqu’au déjeuner.',
+    cta: 'Demander la recette à EVA',
+    prompt: 'Propose-moi une recette de petit-déjeuner protéiné, adaptée à mon objectif nutrition : renforcer les apports protéiques le matin, sans sucre ajouté.',
+  },
+  Sommeil: {
+    label: 'RITUEL DU SOIR',
+    title: 'Trois étapes pour couper le mental',
+    body: 'Lumière tamisée à 21h15, respiration 4-7-8, écrans hors de la chambre. Un rituel de 20 minutes, pas une performance.',
+    cta: 'Créer mon rituel avec EVA',
+    prompt: 'Crée-moi un rituel du soir en trois étapes pour mes réveils nocturnes, adapté à mon objectif sommeil.',
+  },
+  Stress: {
+    label: 'PAUSE GUIDÉE',
+    title: 'Cinq minutes avant le prochain rendez-vous',
+    body: 'Cohérence cardiaque 5-5, expiration longue, épaules relâchées. Une seule priorité pour l’heure qui vient.',
+    cta: 'Guider ma pause avec EVA',
+    prompt: 'Guide-moi une respiration de cinq minutes pour faire baisser la tension avant mes rendez-vous.',
+  },
+  Mouvement: {
+    label: 'ROUTINE DU JOUR',
+    title: 'Douze minutes pour l’épaule droite',
+    body: 'Mobilité douce, gainage et respiration, sans douleur. À répéter trois fois cette semaine, pas plus.',
+    cta: 'Détailler la routine avec EVA',
+    prompt: 'Propose-moi une routine de mobilité de douze minutes pour l’épaule droite, adaptée à mon objectif mouvement.',
+  },
+  Mental: {
+    label: 'PAUSE DE CLARTÉ',
+    title: 'Trois minutes pour vider le mental',
+    body: 'Trois pensées sur papier, une seule action pour la prochaine heure, le reste attend. La clarté revient par soustraction.',
+    cta: 'Faire la pause avec EVA',
+    prompt: 'Propose-moi une pause de clarté mentale de trois minutes pour alléger ma charge cognitive.',
+  },
+  Confiance: {
+    label: 'MICRO-PREUVE',
+    title: 'Préparer l’entretien en dix minutes',
+    body: 'Une force, une preuve, une question à poser. À répéter à voix haute avant d’entrer, pour arriver avec un cadre.',
+    cta: 'Préparer avec EVA',
+    prompt: 'Aide-moi à préparer mon entretien et à reprendre confiance avec une micro-preuve concrète.',
+  },
+}
+
 const LAST_SESSIONS: Record<string, LastSession> = {
   camille: { date: '18 nov.', title: 'Respiration #4', duration: '45 min', summary: 'Apnée portée à 29 s, endormissement à 15 min sur les quatre dernières nuits.', points: ['4-7-8 tenu 3 soirs sur 4', 'Rituel du soir calé à 21h45'] },
   marc: { date: '16 nov.', title: 'Mobilité épaule droite', duration: '45 min', summary: 'Amplitude gagnée de 12°, douleur passée de 4 à 2/10 en fin de séance.', points: ['Amplitude +12°', '12 min à domicile 3×/semaine'] },
@@ -1007,6 +1058,13 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   const radarScores = teamRadar.length > 0 ? teamRadar : RADAR
   const activeAxis = radarScores.find(r => r.axis === selectedRadarAxis) ?? radarScores[0]
   const axisCoach = COACHES.find(c => c.id === activeAxis.coachId) ?? COACHES[0]
+  const evaOffer = EVA_DOMAIN_OFFERS[activeAxis.axis] ?? {
+    label: 'PROPOSITION EVA',
+    title: `Un premier pas sur ${activeAxis.axis.toLowerCase()}`,
+    body: `EVA peut transformer « ${activeAxis.rec} » en action concrète, adaptée à votre semaine.`,
+    cta: 'En parler à EVA',
+    prompt: `Propose-moi un premier pas concret pour mon axe ${activeAxis.axis}, à partir de cette recommandation : ${activeAxis.rec}.`,
+  }
   const popupAxis = axisPopup ? radarScores.find(r => r.axis === axisPopup) ?? null : null
 
   useEffect(() => {
@@ -1466,7 +1524,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
           <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
             <div className="radar-axis-title">
-              <strong>{activeAxis.axis} · {activeAxis.v}/100</strong>
+              <strong>{activeAxis.axis} · <span className="radar-axis-value">{activeAxis.v}</span>/100</strong>
               <span className={'delta ' + (activeAxis.delta.startsWith('+') ? 'up' : '')}>{activeAxis.delta} sur 30 j</span>
             </div>
             <button className="btn btn-soft sm" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => onOpenCoach(axisCoach)}>
@@ -1477,6 +1535,19 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
           <div className="radar-rec-line">
             <Icon name="sparkle" size={12} />
             <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
+          </div>
+          <div className="radar-eva-offer">
+            <div className="radar-eva-offer-head">
+              <EvaAvatar size={20} />
+              <div>
+                <em>EVA · {evaOffer.label}</em>
+                <strong>{evaOffer.title}</strong>
+              </div>
+            </div>
+            <p>{evaOffer.body}</p>
+            <button className="btn btn-soft sm" onClick={() => onOpenEva(evaOffer.prompt)}>
+              <Icon name="sparkle" size={13} /><span>{evaOffer.cta}</span>
+            </button>
           </div>
         </div>
 
@@ -1611,12 +1682,30 @@ function evaRoutes(): { match: RegExp; tone: EvaTone; reply: string; actions: Ev
     ],
   },
   {
+    match: /recette|repas|bowl|petit.déjeuner|petit.d.j|petit dej/i,
+    tone: 'nutrition',
+    reply: 'Pour votre objectif de protéines au petit-déjeuner, je pars sur un bowl : 150 g de yaourt grec, 40 g de flocons d’avoine, un œuf mollet, 100 g de fruits rouges et 10 g d’amandes, soit environ 28 g de protéines. Préparez les flocons avec le yaourt la veille, ajoutez le reste le matin. Une version salée avec deux œufs et un demi-avocat fonctionne aussi.',
+    actions: [
+      { label: 'Voir Nora (nutrition)', kind: 'coach', coachId: 'nora', coachName: 'Nora Benali' },
+      { label: 'Version salée', kind: 'info' },
+    ],
+  },
+  {
     match: /mang|nutrition|aliment|sucre|régime|regime|petit.d.j/i,
     tone: 'nutrition',
     reply: 'Côté nutrition, Nora construit des habitudes tenables, sans interdits. Je peux aussi vous envoyer un guide gratuit pour commencer dès aujourd’hui.',
     actions: [
       { label: 'Voir Nora (nutrition)', kind: 'coach', coachId: 'nora', coachName: 'Nora Benali' },
       { label: 'Guide petit-déjeuner', kind: 'info' },
+    ],
+  },
+  {
+    match: /mouvement|mobilité|mobilite|étirement|etirement|épaule|epaule/i,
+    tone: 'info',
+    reply: 'Pour votre épaule droite, je propose 12 minutes : 2 min de cercles lents, 3 min d’ouverture avec un bâton, 2 min de gainage latéral, 2 min de respiration et 3 min d’étirement doux. Restez sous 3/10 de douleur ; si elle augmente, arrêtez et parlez-en à Marc.',
+    actions: [
+      { label: 'Voir Marc (mobilité & dos)', kind: 'coach', coachId: 'marc', coachName: 'Marc Lefèvre' },
+      { label: 'Quand consulter un médecin', kind: 'info' },
     ],
   },
   {
@@ -1629,7 +1718,7 @@ function evaRoutes(): { match: RegExp; tone: EvaTone; reply: string; actions: Ev
     ],
   },
   {
-    match: /trist|déprim|deprim|moros|isol|appréhens|peur|confiance|motiv/i,
+    match: /trist|déprim|deprim|moros|isol|appréhens|peur|confiance|motiv|mental|clarté|clarte|charge/i,
     tone: 'mental',
     reply: 'Ce que vous décrivez mérite d’être pris au sérieux. Élodie propose un espace d’écoute sans jugement — et si le poids devient trop lourd, un psychologue ou votre médecin traitant est la voie à privilégier.',
     actions: [
