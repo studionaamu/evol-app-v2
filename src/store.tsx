@@ -77,7 +77,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     root.dataset.theme = theme
     root.style.colorScheme = theme
     const meta = document.querySelector('meta[name=theme-color]')
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#101013' : '#F6F4F8')
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#101013' : '#F7F6FA')
     try { window.localStorage.setItem('evol-theme', theme) } catch { /* stockage indisponible */ }
   }, [theme])
 

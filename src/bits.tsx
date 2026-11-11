@@ -40,9 +40,9 @@ export function EvaAvatar({ size = 46 }: { size?: number }) {
         <defs>
           <clipPath id={clip}><circle cx="24" cy="24" r="23" /></clipPath>
           <radialGradient id={base} cx="38%" cy="30%" r="82%">
-            <stop offset="0" stopColor="#8AB4FF" />
-            <stop offset="0.55" stopColor="#3C63F0" />
-            <stop offset="1" stopColor="#1C1856" />
+            <stop offset="0" className="eva-stop-top" />
+            <stop offset="0.55" className="eva-stop-mid" />
+            <stop offset="1" className="eva-stop-deep" />
           </radialGradient>
           <filter id={blur} x="-45%" y="-45%" width="190%" height="190%">
             <feGaussianBlur stdDeviation="4" />
@@ -50,10 +50,10 @@ export function EvaAvatar({ size = 46 }: { size?: number }) {
         </defs>
         <g clipPath={`url(#${clip})`}>
           <circle cx="24" cy="24" r="23" fill={`url(#${base})`} />
-          <ellipse cx="14" cy="13" rx="12" ry="10" fill="#9BC6FF" opacity="0.68" filter={`url(#${blur})`} />
-          <ellipse cx="35" cy="19" rx="11" ry="12" fill="#7B6BFF" opacity="0.60" filter={`url(#${blur})`} />
-          <ellipse cx="20" cy="35" rx="13" ry="9" fill="#2E6BFF" opacity="0.56" filter={`url(#${blur})`} />
-          <ellipse cx="37" cy="35" rx="10" ry="8" fill="#6D3EAD" opacity="0.48" filter={`url(#${blur})`} />
+          <ellipse cx="14" cy="13" rx="12" ry="10" className="eva-blob-a" opacity="0.68" filter={`url(#${blur})`} />
+          <ellipse cx="35" cy="19" rx="11" ry="12" className="eva-blob-b" opacity="0.60" filter={`url(#${blur})`} />
+          <ellipse cx="20" cy="35" rx="13" ry="9" className="eva-blob-c" opacity="0.56" filter={`url(#${blur})`} />
+          <ellipse cx="37" cy="35" rx="10" ry="8" className="eva-blob-d" opacity="0.48" filter={`url(#${blur})`} />
           <ellipse cx="16" cy="12" rx="8" ry="5" fill="#FFFFFF" opacity="0.32" filter={`url(#${blur})`} />
         </g>
         <circle cx="24" cy="24" r="22.6" fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="1.1" />

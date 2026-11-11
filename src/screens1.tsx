@@ -60,9 +60,14 @@ export function RadarChart({
       <svg viewBox="0 0 300 280" className="radar-svg" role="group" aria-label="Radar de vie interactif">
         <defs>
           <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#1525FF" stopOpacity="0.18" />
-            <stop offset="60%" stopColor="#6D3EAD" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#1525FF" stopOpacity="0.06" />
+            <stop offset="0%" stopColor="#E92B1F" stopOpacity="0.20" />
+            <stop offset="46%" stopColor="#6D3EAD" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#1525FF" stopOpacity="0.10" />
+          </linearGradient>
+          <linearGradient id="radarStroke" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#E92B1F" />
+            <stop offset="52%" stopColor="#6D3EAD" />
+            <stop offset="100%" stopColor="#1525FF" />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75, 1].map(f => <polygon key={f} points={ring(R * f)} className="radar-ring" />)}
