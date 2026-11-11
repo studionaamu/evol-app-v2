@@ -7322,3 +7322,339 @@ html:not(.dark) .radar-eva-offer {
   box-shadow: 0 12px 26px -24px rgba(43, 69, 214, 0.32), inset 0 1px 0 #FFFFFF;
 }
 html:not(.dark) .radar-eva-offer-head em { color: #6D3EAD; }
+
+/* ============================================================
+   EVA — CARTE QUOTIDIENNE, ADAPTATION, CARNET & PROFIL
+   ============================================================ */
+
+.eva-reco {
+  position: relative;
+  margin-top: 12px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+.eva-reco::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, #6D3EAD 0%, #2B45D6 100%);
+  opacity: 0.85;
+}
+.eva-reco.is-saved::before { background: #2E8B68; }
+.eva-reco.is-done::before { background: #1E8E5A; }
+.eva-reco-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.eva-reco-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.eva-reco-id > div { min-width: 0; }
+.eva-reco-id em {
+  display: block;
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  color: #C98AF2;
+}
+.eva-reco-id span { display: block; margin-top: 1px; font-size: 9.5px; letter-spacing: 0.10em; color: var(--ink-3); }
+.eva-reco-adapt {
+  flex: none;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.eva-reco-adapt:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.eva-reco h3 {
+  margin: 12px 0 4px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.eva-reco-body { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); font-weight: 300; }
+.eva-reco-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.eva-reco-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 25px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  color: var(--ink-2);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.eva-reco-why { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 9px; }
+.eva-reco-why em {
+  margin-right: 2px;
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.eva-reco-why span {
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(109, 62, 173, 0.10);
+  color: #C9A6F0;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.eva-reco-why span.avoid { background: rgba(46, 139, 104, 0.12); color: #70D2AA; }
+.eva-reco-adapt-note {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: rgba(201, 138, 242, 0.08);
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.eva-reco-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 9px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-2);
+  font-size: 11px;
+}
+.eva-reco-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 11px; }
+.eva-reco-actions .btn { min-height: 38px; padding: 0 10px; font-size: 11.5px; }
+.eva-reco-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: rgba(46, 139, 104, 0.13);
+  color: #70D2AA;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.eva-reco-skip {
+  margin-left: auto;
+  min-height: 34px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.eva-reco-skip:hover { color: var(--ink); }
+.eva-reco-detail {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  animation: evaDetailIn 0.26s ease both;
+}
+.eva-reco-block + .eva-reco-block { margin-top: 11px; }
+.eva-reco-label { display: block; margin-bottom: 5px; font-size: 9.5px; letter-spacing: 0.13em; font-weight: 600; color: #C98AF2; }
+.eva-reco-detail ul, .eva-reco-detail ol { display: grid; gap: 4px; margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 12px; line-height: 1.45; }
+.eva-reco-detail li::marker { color: #9C72D8; }
+.eva-reco-note { display: flex; align-items: flex-start; gap: 6px; margin-top: 10px; color: var(--ink-3); font-size: 11px; line-height: 1.4; }
+.eva-reco-note svg { flex: none; margin-top: 1px; color: #70D2AA; }
+.eva-reco-detail-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+.eva-reco-detail-actions .btn { min-height: 36px; padding: 0 9px; font-size: 11px; }
+.eva-reco-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  animation: evaDetailIn 0.22s ease both;
+}
+.eva-reco-reasons > span { margin-right: 2px; color: var(--ink-3); font-size: 10px; }
+.eva-reco-reasons button {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.eva-reco-reasons button:hover { border-color: rgba(201, 138, 242, 0.35); color: var(--ink); }
+
+html:not(.dark) .eva-reco {
+  border-color: rgba(109, 62, 173, 0.13);
+  background: linear-gradient(155deg, #FFFFFF 0%, #FCF9FF 100%);
+  box-shadow: 0 16px 32px -28px rgba(43, 69, 214, 0.35), inset 0 1px 0 #FFFFFF;
+}
+html:not(.dark) .eva-reco-id em { color: #6D3EAD; }
+html:not(.dark) .eva-reco-why span { background: rgba(109, 62, 173, 0.07); color: #63409B; }
+html:not(.dark) .eva-reco-why span.avoid { background: rgba(30, 142, 90, 0.08); color: #267758; }
+html:not(.dark) .eva-reco-state { background: rgba(30, 142, 90, 0.08); color: #267758; }
+html:not(.dark) .eva-reco-label { color: #6D3EAD; }
+html:not(.dark) .eva-reco-adapt-note { background: rgba(109, 62, 173, 0.045); }
+html:not(.dark) .eva-reco-empty { background: #F8F5FC; }
+html:not(.dark) .eva-reco-detail ul li::marker,
+html:not(.dark) .eva-reco-detail ol li::marker { color: #8A5BC4; }
+
+/* Adaptation */
+.eva-adapt-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px 14px;
+  background: rgba(12, 9, 20, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: evaFadeIn 0.22s ease both;
+}
+.eva-adapt-sheet {
+  width: 100%;
+  max-width: 430px;
+  max-height: min(88dvh, 650px);
+  padding: 20px 18px 18px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 24px;
+  background: #17131F;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  animation: evaSheetIn 0.30s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.eva-adapt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.eva-adapt-head span { display: block; color: #C98AF2; font-size: 9.5px; letter-spacing: 0.14em; font-weight: 600; }
+.eva-adapt-head h2 { margin-top: 3px; font-family: var(--sans); font-size: 21px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
+.eva-adapt-close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.eva-adapt-sheet > p { margin-top: 8px; color: var(--ink-2); font-size: 12px; line-height: 1.5; }
+.eva-adapt-label { margin-top: 16px; color: var(--ink-3); font-size: 9.5px; letter-spacing: 0.13em; font-weight: 600; }
+.eva-adapt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.eva-adapt-chips button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 11%, transparent);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.eva-adapt-chips button.on {
+  border-color: #6D3EAD;
+  background: #6D3EAD;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+.eva-adapt-hint { margin-top: 12px; padding: 9px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.045); color: var(--ink-2); font-size: 11px; line-height: 1.45; }
+.eva-adapt-apply { width: 100%; min-height: 46px; margin-top: 18px; justify-content: center; }
+html:not(.dark) .eva-adapt-sheet { border-color: rgba(109, 62, 173, 0.12); background: #FFFFFF; box-shadow: 0 30px 90px rgba(42, 26, 72, 0.24); }
+html:not(.dark) .eva-adapt-head h2 { color: #1E1C2A; }
+html:not(.dark) .eva-adapt-sheet > p { color: #6F687D; }
+html:not(.dark) .eva-adapt-label { color: #8C839B; }
+html:not(.dark) .eva-adapt-chips button { border-color: #E6E0EE; background: #FBF9FE; color: #5A5368; }
+html:not(.dark) .eva-adapt-chips button.on { border-color: #6D3EAD; background: #6D3EAD; color: #FFFFFF; }
+html:not(.dark) .eva-adapt-hint { background: #F8F5FC; color: #6F687D; }
+html:not(.dark) .eva-adapt-close { color: #6F687D; border-color: #E6E0EE; }
+
+/* Carnet */
+.eva-carnet-card { margin-top: 12px; }
+.eva-carnet-list { margin-top: 10px; display: grid; gap: 8px; }
+.eva-carnet-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 10px 10px 9px;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+.eva-carnet-ico { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; background: rgba(109, 62, 173, 0.12); color: #C98AF2; }
+.eva-carnet-copy { min-width: 0; flex: 1; }
+.eva-carnet-copy .tag { margin: 0 0 3px; }
+.eva-carnet-copy strong { display: block; color: var(--ink); font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+.eva-carnet-copy em { display: block; margin-top: 2px; color: var(--ink-3); font-size: 10.5px; font-style: normal; }
+.eva-carnet-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.eva-carnet-actions .btn { min-height: 32px; padding: 0 9px; font-size: 10.5px; }
+.eva-carnet-remove { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--ink-3); cursor: pointer; }
+.eva-carnet-remove:hover { color: #C74444; background: rgba(199, 68, 68, 0.08); }
+.eva-carnet-hint { margin-top: 9px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4; }
+html:not(.dark) .eva-carnet-row { border-color: #EEE8F5; background: #FCFAFF; }
+html:not(.dark) .eva-carnet-ico { background: #F2ECFC; color: #6D3EAD; }
+html:not(.dark) .eva-carnet-copy strong { color: #1E1C2A; }
+html:not(.dark) .eva-carnet-copy em { color: #8C839B; }
+html:not(.dark) .eva-carnet-hint { color: #8C839B; }
+
+/* Profil EVA */
+.eva-profile-card h2 { margin-top: 4px; }
+.eva-profile-card > p { margin-top: 4px; color: var(--ink-2); font-size: 12px; line-height: 1.5; }
+.eva-profile-block { margin-top: 15px; }
+.eva-profile-label { display: block; color: var(--ink-3); font-size: 9.5px; letter-spacing: 0.12em; font-weight: 600; }
+.eva-profile-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.eva-pref-chip {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid color-mix(in srgb, var(--ink) 11%, transparent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.eva-pref-chip.on { border-color: #6D3EAD; background: #6D3EAD; color: #FFFFFF; font-weight: 600; }
+.eva-profile-priorities { margin-top: 15px; padding-top: 13px; border-top: 1px solid color-mix(in srgb, var(--ink) 7%, transparent); }
+.eva-profile-hint { display: flex; align-items: flex-start; gap: 6px; margin-top: 14px; padding-top: 11px; border-top: 1px solid color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink-3); font-size: 10.5px; line-height: 1.45; }
+.eva-profile-hint svg { flex: none; margin-top: 1px; color: #70D2AA; }
+html:not(.dark) .eva-profile-label { color: #8C839B; }
+html:not(.dark) .eva-pref-chip { border-color: #E7E1EF; background: #FCFAFF; color: #5A5368; }
+html:not(.dark) .eva-pref-chip.on { border-color: #6D3EAD; background: #6D3EAD; color: #FFFFFF; }
+html:not(.dark) .eva-profile-hint { color: #8C839B; }
+
+.eva-reco button:focus-visible,
+.eva-adapt-sheet button:focus-visible,
+.eva-pref-chip:focus-visible,
+.eva-carnet-remove:focus-visible {
+  outline: 2px solid #C98AF2;
+  outline-offset: 2px;
+}
+
+@keyframes evaFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes evaSheetIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes evaDetailIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .eva-reco-detail, .eva-reco-reasons, .eva-adapt-layer, .eva-adapt-sheet { animation: none; }
+}

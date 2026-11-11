@@ -351,7 +351,10 @@ export function ProgramAccess({ onBack, onAccess }: {
 
 /* ---------- assessment quiz ---------- */
 
-export function Quiz({ onDone, onExit }: { onDone: (domains: Domain[]) => void; onExit: () => void }) {
+export function Quiz({ onDone, onExit }: {
+  onDone: (domains: Domain[], mode?: 'visio' | 'presentiel' | 'both') => void
+  onExit: () => void
+}) {
   const [i, setI] = useState(0)
   const [picked, setPicked] = useState<number[]>([])
   const step = QUIZ[i]
@@ -363,10 +366,13 @@ export function Quiz({ onDone, onExit }: { onDone: (domains: Domain[]) => void; 
   }
   const finish = () => {
     const domains = new Set<Domain>()
+    let mode: 'visio' | 'presentiel' | 'both' | undefined
     picked.forEach((opt, k) => {
-      QUIZ[k]?.options[opt]?.domains.forEach(d => domains.add(d))
+      const choice = QUIZ[k]?.options[opt]
+      choice?.domains.forEach(d => domains.add(d))
+      if (choice?.mode) mode = choice.mode
     })
-    onDone([...domains])
+    onDone([...domains], mode)
   }
 
   return (

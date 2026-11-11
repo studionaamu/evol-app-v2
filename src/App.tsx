@@ -14,7 +14,7 @@ function Shell() {
   const {
     role, setRole, setName, setGuest, tab, setTab,
     hideExplorer, setHideExplorer, program,
-    setThreads, setQuizDomains, reset,
+    setThreads, setQuizDomains, setPersonalization, reset,
     setProgram, setConsent,
   } = useStore()
   const [phase, setPhase] = useState<Phase>('welcome')
@@ -128,7 +128,12 @@ function Shell() {
   if (phase === 'quiz') return (
     <Quiz
       onExit={() => setPhase('welcome')}
-      onDone={(domains) => { setQuizDomains(domains); setSavedResults(domains); setPhase('results') }}
+      onDone={(domains, mode) => {
+        setQuizDomains(domains)
+        setSavedResults(domains)
+        if (mode) setPersonalization(p => ({ ...p, quizMode: mode }))
+        setPhase('results')
+      }}
     />
   )
 

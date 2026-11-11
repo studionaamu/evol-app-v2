@@ -18,7 +18,7 @@ export type VitrineSub = 'business' | 'programmes' | 'creneaux' | 'galerie'
    ===================================================== */
 
 export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
-  const { name, avatar, setAvatar, guest, reset, role, program, theme, setTheme } = useStore()
+  const { name, avatar, setAvatar, guest, reset, role, program, theme, setTheme, personalization, setPersonalization, quizDomains } = useStore()
   const [openInfo, setOpenInfo] = useState<keyof Consent | null>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
   const changeAvatar = (file?: File) => {
@@ -62,6 +62,87 @@ export function Profile({ onGoCoach }: { onGoCoach: () => void }) {
           </div>
           <ThemeToggle theme={theme} onChange={setTheme} />
         </div>
+      </section>
+
+      <section className="card eva-profile-card">
+        <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+          <div className="card-kicker" style={{ margin: 0 }}><Icon name="sparkle" size={13} /> MON PROFIL EVA</div>
+          <span className="tag mini">{personalization.time} min</span>
+        </div>
+        <h2>Ce qu’EVA retient.</h2>
+        <p>Ces préférences adaptent les propositions du radar, sans modifier votre programme.</p>
+
+        <div className="eva-profile-block">
+          <span className="eva-profile-label">TEMPS DISPONIBLE</span>
+          <div className="eva-profile-chips">
+            {([5, 10, 20] as const).map(time => (
+              <button
+                key={time}
+                type="button"
+                className={'eva-pref-chip' + (personalization.time === time ? ' on' : '')}
+                aria-pressed={personalization.time === time}
+                onClick={() => setPersonalization(current => ({ ...current, time }))}
+              >
+                {time} min
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="eva-profile-block">
+          <span className="eva-profile-label">À ÉVITER DANS LES RECETTES</span>
+          <div className="eva-profile-chips">
+            {['Œuf', 'Lactose', 'Fruits à coque', 'Gluten'].map(tag => {
+              const on = personalization.avoid.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  className={'eva-pref-chip' + (on ? ' on' : '')}
+                  aria-pressed={on}
+                  onClick={() => setPersonalization(current => ({
+                    ...current,
+                    avoid: on ? current.avoid.filter(item => item !== tag) : [...current.avoid, tag],
+                  }))}
+                >
+                  {tag}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="eva-profile-block">
+          <span className="eva-profile-label">FORMAT PRÉFÉRÉ</span>
+          <div className="eva-profile-chips">
+            {([
+              { id: 'visio', label: 'Visio' },
+              { id: 'presentiel', label: 'Présentiel' },
+              { id: 'both', label: 'Les deux' },
+            ] as const).map(format => (
+              <button
+                key={format.id}
+                type="button"
+                className={'eva-pref-chip' + (personalization.quizMode === format.id ? ' on' : '')}
+                aria-pressed={personalization.quizMode === format.id}
+                onClick={() => setPersonalization(current => ({ ...current, quizMode: format.id }))}
+              >
+                {format.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {quizDomains.length > 0 && (
+          <div className="eva-profile-priorities">
+            <span className="eva-profile-label">VOS PRIORITÉS</span>
+            <div className="row" style={{ marginTop: 6 }}>
+              {quizDomains.map(domain => <span className="tag mini" key={domain}>{domain}</span>)}
+            </div>
+          </div>
+        )}
+
+        <p className="eva-profile-hint"><Icon name="shield" size={12} /> Modifiable à tout moment. EVA ne partage pas ces préférences avec vos coachs.</p>
       </section>
 
       {program && (

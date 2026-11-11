@@ -547,7 +547,8 @@ export type CoachAgendaDay = { day: number; items: { time: string; label: string
 
 /* --- Assessment quiz (friction zéro : pas de compte requis) --- */
 
-export type QuizOption = { label: string; domains: Domain[] }
+export type QuizMode = 'visio' | 'presentiel' | 'both'
+export type QuizOption = { label: string; domains: Domain[]; mode?: QuizMode }
 export type QuizStep = { q: string; sub: string; options: QuizOption[] }
 
 export const QUIZ: QuizStep[] = [
@@ -575,9 +576,9 @@ export const QUIZ: QuizStep[] = [
     q: 'Votre préférence pour débuter ?',
     sub: 'Vous pourrez toujours changer d’avis.',
     options: [
-      { label: 'En visio, depuis chez moi', domains: [] },
-      { label: 'En présentiel, près de chez moi', domains: [] },
-      { label: 'Les deux m’arrangent', domains: [] },
+      { label: 'En visio, depuis chez moi', domains: [], mode: 'visio' },
+      { label: 'En présentiel, près de chez moi', domains: [], mode: 'presentiel' },
+      { label: 'Les deux m’arrangent', domains: [], mode: 'both' },
     ],
   },
 ]

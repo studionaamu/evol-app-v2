@@ -1,10 +1,18 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { THREADS, DEFAULT_CONSENT, COACHES, CHAT_SEED, type Consent, type Thread } from './data'
+import { THREADS, DEFAULT_CONSENT, COACHES, CHAT_SEED, type Consent, type QuizMode, type Thread } from './data'
 
 type Role = 'coache' | 'coach'
 type Tab = 'hub' | 'ecosystem' | 'explorer' | 'carnet' | 'synergy' | 'profile'
 export type Theme = 'dark' | 'light'
 export type CoachSync = { agenda: boolean; signaux: boolean }
+export type EvaFeedbackStatus = 'saved' | 'done' | 'skipped'
+export type EvaFeedback = { status: EvaFeedbackStatus; reason?: string; at: number }
+export type Personalization = {
+  time: 5 | 10 | 20
+  avoid: string[]
+  quizMode: QuizMode | null
+  feedback: Record<string, EvaFeedback>
+}
 
 type Store = {
   role: Role
@@ -21,6 +29,8 @@ type Store = {
   setProgram: (p: boolean) => void
   coachSync: CoachSync
   setCoachSync: React.Dispatch<React.SetStateAction<CoachSync>>
+  personalization: Personalization
+  setPersonalization: React.Dispatch<React.SetStateAction<Personalization>>
   theme: Theme
   setTheme: (theme: Theme) => void
   toggleTheme: () => void
@@ -44,6 +54,25 @@ type Store = {
 
 const Ctx = createContext<Store | null>(null)
 
+const DEFAULT_PERSONALIZATION: Personalization = { time: 10, avoid: [], quizMode: null, feedback: {} }
+
+function initialPersonalization(): Personalization {
+  if (typeof window === 'undefined') return DEFAULT_PERSONALIZATION
+  try {
+    const raw = window.localStorage.getItem('evol-personalization')
+    if (!raw) return DEFAULT_PERSONALIZATION
+    const saved = JSON.parse(raw) as Partial<Personalization>
+    return {
+      time: saved.time === 5 || saved.time === 10 || saved.time === 20 ? saved.time : 10,
+      avoid: Array.isArray(saved.avoid) ? saved.avoid.filter((x): x is string => typeof x === 'string') : [],
+      quizMode: saved.quizMode === 'visio' || saved.quizMode === 'presentiel' || saved.quizMode === 'both' ? saved.quizMode : null,
+      feedback: saved.feedback && typeof saved.feedback === 'object' ? saved.feedback as Record<string, EvaFeedback> : {},
+    }
+  } catch {
+    return DEFAULT_PERSONALIZATION
+  }
+}
+
 function initialTheme(): Theme {
   if (typeof window === 'undefined') return 'dark'
   try {
@@ -62,6 +91,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [hideExplorer, setHideExplorer] = useState(false)
   const [program, setProgram] = useState(false)
   const [coachSync, setCoachSync] = useState<CoachSync>({ agenda: true, signaux: true })
+  const [personalization, setPersonalization] = useState<Personalization>(initialPersonalization)
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [tab, setTab] = useState<Tab>('hub')
   const [threads, setThreads] = useState<Thread[]>(THREADS)
@@ -70,6 +100,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [consent, setConsent] = useState<Consent>(DEFAULT_CONSENT)
   const [quizDomains, setQuizDomains] = useState<string[]>([])
   const [coachClient, setCoachClient] = useState('camille')
+
+  useEffect(() => {
+    try { window.localStorage.setItem('evol-personalization', JSON.stringify(personalization)) } catch { /* stockage indisponible */ }
+  }, [personalization])
 
   useEffect(() => {
     const root = document.documentElement
@@ -107,6 +141,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<Store>(() => ({
     role, setRole, name, setName, avatar, setAvatar, guest, setGuest, tab, setTab,
     hideExplorer, setHideExplorer, coachSync, setCoachSync, program, setProgram,
+    personalization, setPersonalization,
     theme, setTheme, toggleTheme: () => setTheme(t => (t === 'dark' ? 'light' : 'dark')),
     threads, setThreads, followedCoachIds, setFollowedCoachIds, toggleFollowCoach,
     selectedRadarAxis, setSelectedRadarAxis,
@@ -115,10 +150,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     reset: () => {
       setRole('coache'); setTab('hub'); setGuest(false); setName('Alex'); setAvatar(null)
       setHideExplorer(false); setProgram(false); setCoachSync({ agenda: true, signaux: true })
+      setPersonalization(DEFAULT_PERSONALIZATION)
       setThreads(THREADS); setFollowedCoachIds(['camille', 'nora'])
       setConsent(DEFAULT_CONSENT); setQuizDomains([])
     },
-  }), [role, name, avatar, guest, tab, hideExplorer, coachSync, theme, threads, followedCoachIds, selectedRadarAxis, consent, quizDomains, coachClient, program])
+  }), [role, name, avatar, guest, tab, hideExplorer, coachSync, personalization, theme, threads, followedCoachIds, selectedRadarAxis, consent, quizDomains, coachClient, program])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

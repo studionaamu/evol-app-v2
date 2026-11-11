@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from './Icon'
 import { Avatar, EvaAvatar } from './bits'
-import { useStore } from './store'
+import { useStore, type Personalization } from './store'
 import {
   COACHES, SESSIONS, QUOTES, IMAGES, EVENTS, HOME_ANNOUNCEMENTS,
   EVA_SESSION_REPORTS, STORIES, HORIZON_GOALS,
@@ -683,6 +683,8 @@ export function Carnet({ onOpenChat, onOpenEva }: {
         </div>
       </section>
 
+      <EvaCarnetActions />
+
       <EvolutionJournal onOpenChat={onOpenChat} onOpenEva={onOpenEva} rich />
     </div>
   )
@@ -912,55 +914,615 @@ const DOMAIN_CAPS: Record<string, { cap: string; why: string }> = {
   Confiance: { cap: 'Reprendre confiance dans vos décisions.', why: 'La confiance se reconstruit par des preuves concrètes, pas par la motivation.' },
 }
 
-const EVA_DOMAIN_OFFERS: Record<string, {
+type EvaDailyAction = {
+  id: string
+  domain: string
   label: string
   title: string
   body: string
-  cta: string
+  duration: 5 | 10 | 20
+  meta: string
+  why: string[]
+  ingredients?: string[]
+  steps: string[]
+  avoid?: string[]
+  avoidNotes?: { tag: string; note: string }[]
   prompt: string
-}> = {
-  Nutrition: {
-    label: 'RECETTE ADAPTÉE',
-    title: 'Un petit-déjeuner à 28 g de protéines',
-    body: 'Yaourt grec, flocons d’avoine, fruits rouges, amandes et un œuf mollet. Cinq minutes, sans sucre ajouté, pour tenir jusqu’au déjeuner.',
-    cta: 'Demander la recette à EVA',
-    prompt: 'Propose-moi une recette de petit-déjeuner protéiné, adaptée à mon objectif nutrition : renforcer les apports protéiques le matin, sans sucre ajouté.',
-  },
-  Sommeil: {
-    label: 'RITUEL DU SOIR',
-    title: 'Trois étapes pour couper le mental',
-    body: 'Lumière tamisée à 21h15, respiration 4-7-8, écrans hors de la chambre. Un rituel de 20 minutes, pas une performance.',
-    cta: 'Créer mon rituel avec EVA',
-    prompt: 'Crée-moi un rituel du soir en trois étapes pour mes réveils nocturnes, adapté à mon objectif sommeil.',
-  },
-  Stress: {
-    label: 'PAUSE GUIDÉE',
-    title: 'Cinq minutes avant le prochain rendez-vous',
-    body: 'Cohérence cardiaque 5-5, expiration longue, épaules relâchées. Une seule priorité pour l’heure qui vient.',
-    cta: 'Guider ma pause avec EVA',
-    prompt: 'Guide-moi une respiration de cinq minutes pour faire baisser la tension avant mes rendez-vous.',
-  },
-  Mouvement: {
-    label: 'ROUTINE DU JOUR',
-    title: 'Douze minutes pour l’épaule droite',
-    body: 'Mobilité douce, gainage et respiration, sans douleur. À répéter trois fois cette semaine, pas plus.',
-    cta: 'Détailler la routine avec EVA',
-    prompt: 'Propose-moi une routine de mobilité de douze minutes pour l’épaule droite, adaptée à mon objectif mouvement.',
-  },
-  Mental: {
-    label: 'PAUSE DE CLARTÉ',
-    title: 'Trois minutes pour vider le mental',
-    body: 'Trois pensées sur papier, une seule action pour la prochaine heure, le reste attend. La clarté revient par soustraction.',
-    cta: 'Faire la pause avec EVA',
-    prompt: 'Propose-moi une pause de clarté mentale de trois minutes pour alléger ma charge cognitive.',
-  },
-  Confiance: {
-    label: 'MICRO-PREUVE',
-    title: 'Préparer l’entretien en dix minutes',
-    body: 'Une force, une preuve, une question à poser. À répéter à voix haute avant d’entrer, pour arriver avec un cadre.',
-    cta: 'Préparer avec EVA',
-    prompt: 'Aide-moi à préparer mon entretien et à reprendre confiance avec une micro-preuve concrète.',
-  },
+  cta: string
+  note?: string
+}
+
+const EVA_ACTIONS: Record<string, EvaDailyAction[]> = {
+  Nutrition: [
+    {
+      id: 'nutrition-bowl',
+      domain: 'Nutrition',
+      label: 'RECETTE',
+      title: 'Le bol protéiné du matin',
+      body: 'Yaourt grec, flocons d’avoine, fruits rouges et amandes : un petit-déjeuner qui tient jusqu’au déjeuner.',
+      duration: 5,
+      meta: '28 g de protéines · sans sucre ajouté',
+      why: ['Apports protéiques', 'Énergie stable'],
+      ingredients: ['150 g de yaourt grec', '40 g de flocons d’avoine', '1 œuf mollet', '100 g de fruits rouges', '10 g d’amandes'],
+      steps: ['Mélangez le yaourt et les flocons.', 'Ajoutez les fruits rouges et les amandes.', 'Complétez avec l’œuf mollet.'],
+      avoid: ['Lactose', 'Œuf', 'Fruits à coque'],
+      avoidNotes: [
+        { tag: 'Lactose', note: 'Remplacez le yaourt grec par un yaourt de soja.' },
+        { tag: 'Œuf', note: 'Remplacez l’œuf par 100 g de tofu.' },
+        { tag: 'Fruits à coque', note: 'Remplacez les amandes par des graines de courge.' },
+      ],
+      prompt: 'Propose-moi une recette de petit-déjeuner protéiné, adaptée à mon objectif nutrition et à mes contraintes.',
+      cta: 'Voir la recette',
+    },
+    {
+      id: 'nutrition-toast',
+      domain: 'Nutrition',
+      label: 'RECETTE',
+      title: 'Les tartines qui rassasient',
+      body: 'Pain de seigle, avocat, œufs et tomates : un petit-déjeuner salé, riche en fibres et en protéines.',
+      duration: 10,
+      meta: '24 g de protéines · fibres',
+      why: ['Petit-déjeuner salé', 'Rassasiement'],
+      ingredients: ['2 tranches de pain de seigle', '1/2 avocat', '2 œufs', '1 tomate', 'Quelques graines'],
+      steps: ['Toastez le pain.', 'Écrasez l’avocat et ajoutez les œufs.', 'Complétez avec la tomate et les graines.'],
+      avoid: ['Gluten', 'Œuf'],
+      avoidNotes: [
+        { tag: 'Gluten', note: 'Remplacez le pain de seigle par un pain sans gluten.' },
+        { tag: 'Œuf', note: 'Remplacez les œufs par du tofu brouillé.' },
+      ],
+      prompt: 'Propose-moi une recette de petit-déjeuner salé, riche en protéines et en fibres, adaptée à mes contraintes.',
+      cta: 'Voir la recette',
+    },
+    {
+      id: 'nutrition-batch',
+      domain: 'Nutrition',
+      label: 'RECETTE',
+      title: 'Le batch de trois petits-déjeuners',
+      body: 'Préparez trois portions le dimanche soir : les matins sans inspiration deviennent des matins sans décision.',
+      duration: 20,
+      meta: '3 portions · 22 g de protéines',
+      why: ['Anticipation', 'Moins de décisions'],
+      ingredients: ['120 g de flocons d’avoine', '450 g de yaourt de soja', '3 poignées de fruits rouges', '30 g de graines de courge', 'Cannelle'],
+      steps: ['Répartissez les flocons et le yaourt dans trois pots.', 'Ajoutez les fruits, les graines et la cannelle.', 'Fermez et gardez au frais jusqu’au matin.'],
+      avoid: ['Gluten'],
+      avoidNotes: [{ tag: 'Gluten', note: 'Utilisez des flocons d’avoine certifiés sans gluten.' }],
+      prompt: 'Propose-moi un batch de petits-déjeuners protéinés pour trois matins, avec des ingrédients simples.',
+      cta: 'Voir la recette',
+    },
+  ],
+  Sommeil: [
+    {
+      id: 'sleep-breath',
+      domain: 'Sommeil',
+      label: 'RESPIRATION',
+      title: 'La respiration 4-7-8',
+      body: 'Un cycle lent pour faire redescendre le système nerveux avant de fermer les yeux.',
+      duration: 5,
+      meta: '3 cycles · au lit',
+      why: ['Endormissement', 'Réveils nocturnes'],
+      steps: ['Inspirez par le nez pendant 4 secondes.', 'Retenez votre souffle 7 secondes.', 'Expirez lentement pendant 8 secondes.', 'Répétez trois fois, sans forcer.'],
+      prompt: 'Guide-moi une respiration 4-7-8 pour mon endormissement et mes réveils nocturnes.',
+      cta: 'Voir le rituel',
+      note: 'Si les réveils persistent plus de trois semaines, parlez-en à Camille.',
+    },
+    {
+      id: 'sleep-ritual',
+      domain: 'Sommeil',
+      label: 'RITUEL',
+      title: 'Le rituel du soir en 3 temps',
+      body: 'Lumière tamisée, écrans hors de la chambre, respiration : un sas de dix minutes pour couper la journée.',
+      duration: 10,
+      meta: '3 temps · 21h45',
+      why: ['Rythme du soir', 'Moins d’écrans'],
+      steps: ['Baissez les lumières et posez le téléphone hors de la chambre.', 'Préparez une tisane ou un verre d’eau.', 'Faites trois cycles de respiration lente au lit.'],
+      prompt: 'Crée-moi un rituel du soir en trois étapes pour mes réveils nocturnes, adapté à mon objectif sommeil.',
+      cta: 'Voir le rituel',
+    },
+    {
+      id: 'sleep-winddown',
+      domain: 'Sommeil',
+      label: 'RITUEL',
+      title: 'Le sas de 20 minutes',
+      body: 'Une douche tiède, quelques pages, la lumière basse et la respiration : le corps comprend que la journée est finie.',
+      duration: 20,
+      meta: '20 min · sans écran',
+      why: ['Récupération', 'Couper le mental'],
+      steps: ['Douche tiède, sans écran.', 'Dix minutes de lecture papier, lumière basse.', 'Trois cycles de respiration au lit.', 'Si une pensée revient, notez-la pour demain.'],
+      prompt: 'Construis-moi un rituel de 20 minutes pour couper le mental et améliorer mon sommeil.',
+      cta: 'Voir le rituel',
+    },
+  ],
+  Stress: [
+    {
+      id: 'stress-coherence',
+      domain: 'Stress',
+      label: 'RESPIRATION',
+      title: 'Cohérence cardiaque 5-5',
+      body: 'Cinq secondes à l’inspiration, cinq à l’expiration : le geste le plus court pour faire baisser la tension.',
+      duration: 5,
+      meta: '5 min · 6 cycles/min',
+      why: ['Tension avant rendez-vous', 'Système nerveux'],
+      steps: ['Asseyez-vous, épaules relâchées.', 'Inspirez 5 secondes par le nez.', 'Expirez 5 secondes par la bouche.', 'Continuez cinq minutes, sans performance.'],
+      prompt: 'Guide-moi une cohérence cardiaque de cinq minutes pour faire baisser la tension avant un rendez-vous.',
+      cta: 'Voir la pause',
+    },
+    {
+      id: 'stress-walk',
+      domain: 'Stress',
+      label: 'PAUSE',
+      title: 'La pause qui dénoue',
+      body: 'Dix minutes dehors, une respiration longue et une seule phrase : ce qui peut attendre attendra.',
+      duration: 10,
+      meta: '10 min · debout',
+      why: ['Charge mentale', 'Changer de rythme'],
+      steps: ['Sortez ou changez de pièce.', 'Marchez lentement cinq minutes.', 'Faites trois respirations longues.', 'Notez la seule priorité de la prochaine heure.'],
+      prompt: 'Propose-moi une pause active de dix minutes pour faire redescendre le stress dans ma journée.',
+      cta: 'Voir la pause',
+    },
+    {
+      id: 'stress-reset',
+      domain: 'Stress',
+      label: 'RESET',
+      title: 'Le reset avant la journée',
+      body: 'Trois respirations, deux priorités, zéro notification : un sas de vingt minutes pour ne pas subir la journée.',
+      duration: 20,
+      meta: '20 min · avant la journée',
+      why: ['Anticiper', 'Poser un cadre'],
+      steps: ['Coupez les notifications vingt minutes.', 'Écrivez les deux priorités du jour.', 'Faites cinq minutes de respiration.', 'Relâchez les épaules et commencez par la plus petite.'],
+      prompt: 'Aide-moi à faire un reset de vingt minutes avant une journée chargée, avec deux priorités maximum.',
+      cta: 'Voir le reset',
+    },
+  ],
+  Mouvement: [
+    {
+      id: 'move-shoulders',
+      domain: 'Mouvement',
+      label: 'ROUTINE',
+      title: 'Mobilité express épaules',
+      body: 'Cinq minutes pour dénouer la nuque et les épaules, sans matériel et sans forcer.',
+      duration: 5,
+      meta: '5 min · debout',
+      why: ['Épaule droite', 'Travail assis'],
+      steps: ['Cercles d’épaules lents, 30 secondes.', 'Tête inclinée à droite puis à gauche, 30 secondes.', 'Ouverture des bras, 1 minute.', 'Respiration et relâchement, 3 minutes.'],
+      prompt: 'Propose-moi une routine de mobilité de cinq minutes pour mes épaules, sans matériel.',
+      cta: 'Voir la routine',
+      note: 'Arrêtez si la douleur dépasse 3/10 et parlez-en à Marc.',
+    },
+    {
+      id: 'move-back',
+      domain: 'Mouvement',
+      label: 'ROUTINE',
+      title: 'Dos & épaules sans matériel',
+      body: 'Une routine douce pour retrouver de l’amplitude et éviter les tensions de la journée.',
+      duration: 10,
+      meta: '10 min · sans matériel',
+      why: ['Amplitude', 'Prévenir les tensions'],
+      steps: ['Échauffement des épaules, 2 minutes.', 'Ouverture de la cage thoracique, 3 minutes.', 'Gainage doux, 3 minutes.', 'Étirement et respiration, 2 minutes.'],
+      prompt: 'Propose-moi une routine de dix minutes pour le dos et les épaules, sans matériel, adaptée à mon objectif mouvement.',
+      cta: 'Voir la routine',
+      note: 'Restez sous 3/10 de douleur. En cas de douleur qui augmente, arrêtez.',
+    },
+    {
+      id: 'move-full',
+      domain: 'Mouvement',
+      label: 'ROUTINE',
+      title: 'La mobilité complète',
+      body: 'Vingt minutes pour ouvrir les épaules, la hanche et le dos, à votre rythme.',
+      duration: 20,
+      meta: '20 min · doux',
+      why: ['Mobilité globale', 'Récupération'],
+      steps: ['Échauffement, 3 minutes.', 'Épaules et nuque, 5 minutes.', 'Hanche et dos, 6 minutes.', 'Gainage et respiration, 4 minutes.', 'Retour au calme, 2 minutes.'],
+      prompt: 'Propose-moi une routine de mobilité complète de vingt minutes, douce et sans matériel.',
+      cta: 'Voir la routine',
+      note: 'La douleur est un signal : si elle augmente, arrêtez et parlez-en à Marc.',
+    },
+  ],
+  Mental: [
+    {
+      id: 'mental-dump',
+      domain: 'Mental',
+      label: 'PAUSE',
+      title: 'Le brain dump de 5 minutes',
+      body: 'Videz tout ce qui tourne en tête sur une page. Le but n’est pas d’organiser, c’est de faire de la place.',
+      duration: 5,
+      meta: '5 min · papier',
+      why: ['Charge cognitive', 'Clarté'],
+      steps: ['Prenez une feuille, sans filtre.', 'Écrivez toutes les pensées qui tournent.', 'Entourez la seule action de la prochaine heure.', 'Fermez la page et respirez.'],
+      prompt: 'Propose-moi une pause de clarté mentale de cinq minutes pour alléger ma charge cognitive.',
+      cta: 'Voir la pause',
+    },
+    {
+      id: 'mental-priority',
+      domain: 'Mental',
+      label: 'PAUSE',
+      title: 'Trois priorités, pas dix',
+      body: 'Dix minutes pour trier ce qui compte vraiment aujourd’hui et laisser le reste attendre.',
+      duration: 10,
+      meta: '10 min · 3 priorités',
+      why: ['Décisions', 'Focus'],
+      steps: ['Listez tout ce qui semble urgent.', 'Gardez trois éléments maximum.', 'Choisissez le premier pas de chacun.', 'Barrez le reste pour aujourd’hui.'],
+      prompt: 'Aide-moi à trier mes priorités en dix minutes et à ne garder que trois actions pour la journée.',
+      cta: 'Voir la pause',
+    },
+    {
+      id: 'mental-plan',
+      domain: 'Mental',
+      label: 'PAUSE',
+      title: 'Le plan de la prochaine heure',
+      body: 'Vingt minutes pour sortir du brouillard : une page, un plan, une seule prochaine action.',
+      duration: 20,
+      meta: '20 min · plan',
+      why: ['Brouillard mental', 'Reprendre le contrôle'],
+      steps: ['Videz les pensées sur papier.', 'Regroupez-les en trois thèmes.', 'Choisissez la prochaine action utile.', 'Bloquez vingt minutes pour la faire.'],
+      prompt: 'Construis-moi un plan de vingt minutes pour retrouver de la clarté et choisir ma prochaine action.',
+      cta: 'Voir la pause',
+    },
+  ],
+  Confiance: [
+    {
+      id: 'confidence-proof',
+      domain: 'Confiance',
+      label: 'MICRO-PREUVE',
+      title: 'Une force, une preuve',
+      body: 'Cinq minutes pour retrouver un fait concret : ce que vous savez faire, et la fois où vous l’avez fait.',
+      duration: 5,
+      meta: '5 min · 1 force',
+      why: ['Preuve concrète', 'Prise de parole'],
+      steps: ['Notez une force que vous assumez.', 'Trouvez une situation où elle a servi.', 'Écrivez-la en une phrase.', 'Relisez-la à voix haute.'],
+      prompt: 'Aide-moi à trouver une force et une preuve concrète pour reprendre confiance avant un moment important.',
+      cta: 'Voir la préparation',
+    },
+    {
+      id: 'confidence-interview',
+      domain: 'Confiance',
+      label: 'PRÉPARATION',
+      title: 'Préparer l’entretien en dix minutes',
+      body: 'Une force, une preuve, une question à poser. Trois éléments suffisent pour arriver avec un cadre.',
+      duration: 10,
+      meta: '10 min · entretien',
+      why: ['Entretien', 'Structurer'],
+      steps: ['Choisissez une force liée au poste.', 'Préparez une preuve chiffrée.', 'Écrivez une question à poser.', 'Répétez les trois à voix haute.'],
+      prompt: 'Aide-moi à préparer mon entretien avec une force, une preuve et une question à poser.',
+      cta: 'Voir la préparation',
+    },
+    {
+      id: 'confidence-rehearsal',
+      domain: 'Confiance',
+      label: 'PRÉPARATION',
+      title: 'La répétition à voix haute',
+      body: 'Vingt minutes pour entendre votre voix, ajuster le rythme et arriver sans réciter.',
+      duration: 20,
+      meta: '20 min · à voix haute',
+      why: ['Répétition', 'Présence'],
+      steps: ['Relisez votre force et votre preuve.', 'Enregistrez-vous une minute.', 'Réécoutez sans juger.', 'Répétez la version qui sonne juste.', 'Gardez seulement trois repères.'],
+      prompt: 'Aide-moi à répéter à voix haute mon entretien et à garder seulement trois repères.',
+      cta: 'Voir la préparation',
+    },
+  ],
+}
+
+function allEvaActions() {
+  return Object.values(EVA_ACTIONS).flat()
+}
+
+function findEvaAction(id: string) {
+  return allEvaActions().find(action => action.id === id)
+}
+
+function pickEvaAction(domain: string, personalization: Personalization): EvaDailyAction {
+  const list = EVA_ACTIONS[domain] ?? EVA_ACTIONS.Nutrition
+  const skipped = new Set(
+    Object.entries(personalization.feedback)
+      .filter(([, feedback]) => feedback.status === 'skipped')
+      .map(([id]) => id),
+  )
+  const available = list.filter(action => !skipped.has(action.id))
+  const pool = available.length > 0 ? available : list
+  const exact = pool.filter(action => action.duration === personalization.time)
+  const candidates = exact.length > 0
+    ? exact
+    : [...pool].sort((a, b) => Math.abs(a.duration - personalization.time) - Math.abs(b.duration - personalization.time))
+  const compatible = candidates.filter(action => !(action.avoid ?? []).some(tag => personalization.avoid.includes(tag)))
+  return compatible[0] ?? candidates[0] ?? pool[0] ?? list[0]
+}
+
+function actionAvoidNotes(action: EvaDailyAction, avoid: string[]) {
+  return (action.avoidNotes ?? []).filter(note => avoid.includes(note.tag))
+}
+
+function EvaRecommendation({ domain, onOpenEva }: { domain: string; onOpenEva: (prefill?: string) => void }) {
+  const { personalization, setPersonalization } = useStore()
+  const action = pickEvaAction(domain, personalization)
+  const feedback = personalization.feedback[action.id]
+  const [expanded, setExpanded] = useState(false)
+  const [skipOpen, setSkipOpen] = useState(false)
+  const [adaptOpen, setAdaptOpen] = useState(false)
+  const [draftTime, setDraftTime] = useState<5 | 10 | 20>(personalization.time)
+  const [draftAvoid, setDraftAvoid] = useState<string[]>(personalization.avoid)
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const notes = actionAvoidNotes(action, personalization.avoid)
+  const isSaved = feedback?.status === 'saved'
+  const isDone = feedback?.status === 'done'
+  const isSkipped = feedback?.status === 'skipped'
+
+  useEffect(() => {
+    setExpanded(false)
+    setSkipOpen(false)
+  }, [action.id])
+
+  useEffect(() => {
+    if (!adaptOpen) return
+    const previous = document.activeElement as HTMLElement | null
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const focusFrame = requestAnimationFrame(() => closeRef.current?.focus())
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAdaptOpen(false)
+        return
+      }
+      if (event.key !== 'Tab' || !sheetRef.current) return
+      const focusable = Array.from(
+        sheetRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+      ).filter(element => !element.hasAttribute('disabled'))
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      cancelAnimationFrame(focusFrame)
+      window.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = overflow
+      previous?.focus()
+    }
+  }, [adaptOpen])
+
+  const updateFeedback = (status: 'saved' | 'done' | 'skipped' | null, reason?: string) => {
+    setPersonalization(current => {
+      const next = { ...current.feedback }
+      if (status) next[action.id] = { status, at: Date.now(), ...(reason ? { reason } : {}) }
+      else delete next[action.id]
+      return { ...current, feedback: next }
+    })
+  }
+
+  const openAdapt = () => {
+    setDraftTime(personalization.time)
+    setDraftAvoid(personalization.avoid)
+    setAdaptOpen(true)
+  }
+
+  const applyAdapt = () => {
+    setPersonalization(current => ({ ...current, time: draftTime, avoid: draftAvoid }))
+    setAdaptOpen(false)
+  }
+
+  const toggleDraftAvoid = (tag: string) => {
+    setDraftAvoid(current => current.includes(tag) ? current.filter(item => item !== tag) : [...current, tag])
+  }
+
+  const resetSkips = () => {
+    setPersonalization(current => {
+      const next = { ...current.feedback }
+      ;(EVA_ACTIONS[domain] ?? []).forEach(item => {
+        if (next[item.id]?.status === 'skipped') delete next[item.id]
+      })
+      return { ...current, feedback: next }
+    })
+  }
+
+  return (
+    <div className={'eva-reco' + (isDone ? ' is-done' : isSaved ? ' is-saved' : '')}>
+      <div className="eva-reco-head">
+        <div className="eva-reco-id">
+          <EvaAvatar size={21} />
+          <div>
+            <em>EVA PROPOSE</em>
+            <span>{action.label}</span>
+          </div>
+        </div>
+        <button className="eva-reco-adapt" type="button" onClick={openAdapt}>Adapter</button>
+      </div>
+
+      <h3>{action.title}</h3>
+      <p className="eva-reco-body">{action.body}</p>
+
+      <div className="eva-reco-meta">
+        <span><Icon name="clock" size={12} /> {action.duration} min</span>
+        <span>{action.meta}</span>
+      </div>
+
+      <div className="eva-reco-why" aria-label="Pourquoi cette proposition">
+        <em>POURQUOI</em>
+        {action.why.slice(0, 2).map(item => <span key={item}>{item}</span>)}
+        {personalization.avoid.filter(tag => (action.avoid ?? []).includes(tag)).map(tag => (
+          <span key={tag} className="avoid">Sans {tag.toLowerCase()}</span>
+        ))}
+      </div>
+
+      {notes.length > 0 && (
+        <p className="eva-reco-adapt-note">{notes.map(note => note.note).join(' ')}</p>
+      )}
+
+      {isSkipped && (
+        <div className="eva-reco-empty">
+          <span>Vous avez écarté les propositions de cet axe.</span>
+          <button className="link-btn" type="button" onClick={resetSkips}>Réinitialiser</button>
+        </div>
+      )}
+
+      <div className="eva-reco-actions">
+        <button className="btn btn-primary sm" type="button" onClick={() => setExpanded(value => !value)} aria-expanded={expanded}>
+          {expanded ? 'Réduire' : action.cta}
+        </button>
+        {!isSaved && !isDone && (
+          <button className="btn btn-soft sm" type="button" onClick={() => updateFeedback('saved')}>
+            <Icon name="plus" size={13} /><span>Ajouter</span>
+          </button>
+        )}
+        {(isSaved || isDone) && (
+          <span className="eva-reco-state">
+            <Icon name="check" size={12} /> {isDone ? 'Fait' : 'Au carnet'}
+          </span>
+        )}
+        <button className="eva-reco-skip" type="button" onClick={() => setSkipOpen(value => !value)} aria-expanded={skipOpen}>
+          Pas pour moi
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="eva-reco-detail">
+          {action.ingredients && (
+            <div className="eva-reco-block">
+              <span className="eva-reco-label">INGRÉDIENTS</span>
+              <ul>{action.ingredients.map(item => <li key={item}>{item}</li>)}</ul>
+            </div>
+          )}
+          <div className="eva-reco-block">
+            <span className="eva-reco-label">ÉTAPES</span>
+            <ol>{action.steps.map(item => <li key={item}>{item}</li>)}</ol>
+          </div>
+          {action.note && <p className="eva-reco-note"><Icon name="shield" size={12} /> {action.note}</p>}
+          <div className="eva-reco-detail-actions">
+            {isSaved && (
+              <button className="btn btn-primary sm" type="button" onClick={() => updateFeedback('done')}>
+                <Icon name="check" size={13} /><span>Marquer comme fait</span>
+              </button>
+            )}
+            {isDone && (
+              <button className="btn btn-ghost sm" type="button" onClick={() => updateFeedback(null)}>
+                <span>Annuler</span>
+              </button>
+            )}
+            <button className="btn btn-ghost sm" type="button" onClick={() => onOpenEva(action.prompt)}>
+              <Icon name="sparkle" size={13} /><span>En parler à EVA</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {skipOpen && (
+        <div className="eva-reco-reasons" role="group" aria-label="Pourquoi écarter cette proposition">
+          <span>Pourquoi ?</span>
+          {['Trop long', 'Pas mon goût', 'Pas maintenant'].map(reason => (
+            <button key={reason} type="button" onClick={() => { updateFeedback('skipped', reason); setSkipOpen(false) }}>{reason}</button>
+          ))}
+        </div>
+      )}
+
+      {adaptOpen && (
+        <div className="eva-adapt-layer" onClick={() => setAdaptOpen(false)}>
+          <div
+            ref={sheetRef}
+            className="eva-adapt-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="eva-adapt-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="eva-adapt-head">
+              <div><span>ADAPTER</span><h2 id="eva-adapt-title">Votre proposition</h2></div>
+              <button ref={closeRef} className="eva-adapt-close" type="button" onClick={() => setAdaptOpen(false)} aria-label="Fermer">
+                <Icon name="close" size={16} />
+              </button>
+            </div>
+            <p>EVA ajuste l’action à votre journée. Le reste du programme ne change pas.</p>
+
+            <div className="eva-adapt-label">TEMPS DISPONIBLE</div>
+            <div className="eva-adapt-chips">
+              {([5, 10, 20] as const).map(value => (
+                <button key={value} type="button" className={draftTime === value ? 'on' : ''} aria-pressed={draftTime === value} onClick={() => setDraftTime(value)}>
+                  {value} min
+                </button>
+              ))}
+            </div>
+
+            {domain === 'Nutrition' ? (
+              <>
+                <div className="eva-adapt-label">À ÉVITER</div>
+                <div className="eva-adapt-chips">
+                  {['Œuf', 'Lactose', 'Fruits à coque', 'Gluten'].map(tag => (
+                    <button key={tag} type="button" className={draftAvoid.includes(tag) ? 'on' : ''} aria-pressed={draftAvoid.includes(tag)} onClick={() => toggleDraftAvoid(tag)}>
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="eva-adapt-hint">La durée suffit à adapter cette proposition. Pour une contrainte particulière, utilisez « En parler à EVA ».</p>
+            )}
+
+            <button className="btn btn-primary eva-adapt-apply" type="button" onClick={applyAdapt}>Mettre à jour</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EvaCarnetActions() {
+  const { personalization, setPersonalization } = useStore()
+  const items = Object.entries(personalization.feedback)
+    .filter(([, feedback]) => feedback.status === 'saved' || feedback.status === 'done')
+    .flatMap(([id, feedback]) => {
+      const action = findEvaAction(id)
+      return action ? [{ id, feedback, action }] : []
+    })
+    .sort((a, b) => b.feedback.at - a.feedback.at)
+
+  if (items.length === 0) return null
+
+  const setStatus = (id: string, status: 'saved' | 'done' | null) => {
+    setPersonalization(current => {
+      const next = { ...current.feedback }
+      if (status) next[id] = { status, at: Date.now() }
+      else delete next[id]
+      return { ...current, feedback: next }
+    })
+  }
+
+  return (
+    <section className="card eva-carnet-card">
+      <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
+        <div className="card-kicker" style={{ margin: 0 }}><Icon name="sparkle" size={13} /> VOS ACTIONS EVA</div>
+        <span className="tag mini">{items.length}</span>
+      </div>
+      <h2>Le quotidien, pas la théorie.</h2>
+      <div className="eva-carnet-list">
+        {items.map(({ id, action, feedback }) => {
+          const done = feedback.status === 'done'
+          return (
+            <div className="eva-carnet-row" key={id}>
+              <span className="eva-carnet-ico"><Icon name="sparkle" size={14} /></span>
+              <div className="eva-carnet-copy">
+                <span className={'tag mini' + (done ? ' done' : '')}>{done ? 'Fait' : 'À faire'}</span>
+                <strong>{action.title}</strong>
+                <em>{action.label} · {action.duration} min</em>
+              </div>
+              <div className="eva-carnet-actions">
+                {done
+                  ? <button className="btn btn-ghost sm" type="button" onClick={() => setStatus(id, 'saved')}>Annuler</button>
+                  : <button className="btn btn-soft sm" type="button" onClick={() => setStatus(id, 'done')}>Fait</button>}
+                <button className="eva-carnet-remove" type="button" onClick={() => setStatus(id, null)} aria-label={`Retirer ${action.title}`}>
+                  <Icon name="close" size={12} />
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <p className="eva-carnet-hint">Retrouvez ces actions dans le radar de vie, axe par axe.</p>
+    </section>
+  )
 }
 
 const LAST_SESSIONS: Record<string, LastSession> = {
@@ -1058,14 +1620,16 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
   const radarScores = teamRadar.length > 0 ? teamRadar : RADAR
   const activeAxis = radarScores.find(r => r.axis === selectedRadarAxis) ?? radarScores[0]
   const axisCoach = COACHES.find(c => c.id === activeAxis.coachId) ?? COACHES[0]
-  const evaOffer = EVA_DOMAIN_OFFERS[activeAxis.axis] ?? {
-    label: 'PROPOSITION EVA',
-    title: `Un premier pas sur ${activeAxis.axis.toLowerCase()}`,
-    body: `EVA peut transformer « ${activeAxis.rec} » en action concrète, adaptée à votre semaine.`,
-    cta: 'En parler à EVA',
-    prompt: `Propose-moi un premier pas concret pour mon axe ${activeAxis.axis}, à partir de cette recommandation : ${activeAxis.rec}.`,
-  }
   const popupAxis = axisPopup ? radarScores.find(r => r.axis === axisPopup) ?? null : null
+  const detailRef = useRef<HTMLDivElement>(null)
+
+  const selectRadarAxis = (axis: string) => {
+    setSelectedRadarAxis(axis)
+    window.setTimeout(() => {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      detailRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' })
+    }, 80)
+  }
 
   useEffect(() => {
     if (!axisPopup) return
@@ -1500,7 +2064,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
         <RadarChart
           scores={radarScores}
           selectedAxis={activeAxis.axis}
-          onSelectAxis={axis => setSelectedRadarAxis(axis)}
+          onSelectAxis={axis => selectRadarAxis(axis)}
           expanded
         />
 
@@ -1512,7 +2076,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
                 type="button"
                 className={'radar-score' + (isSel ? ' active' : '')}
                 key={r.axis}
-                onClick={() => setSelectedRadarAxis(r.axis)}
+                onClick={() => selectRadarAxis(r.axis)}
               >
                 <span>{r.axis}</span>
                 <strong>{r.v}</strong>
@@ -1521,7 +2085,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
           })}
         </div>
 
-        <div className="radar-axis-detail glass-lite" key={activeAxis.axis}>
+        <div className="radar-axis-detail glass-lite" key={activeAxis.axis} ref={detailRef}>
           <div className="row between" style={{ marginTop: 0, marginBottom: 6 }}>
             <div className="radar-axis-title">
               <strong>{activeAxis.axis} · <span className="radar-axis-value">{activeAxis.v}</span>/100</strong>
@@ -1532,23 +2096,7 @@ export function Ecosystem({ onOpenCoach, onOpenChat, onOpenEva }: {
             </button>
           </div>
           <p className="radar-axis-txt">{activeAxis.insight}</p>
-          <div className="radar-rec-line">
-            <Icon name="sparkle" size={12} />
-            <span>Action prioritaire : <strong>{activeAxis.rec}</strong></span>
-          </div>
-          <div className="radar-eva-offer">
-            <div className="radar-eva-offer-head">
-              <EvaAvatar size={20} />
-              <div>
-                <em>EVA · {evaOffer.label}</em>
-                <strong>{evaOffer.title}</strong>
-              </div>
-            </div>
-            <p>{evaOffer.body}</p>
-            <button className="btn btn-soft sm" onClick={() => onOpenEva(evaOffer.prompt)}>
-              <Icon name="sparkle" size={13} /><span>{evaOffer.cta}</span>
-            </button>
-          </div>
+          <EvaRecommendation domain={activeAxis.axis} onOpenEva={onOpenEva} />
         </div>
 
       </section>
